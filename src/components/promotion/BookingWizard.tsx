@@ -115,7 +115,7 @@ export function BookingWizard({ initial }: { initial: PlacementId }) {
             const pick = v === "desktop" ? desktop : mobile;
             return (
               <div key={v} className="space-y-1.5">
-                <span className="text-sm font-semibold capitalize">{v} image {v === "mobile" && <span className="font-normal text-muted">(optional, falls back to desktop)</span>}</span>
+                <span className="text-sm font-semibold capitalize">{v} image {v === "mobile" && <span className="font-normal normal-case text-muted">(optional, falls back to desktop)</span>}</span>
                 <label className="glass-flat flex cursor-pointer items-center gap-3 p-3 text-sm">
                   <ImagePlus size={18} className="text-brand" />
                   <span className="min-w-0 flex-1 truncate">{pick ? pick.file.name : `Upload JPG, PNG or WebP, about ${rec.w}×${rec.h}, up to 2 MB`}</span>

@@ -1,3 +1,5 @@
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
 import type { Metadata, Viewport } from "next";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
@@ -17,18 +19,16 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#060913" },
-    { media: "(prefers-color-scheme: light)", color: "#f4f6fb" },
-  ],
+  themeColor: "#040612",
+  colorScheme: "dark",
 };
 
-const themeScript = `try{var t=localStorage.getItem('cg-theme');if(!t){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t)}catch(e){document.documentElement.setAttribute('data-theme','dark')}`;
+const themeScript = `try{var t=localStorage.getItem('cg-theme');document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark')}catch(e){document.documentElement.setAttribute('data-theme','dark')}`;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
   return (
-    <html lang={locale} dir={dirOf(locale)} data-theme="dark" suppressHydrationWarning>
+    <html lang={locale} dir={dirOf(locale)} data-theme="dark" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>

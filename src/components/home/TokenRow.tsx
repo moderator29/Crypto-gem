@@ -35,7 +35,7 @@ export function TokenRow({ pool, rank, note }: { pool: PoolSummary; rank?: numbe
   const net = getNetwork(pool.networkId);
   const panelId = `row-${pool.id.replace(/[^a-z0-9]/gi, "")}`;
   return (
-    <div className="glass-flat overflow-hidden">
+    <div className="glass-flat overflow-hidden hover:border-[var(--border-strong)] has-[[aria-expanded=true]]:border-[var(--border-strong)] has-[[aria-expanded=true]]:shadow-[0_0_30px_color-mix(in_srgb,var(--neon-glow)_55%,transparent)]">
       <button
         type="button"
         aria-expanded={open}

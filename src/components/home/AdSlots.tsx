@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { PlacementId } from "@/lib/ads/catalog";
 import { getPlacement } from "@/lib/ads/catalog";
 import type { ActiveCampaign } from "@/lib/ads/delivery";
+import { GemMark } from "@/components/ui/Logo";
 import { useT } from "@/components/i18n/I18nProvider";
 import { AdBeacon } from "./AdBeacon";
 
@@ -14,10 +15,11 @@ export function AvailableSlot({ placement, variant = "wide" }: { placement: Plac
   const p = getPlacement(placement);
   if (!p) return null;
   const from = Math.min(...Object.values(p.prices).filter((v): v is number => v !== undefined));
-  const height = variant === "hero" ? "min-h-[132px] md:min-h-[260px]" : variant === "wide" ? "min-h-[84px] md:min-h-[110px]" : "min-h-[180px]";
+  const height = variant === "hero" ? "min-h-[132px] md:min-h-[236px]" : variant === "wide" ? "min-h-[84px] md:min-h-[96px]" : "min-h-[170px]";
   return (
     <Link href={`/promotion/book?placement=${placement}`} className={`glass hover-lift group relative flex ${height} flex-col justify-between gap-2 overflow-hidden p-4 md:p-7`}>
-      <span aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[radial-gradient(circle,var(--aurora-a),transparent_70%)]" />
+      <span aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-[radial-gradient(circle,var(--aurora-a),transparent_68%)]" />
+      <span aria-hidden="true" className="pointer-events-none absolute -bottom-10 -right-6 scale-[0.6] opacity-[0.1] transition duration-500 group-hover:opacity-25 md:bottom-[-24px] md:right-4 md:scale-100 md:opacity-[0.16]"><GemMark size={variant === "hero" ? 230 : variant === "card" ? 130 : 110} /></span>
       <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted">
         <Megaphone size={12} /> {t("slot.available")}
       </span>

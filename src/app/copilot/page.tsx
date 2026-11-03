@@ -15,7 +15,15 @@ export default async function CopilotPage({ searchParams }: { searchParams: Prom
         <h1 className="font-display text-3xl font-bold">AI Copilot</h1>
         <p className="text-sm text-soft">Research assistant that reads live market data. Facts come from data sources, interpretation is labelled.</p>
       </header>
-      {configured ? <Chat context={ctx} /> : <div className="glass p-6 text-sm text-soft">The Copilot is not configured in this environment. Set <code>ANTHROPIC_API_KEY</code> (see SETUP.md). Nothing is simulated.</div>}
+      {configured ? (
+        <Chat context={ctx} />
+      ) : (
+        <div className="glass space-y-2 p-6 text-sm text-soft" role="status">
+          <p className="font-display text-lg font-bold text-text">The Copilot is offline right now</p>
+          <p>It answers from live market data and is switched off until its AI service is connected. Nothing is simulated.</p>
+          {process.env.NODE_ENV !== "production" && <p className="text-xs text-muted">Setup: set ANTHROPIC_API_KEY (see SETUP.md).</p>}
+        </div>
+      )}
     </div>
   );
 }

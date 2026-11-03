@@ -1,6 +1,6 @@
 export function GemMark({ size = 28 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
+    <svg className="gem-glow" width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden="true">
       <defs>
         <linearGradient id="gm-a" x1="4" y1="2" x2="28" y2="30" gradientUnits="userSpaceOnUse">
           <stop stopColor="#4d8dff" />
@@ -22,7 +22,7 @@ export function Logo() {
     <span className="inline-flex items-center gap-2.5">
       <GemMark />
       <span className="font-display text-[17px] font-bold tracking-tight">
-        Crypto<span className="text-brand">Gems</span>
+        Crypto<span className="neon-text">Gems</span>
       </span>
     </span>
   );

@@ -43,7 +43,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
   return (
     <>
       <div className="aurora" aria-hidden="true" />
-      <header className="sticky top-0 z-50 border-b border-line bg-[var(--surface)] backdrop-blur-xl">
+      <header className="site-header sticky top-0 z-50">
         <div className="mx-auto flex h-[var(--header-h)] max-w-[1360px] items-center gap-3 px-4">
           <button type="button" className="btn !px-0 w-11 xl:hidden" aria-label={t("menu.open")} onClick={() => setDrawer(true)}>
             <Menu size={20} />
@@ -53,7 +53,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
           </Link>
           <nav className="hidden items-center gap-1 xl:flex" aria-label="Primary">
             {NAV.map((n) => (
-              <Link key={n.href} href={n.href} aria-current={isActive(path, n.href) ? "page" : undefined} className="rounded-full px-3 py-2 text-sm font-semibold text-soft transition xl:px-4 hover:text-text aria-[current=page]:bg-[var(--border)] aria-[current=page]:text-text">
+              <Link key={n.href} href={n.href} aria-current={isActive(path, n.href) ? "page" : undefined} className="rounded-full px-3 py-2 text-sm font-semibold text-soft transition xl:px-4 hover:text-text aria-[current=page]:bg-[color-mix(in_srgb,var(--neon)_20%,transparent)] aria-[current=page]:text-white aria-[current=page]:shadow-[inset_0_0_0_1px_rgba(90,160,255,0.45),0_0_20px_var(--neon-glow)]">
                 {t(n.key)}
               </Link>
             ))}
@@ -107,7 +107,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
       {footer}
 
       <nav className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[max(env(safe-area-inset-bottom),10px)] xl:hidden" aria-label="Mobile">
-        <div className="glass mx-auto flex h-[56px] max-w-md items-center justify-around !rounded-full px-2 !bg-[var(--surface-solid)]">
+        <div className="glass mx-auto flex h-[56px] max-w-md items-center justify-around !rounded-full px-2 !bg-[color-mix(in_srgb,var(--bg)_80%,transparent)]">
           <BottomLink href="/" label={t("nav.home")} icon={Compass} active={isActive(path, "/")} />
           <BottomLink href="/copilot" label={t("nav.ai")} icon={Bot} active={isActive(path, "/copilot")} />
           <Link href="/add-coin" aria-label="Add Coin" className="btn btn-primary -mt-6 !h-14 !min-h-14 w-14 !rounded-full !px-0 shadow-lg">
@@ -124,7 +124,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
 
 function BottomLink({ href, label, icon: Icon, active }: { href: string; label: string; icon: typeof Compass; active: boolean }) {
   return (
-    <Link href={href} aria-current={active ? "page" : undefined} className={`flex h-11 w-14 flex-col items-center justify-center text-[10px] font-semibold ${active ? "text-brand" : "text-muted"}`}>
+    <Link href={href} aria-current={active ? "page" : undefined} className={`flex h-11 w-14 flex-col items-center justify-center text-[10px] font-semibold transition ${active ? "text-brand [filter:drop-shadow(0_0_8px_var(--neon-glow))]" : "text-muted"}`}>
       <Icon size={20} />
       {label}
     </Link>
