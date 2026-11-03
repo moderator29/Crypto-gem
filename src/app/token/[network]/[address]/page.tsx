@@ -9,6 +9,7 @@ import { VoteButton } from "@/components/token/VoteButton";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 import { WatchButton } from "@/components/dashboard/WatchButton";
 import { NavIcon } from "@/components/ui/NavIcon";
+import { ShareButton } from "@/components/ui/ShareButton";
 import { RiskPanel } from "@/components/token/RiskPanel";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { TokenLogo } from "@/components/ui/TokenLogo";
@@ -117,6 +118,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
           <Link href={`/alerts?network=${net.id}&address=${encodeURIComponent(canonical)}&symbol=${encodeURIComponent(identity?.symbol ?? "")}&name=${encodeURIComponent(identity?.name ?? "")}&price=${top?.priceUsd ?? ""}`} className="btn btn-sm">
             <NavIcon name="alert" size={16} /> Alert
           </Link>
+          <ShareButton title={`${identity?.name ?? "Token"} on Crypto Gems`} />
           <Link href={`/compare?a=${net.id}:${encodeURIComponent(canonical)}`} className="btn btn-sm">
             <NavIcon name="compare" size={16} /> Compare
           </Link>

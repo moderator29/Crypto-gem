@@ -2,16 +2,14 @@
 
 import { usePrivy } from "@privy-io/react-auth";
 import { LogIn, LogOut, Mail, Unlink, Wallet } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/Button";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
-import { LOCALE_COOKIE, LOCALES } from "@/lib/i18n/config";
 import { canUnlink } from "@/lib/settings";
-import { useT } from "@/components/i18n/I18nProvider";
+import { PreferencesGroups } from "./PreferencesGroups";
 
 function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
   return (
@@ -20,53 +18,6 @@ function Section({ title, description, children }: { title: string; description?
       {description && <p className="mt-1 text-sm text-muted">{description}</p>}
       <div className="mt-4">{children}</div>
     </section>
-  );
-}
-
-function Preferences() {
-  const { locale } = useT();
-  const router = useRouter();
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-  useEffect(() => {
-    const id = setTimeout(() => setTheme(document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark"), 0);
-    return () => clearTimeout(id);
-  }, []);
-  const apply = (t: "dark" | "light") => {
-    document.documentElement.setAttribute("data-theme", t);
-    try {
-      localStorage.setItem("cg-theme", t);
-    } catch {
-      /* storage unavailable: the choice still applies for this visit */
-    }
-    setTheme(t);
-  };
-  return (
-    <Section title="Preferences" description="Stored in this browser.">
-      <div className="grid gap-5 md:grid-cols-2">
-        <div>
-          <p className="mb-2 text-sm font-semibold">Theme</p>
-          <div className="flex gap-2" role="group" aria-label="Theme">
-            {(["dark", "light"] as const).map((t) => (
-              <button key={t} type="button" className="chip capitalize" aria-pressed={theme === t} onClick={() => apply(t)}>{t}</button>
-            ))}
-          </div>
-        </div>
-        <label className="block">
-          <span className="mb-2 block text-sm font-semibold">Language</span>
-          <select
-            className="input"
-            value={locale}
-            onChange={(e) => {
-              document.cookie = `${LOCALE_COOKIE}=${e.target.value}; path=/; max-age=31536000; samesite=lax`;
-              router.refresh();
-            }}
-          >
-            {LOCALES.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
-          </select>
-          <span className="mt-1.5 block text-xs text-muted">Navigation and discovery labels are translated. Other pages are English for now.</span>
-        </label>
-      </div>
-    </Section>
   );
 }
 
@@ -126,7 +77,7 @@ function Account() {
         <p className="mt-3 text-xs text-muted">Linking a wallet here proves you control it. Crypto Gems never holds your keys or funds.</p>
       </Section>
 
-      <Preferences />
+      <PreferencesGroups />
 
       <Section title="Session">
         <Button variant="danger" onClick={() => void logout()}><LogOut size={15} /> Sign out</Button>
@@ -141,7 +92,7 @@ export function SettingsView() {
     return (
       <div className="space-y-4">
         <EmptyState title="Sign-in is not configured here" description="Account settings appear once sign-in is connected for this site." />
-        <Preferences />
+        <PreferencesGroups />
       </div>
     );
   }
@@ -150,7 +101,7 @@ export function SettingsView() {
     return (
       <div className="space-y-4">
         <EmptyState icon={LogIn} title="Sign in to manage your account" description="Use an email code, a wallet or Google." action={<Button variant="primary" onClick={login}>Sign in</Button>} />
-        <Preferences />
+        <PreferencesGroups />
       </div>
     );
   }

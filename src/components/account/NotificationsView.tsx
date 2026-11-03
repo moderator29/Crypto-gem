@@ -40,6 +40,11 @@ export function NotificationsView() {
   }
   return (
     <div className="space-y-4">
+      <Link href="/alerts" className="card hover-lift nav-tile flex items-center gap-3.5 p-4">
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[color-mix(in_srgb,var(--brand)_14%,transparent)]"><NavIcon name="alert" size={22} /></span>
+        <span className="min-w-0 flex-1"><span className="block font-semibold">Price alerts are here</span><span className="block text-sm text-soft">Set a price and get notified the moment it crosses.</span></span>
+        <span className="text-sm font-semibold text-brand">Set one</span>
+      </Link>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="scroll-x" role="tablist" aria-label="Notification types">
           {TABS.map((t) => <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className="chip" onClick={() => setTab(t.id)}>{t.label}</button>)}

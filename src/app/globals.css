@@ -744,3 +744,10 @@ h3 {
 }
 .spark-draw-line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: spark-draw 1100ms var(--ease-out) forwards; }
 @media (prefers-reduced-motion: reduce) { .spark-draw-line { animation: none; stroke-dashoffset: 0; } }
+.profile-banner {
+  background:
+    radial-gradient(60% 120% at 85% 0%, rgba(255, 90, 60, 0.45), transparent 60%),
+    radial-gradient(50% 100% at 10% 100%, rgba(255, 154, 92, 0.22), transparent 60%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 14px),
+    var(--surface-2);
+}

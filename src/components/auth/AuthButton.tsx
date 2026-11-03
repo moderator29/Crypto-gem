@@ -34,6 +34,7 @@ export function AuthButton({ className = "" }: { className?: string }) {
       </button>
       {open && (
         <div role="menu" className="glass-float absolute right-0 top-[calc(100%+8px)] z-[90] w-56 space-y-1 !bg-[var(--surface-2)] p-2">
+          <Link role="menuitem" href="/profile" className="flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold hover:bg-[var(--surface-3)]" onClick={() => setOpen(false)}>Profile</Link>
           <Link role="menuitem" href="/dashboard" className="flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold hover:bg-[var(--surface-3)]" onClick={() => setOpen(false)}>Dashboard</Link>
           <Link role="menuitem" href="/settings" className="flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold hover:bg-[var(--surface-3)]" onClick={() => setOpen(false)}>Settings</Link>
           {userId && (

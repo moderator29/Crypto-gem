@@ -48,6 +48,7 @@ const GROUPS: NavGroup[] = [
   {
     title: "Your account",
     items: [
+      { href: "/profile", label: "Profile", icon: "home", match: (p) => p.startsWith("/profile") },
       { href: "/dashboard/watchlist", label: "Watchlist", icon: "star", match: (p) => p.startsWith("/dashboard/watchlist") },
       { href: "/alerts", label: "Price alerts", icon: "alert", match: (p) => p.startsWith("/alerts") },
       { href: "/notifications", label: "Notifications", icon: "inbox", match: (p) => p.startsWith("/notifications") },
