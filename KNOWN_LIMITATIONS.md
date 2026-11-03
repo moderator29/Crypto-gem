@@ -10,6 +10,7 @@ This file is the honest ledger. Anything not marked **Working** should not be pr
 - Token page: header, real OHLCV chart (Lightweight Charts), stats, pools, derived market risk signals, validated external trade links.
 - Global search (name, symbol, address) with network shown for every result.
 - Real-time token detection (`/api/detect`, streamed): chain resolution from one cross-network pool search, then parallel GeckoTerminal, CoinGecko, CoinMarketCap and on-chain reads. Per-field provenance. Missing fields reported, never invented.
+- Checkout path (code complete, untested live): `/api/listings` creates submission, order and provider payment with a server-decided price; `/pay/[orderId]` shows address, QR, countdown and live status; `/api/webhooks/nowpayments` verifies signature, replay, order binding and amount before marking paid. Magic-link sign-in at `/login`. Webhook behaviour is covered by 7 tests.
 - Add Coin wizard UI: mode choice, live detection with real progress stages, multiple-chain picker, manual network fallback, provenance badges, form validation, package selection, order summary.
 - NOWPayments primitives: status mapping, HMAC-SHA512 IPN verification (constant time), order matching, underpayment detection. Unit tested.
 - Supabase schema with RLS, tested in-process against Postgres (PGlite): ownership, no self-publish, no self-verify, admin-only pricing, overlapping exclusive ad reservations rejected by the database, deduplicated ad events, idempotent webhook ledger.
@@ -30,8 +31,9 @@ This file is the honest ledger. Anything not marked **Working** should not be pr
 
 ## Not built yet
 
-- Supabase Auth flows and user dashboard (watchlists, alerts, portfolio, saved searches UI).
-- Order creation and the NOWPayments payment page (QR, countdown), IPN route, reconciliation job.
+- User dashboard (watchlists, alerts, portfolio, saved searches UI).
+- Payment reconciliation cron (polling provider for orders whose webhook never arrived) and refund handling.
+- Order and payment code has been tested with an in-memory fake of Supabase and unit tests, NOT against a live Supabase project or a live NOWPayments sandbox, because no credentials exist in this environment. Run one sandbox payment end to end before launch.
 - Advertising: booking checkout, creative upload and crop studio, placement preview, delivery and rotation engine, impression and click routes (`/api/ads/click` is referenced by `CampaignSlot` but does not exist yet, and `CampaignSlot` is unreachable until campaigns exist), analytics dashboard.
 - Boost checkout and activation, sponsored placement engine, expiry cron.
 - AI Copilot.

@@ -20,8 +20,8 @@ Status key: done, partial, todo.
 
 ## Next, in order
 
-1. Supabase client wiring and auth, so listings and campaigns can persist.
-2. Order creation, NOWPayments payment page, IPN route, reconciliation cron. Unlocks all three revenue engines.
+1. Reconciliation cron and a live sandbox payment test (needs credentials). Checkout code is written.
+2. Admin moderation queue and publication of approved listings into discovery.
 3. Listing moderation (admin queue) and publication into discovery.
 4. Ad delivery engine, click and impression routes, booking checkout, creative studio.
 5. Boost checkout, activation and expiry job.

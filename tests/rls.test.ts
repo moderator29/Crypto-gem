@@ -32,6 +32,7 @@ beforeAll(async () => {
     grant execute on function auth.uid() to anon, authenticated;
   `);
   await db.exec(readFileSync(path.resolve(__dirname, "../supabase/migrations/20261103000001_core_schema.sql"), "utf8"));
+  await db.exec(readFileSync(path.resolve(__dirname, "../supabase/migrations/20261103000002_seed_catalog.sql"), "utf8"));
   await db.exec(`
     grant usage on schema public to anon, authenticated;
     grant select, insert, update, delete on all tables in schema public to anon, authenticated;
@@ -77,6 +78,12 @@ describe("row level security", () => {
     ).rejects.toThrow();
   });
 
+  it("ships the catalog with every payment method disabled until verified", async () => {
+    expect((await db.query("select 1 from public.payment_methods where enabled")).rows).toHaveLength(0);
+    expect((await as("anon", null, "select id from public.payment_methods")).length).toBe(0);
+    expect((await as("anon", null, "select id from public.listing_packages")).length).toBe(3);
+  });
+
   it("denies ordinary users any write to payments or orders", async () => {
     await expect(as("authenticated", A, `insert into public.orders (user_id, kind, ref_id, price_usd) values ('${A}', 'listing', gen_random_uuid(), 0)`)).rejects.toThrow();
   });
@@ -88,8 +95,7 @@ describe("row level security", () => {
   });
 
   it("only lets admins change prices", async () => {
-    await db.exec(`insert into public.listing_packages (id, name, price_usd) values ('starter', 'Starter', 300)`);
-    await as("authenticated", A, "update public.listing_packages set price_usd = 1 where id = 'starter'");
+        await as("authenticated", A, "update public.listing_packages set price_usd = 1 where id = 'starter'");
     expect((await db.query<{ price_usd: string }>("select price_usd from public.listing_packages where id = 'starter'")).rows[0]?.price_usd).toBe("300");
     await as("authenticated", ADMIN, "update public.listing_packages set price_usd = 350 where id = 'starter'");
     expect((await db.query<{ price_usd: string }>("select price_usd from public.listing_packages where id = 'starter'")).rows[0]?.price_usd).toBe("350");
@@ -99,7 +105,6 @@ describe("row level security", () => {
 describe("advertising integrity", () => {
   it("rejects overlapping exclusive reservations for the same slot, allows adjacent ones", async () => {
     await db.exec(`
-      insert into public.advertising_placements (id, name, desktop_w, desktop_h, mobile_w, mobile_h, prices, exclusive) values ('trending', 'Trending', 640, 200, 640, 200, '{}', true);
       insert into public.advertising_campaigns (id, owner_id, placement_id, destination_url, starts_at, ends_at) values
         ('11111111-1111-1111-1111-111111111111', '${A}', 'trending', 'https://a.example', '2026-12-01', '2026-12-04'),
         ('22222222-2222-2222-2222-222222222222', '${B}', 'trending', 'https://b.example', '2026-12-03', '2026-12-06'),

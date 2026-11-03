@@ -1,7 +1,10 @@
 "use client";
 
 import { AlertTriangle, ArrowLeft, BadgeCheck, CheckCircle2, Loader2, RefreshCw, Rocket, ScanSearch, Zap } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { accessToken } from "@/lib/supabase/browser";
 import { LISTING_PACKAGES } from "@/lib/ads/catalog";
 import type { DetectedToken, Sourced } from "@/lib/detect/types";
 import { getNetwork, NETWORKS } from "@/lib/market-data/networks";
@@ -52,7 +55,16 @@ export function Wizard() {
   const [pkg, setPkg] = useState<string>("pro");
   const [terms, setTerms] = useState(false);
   const [submit, setSubmit] = useState<{ state: "idle" | "busy" | "setup" | "error"; message?: string }>({ state: "idle" });
+  const router = useRouter();
+  const [methods, setMethods] = useState<Array<{ id: string; label: string; provider_currency: string; network: string }>>([]);
+  const [payCurrency, setPayCurrency] = useState("");
+  const [needSignin, setNeedSignin] = useState(false);
   const { state, retry } = useDetect(step === "identify" ? address : "", network);
+
+  useEffect(() => {
+    if (step !== "summary") return;
+    fetch("/api/payment-methods").then((r) => r.json()).then((j: { methods?: typeof methods }) => setMethods(j.methods ?? []), () => setMethods([]));
+  }, [step]);
 
   const token = state.token;
   const chosenPkg = LISTING_PACKAGES.find((p) => p.id === pkg)!;
@@ -89,15 +101,20 @@ export function Wizard() {
   async function placeOrder() {
     setSubmit({ state: "busy" });
     try {
+      const jwt = await accessToken();
       const res = await fetch("/api/listings", {
         method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ mode, network: token?.networkId ?? network, address: token?.address ?? address.trim(), package: pkg, form, detectedAt: token?.observedAt ?? null }),
+        headers: { "content-type": "application/json", ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}) },
+        body: JSON.stringify({ mode, network: token?.networkId ?? network, address: token?.address ?? (address.trim() || null), package: pkg, payCurrency, form }),
       });
       const j = await res.json().catch(() => ({}));
       if (res.status === 503) return setSubmit({ state: "setup", message: j.error });
+      if (res.status === 401) {
+        setNeedSignin(true);
+        return setSubmit({ state: "idle" });
+      }
       if (!res.ok) return setSubmit({ state: "error", message: j.error ?? "Submission failed" });
-      setSubmit({ state: "idle" });
+      router.push(`/pay/${j.orderId}`);
     } catch {
       setSubmit({ state: "error", message: "Network error. Your details are still here, try again." });
     }
@@ -284,7 +301,14 @@ export function Wizard() {
           </dl>
           <ul className="space-y-1 text-sm text-soft">{chosenPkg.perks.map((x) => <li key={x}>✓ {x}</li>)}</ul>
           <label className="flex items-start gap-3 text-sm"><input type="checkbox" className="mt-1 h-4 w-4" checked={terms} onChange={(e) => setTerms(e.target.checked)} /> I confirm the information is accurate and accept the listing terms.</label>
-          <button type="button" className="btn btn-primary w-full md:w-auto" disabled={!terms || submit.state === "busy"} onClick={placeOrder}>
+          <label className="block"><span className="mb-1 block text-sm font-semibold">Pay with</span>
+            <select className="input" value={payCurrency} onChange={(e) => setPayCurrency(e.target.value)}>
+              <option value="">{methods.length ? "Select currency and network" : "No payment options available yet"}</option>
+              {methods.map((m) => <option key={m.id} value={m.provider_currency}>{m.label} ({m.network})</option>)}
+            </select>
+          </label>
+          {needSignin && <p className="glass-flat p-3 text-sm" role="status">Sign in first so the order is tied to your account. <Link href="/login?next=/add-coin" className="font-semibold text-brand">Sign in</Link>. Your details here are kept only until you leave this page.</p>}
+          <button type="button" className="btn btn-primary w-full md:w-auto" disabled={!terms || !payCurrency || submit.state === "busy"} onClick={placeOrder}>
             {submit.state === "busy" ? <Loader2 size={16} className="animate-spin" /> : <Rocket size={16} />} Continue to Secure Payment · ${chosenPkg.priceUsd.toLocaleString("en-US")}
           </button>
           {submit.state === "setup" && <p className="glass-flat p-3 text-sm text-warm" role="status">{submit.message}</p>}
