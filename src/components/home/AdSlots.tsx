@@ -1,12 +1,16 @@
+"use client";
+
 import { ArrowUpRight, Megaphone } from "lucide-react";
 import Link from "next/link";
 import type { PlacementId } from "@/lib/ads/catalog";
 import { getPlacement } from "@/lib/ads/catalog";
 import type { ActiveCampaign } from "@/lib/ads/delivery";
+import { useT } from "@/components/i18n/I18nProvider";
 import { AdBeacon } from "./AdBeacon";
 
 /** Honest empty inventory: invites a purchase and never pretends an advertiser exists. */
 export function AvailableSlot({ placement, variant = "wide" }: { placement: PlacementId; variant?: "hero" | "wide" | "card" }) {
+  const { t } = useT();
   const p = getPlacement(placement);
   if (!p) return null;
   const from = Math.min(...Object.values(p.prices).filter((v): v is number => v !== undefined));
@@ -15,10 +19,10 @@ export function AvailableSlot({ placement, variant = "wide" }: { placement: Plac
     <Link href={`/promotion/book?placement=${placement}`} className={`glass hover-lift group relative flex ${height} flex-col justify-between gap-2 overflow-hidden p-4 md:p-7`}>
       <span aria-hidden="true" className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[radial-gradient(circle,var(--aurora-a),transparent_70%)]" />
       <span className="inline-flex w-fit items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted">
-        <Megaphone size={12} /> Available placement
+        <Megaphone size={12} /> {t("slot.available")}
       </span>
       <div className="relative">
-        <h3 className={`font-display font-bold leading-tight md:text-3xl ${variant === "hero" ? "text-xl" : "text-lg"}`}>{variant === "hero" ? "Put your project in front of the market" : `Promote here`}</h3>
+        <h3 className={`font-display font-bold leading-tight md:text-3xl ${variant === "hero" ? "text-xl" : "text-lg"}`}>{variant === "hero" ? "Put your project in front of the market" : t("slot.promoteHere")}</h3>
         <p className={`mt-1.5 max-w-xl text-sm text-soft ${variant === "card" ? "" : "hidden md:block"}`}>
           {p.name}: {p.blurb}
         </p>

@@ -1,6 +1,8 @@
 "use client";
 
 import { AlertTriangle, Flame, RefreshCw, Sparkles, TrendingDown, TrendingUp, BarChart3, Zap } from "lucide-react";
+import { useT } from "@/components/i18n/I18nProvider";
+import type { MessageKey } from "@/lib/i18n/messages";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { HomeData } from "@/lib/market-data/home";
 import { NETWORKS } from "@/lib/market-data/networks";
@@ -9,19 +11,20 @@ import { AvailableSlot } from "./AdSlots";
 import { TokenRow } from "./TokenRow";
 
 const TABS = [
-  { id: "organic", label: "Trending", icon: Zap },
-  { id: "heating", label: "Heating Up", icon: Flame },
-  { id: "fresh", label: "New Pairs", icon: Sparkles },
-  { id: "gainers", label: "Gainers", icon: TrendingUp },
-  { id: "losers", label: "Losers", icon: TrendingDown },
-  { id: "volume", label: "Volume", icon: BarChart3 },
-] as const;
+  { id: "organic", key: "tab.trending", icon: Zap },
+  { id: "heating", key: "tab.heating", icon: Flame },
+  { id: "fresh", key: "tab.newPairs", icon: Sparkles },
+  { id: "gainers", key: "tab.gainers", icon: TrendingUp },
+  { id: "losers", key: "tab.losers", icon: TrendingDown },
+  { id: "volume", key: "tab.volume", icon: BarChart3 },
+] as const satisfies ReadonlyArray<{ id: string; key: MessageKey; icon: unknown }>;
 type TabId = (typeof TABS)[number]["id"];
 
 const CHAINS = NETWORKS.filter((n) => n.geckoterminal && ["ethereum", "solana", "bsc", "base", "arbitrum", "polygon", "avalanche", "optimism", "ton", "tron", "sui", "robinhood"].includes(n.id));
 const POLL_MS = 45_000;
 
 export function MarketBoard({ initial }: { initial: HomeData | null }) {
+  const { t: tr } = useT();
   const [data, setData] = useState<HomeData | null>(initial);
   const [tab, setTab] = useState<TabId>("organic");
   const [network, setNetwork] = useState<string | null>(null);
@@ -76,7 +79,7 @@ export function MarketBoard({ initial }: { initial: HomeData | null }) {
     <section aria-label="Market discovery" className="space-y-4">
       <div className="scroll-x" role="group" aria-label="Network filter">
         <button type="button" className="chip" aria-pressed={network === null} onClick={() => pick(null)}>
-          All chains
+          {tr("chain.all")}
         </button>
         {CHAINS.map((c) => (
           <button key={c.id} type="button" className="chip" aria-pressed={network === c.id} onClick={() => pick(c.id)}>
@@ -88,12 +91,12 @@ export function MarketBoard({ initial }: { initial: HomeData | null }) {
       <div className="scroll-x" role="tablist" aria-label="Discovery lists">
         {TABS.map((t) => (
           <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className="chip" onClick={() => setTab(t.id)}>
-            <t.icon size={14} /> {t.label}
+            <t.icon size={14} /> {tr(t.key)}
           </button>
         ))}
       </div>
 
-      {tab === "organic" && <p className="text-xs text-muted">Organic rank from volume, liquidity, activity, momentum and freshness. Paid placements never change this order.</p>}
+      {tab === "organic" && <p className="text-xs text-muted">{tr("market.organicNote")}</p>}
 
       {state === "loading" && (
         <div className="space-y-2" aria-busy="true">

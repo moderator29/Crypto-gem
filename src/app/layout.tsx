@@ -1,5 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { I18nProvider } from "@/components/i18n/I18nProvider";
+import { Footer } from "@/components/layout/Footer";
 import { SiteChrome } from "@/components/layout/SiteChrome";
+import { dirOf } from "@/lib/i18n/config";
+import { messagesFor } from "@/lib/i18n/messages";
+import { getLocale } from "@/lib/i18n/server";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -19,14 +24,17 @@ export const viewport: Viewport = {
 
 const themeScript = `try{var t=localStorage.getItem('cg-theme');if(!t){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t)}catch(e){document.documentElement.setAttribute('data-theme','dark')}`;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale();
   return (
-    <html lang="en" data-theme="dark" suppressHydrationWarning>
+    <html lang={locale} dir={dirOf(locale)} data-theme="dark" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        <SiteChrome>{children}</SiteChrome>
+        <I18nProvider locale={locale} messages={messagesFor(locale)}>
+          <SiteChrome footer={<Footer />}>{children}</SiteChrome>
+        </I18nProvider>
       </body>
     </html>
   );

@@ -15,7 +15,7 @@ Status key: done, partial, todo.
 | 8 | Promotion marketplace | partial (booking, previews, delivery, tracking done; crop tool and advertiser analytics dashboard todo) |
 | 9 | AI Copilot | partial (chat and tools done; history and per-user quotas todo) |
 | 10 | Admin | partial (moderation, prices, payments, creatives, audit done; analytics and feature flags todo) |
-| 11 | i18n | todo |
+| 11 | i18n | partial (architecture, 14 languages for chrome, RTL; page bodies todo, native review needed) |
 | 12 | E2E, accessibility, performance, security hardening | partial (unit and RLS tests, mobile overflow check) |
 
 ## Next, in order

@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight, Flame } from "lucide-react";
 import Link from "next/link";
 import { useRef } from "react";
+import { useT } from "@/components/i18n/I18nProvider";
 import { TokenLogo } from "@/components/ui/TokenLogo";
 import type { RankedPool } from "@/lib/market-data/home";
 import { getNetwork } from "@/lib/market-data/networks";
@@ -12,13 +13,14 @@ import { Change } from "./TokenRow";
 /** Snap-scrolling carousel of the top organic tokens. Rank is the organic score order. */
 export function TopTrending({ items }: { items: RankedPool[] }) {
   const ref = useRef<HTMLDivElement>(null);
+  const { t } = useT();
   if (items.length === 0) return null;
   const by = (dir: number) => ref.current?.scrollBy({ left: dir * 220, behavior: "smooth" });
   return (
     <section aria-label="Top trending" className="space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="flex items-center gap-2 font-display text-xl font-bold">
-          <Flame size={20} className="text-warm" /> Top Trending
+          <Flame size={20} className="text-warm" /> {t("home.topTrending")}
         </h2>
         <div className="flex gap-2">
           <button type="button" className="btn !min-h-10 !px-0 w-10" aria-label="Scroll left" onClick={() => by(-1)}>

@@ -44,7 +44,7 @@ This file is the honest ledger. Anything not marked **Working** should not be pr
 - Crop and reposition tool in the creative studio (images are validated, not cropped). No role-management UI (roles are granted with SQL).
 - Conversation history persistence and per-user AI quotas (limits are per IP, in memory).
 - Community voting, Market Pulse heatmaps, token comparison page, Smart Money.
-- Internationalisation (strings are inline English).
+- Internationalisation covers the app chrome (navigation, footer, shortcuts, discovery labels) in 14 languages with English fallback and RTL for Arabic. Page bodies (wizards, Boost, Promotion, dashboard, admin, Copilot answers) are still English. The translations were machine-drafted and need native review before launch.
 - Holders, transactions and community tabs on the token page.
 - Playwright end-to-end tests, accessibility audit, Lighthouse run.
 - Creative approval in admin does not itself schedule a campaign. The maintenance job promotes a paid campaign to scheduled or active once its desktop creative is approved, so the cron must be running (POST `/api/cron/maintenance` with `Authorization: Bearer $CRON_SECRET`, every few minutes).
