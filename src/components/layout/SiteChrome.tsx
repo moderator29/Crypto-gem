@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, Compass, Megaphone, Menu, PlusCircle, Rocket, Search, X } from "lucide-react";
+import { Bot, Compass, LayoutDashboard, Megaphone, Menu, PlusCircle, Rocket, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -14,6 +14,7 @@ const NAV = [
   { href: "/promotion", label: "Promotion", icon: Megaphone },
   { href: "/boost", label: "Boost", icon: Rocket },
   { href: "/copilot", label: "AI Copilot", icon: Bot },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
 ] as const;
 
 const isActive = (path: string, href: string) => (href === "/" ? path === "/" : path.startsWith(href));
@@ -45,15 +46,15 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
           <Link href="/" aria-label="Crypto Gems home" className="mr-2">
             <Logo />
           </Link>
-          <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
+          <nav className="hidden items-center gap-0.5 lg:flex xl:gap-1" aria-label="Primary">
             {NAV.map((n) => (
-              <Link key={n.href} href={n.href} aria-current={isActive(path, n.href) ? "page" : undefined} className="rounded-full px-4 py-2 text-sm font-semibold text-soft transition hover:text-text aria-[current=page]:bg-[var(--border)] aria-[current=page]:text-text">
+              <Link key={n.href} href={n.href} aria-current={isActive(path, n.href) ? "page" : undefined} className="rounded-full px-3 py-2 text-sm font-semibold text-soft transition xl:px-4 hover:text-text aria-[current=page]:bg-[var(--border)] aria-[current=page]:text-text">
                 {n.label}
               </Link>
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-2">
-            <button type="button" onClick={() => setSearchOpen(true)} className="btn hidden !justify-start gap-3 !px-4 text-muted sm:inline-flex sm:w-64" aria-label="Search">
+            <button type="button" onClick={() => setSearchOpen(true)} className="btn hidden !justify-start gap-3 !px-4 text-muted sm:inline-flex sm:w-44 xl:w-64" aria-label="Search">
               <Search size={16} /> <span className="text-sm font-medium">Search tokens</span>
               <kbd className="ml-auto rounded-md border border-line px-1.5 text-[11px]">⌘K</kbd>
             </button>

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { AvailableSlot } from "@/components/home/AdSlots";
 import { Change } from "@/components/home/TokenRow";
 import { PriceChart } from "@/components/token/PriceChart";
+import { WatchButton } from "@/components/dashboard/WatchButton";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { TokenLogo } from "@/components/ui/TokenLogo";
 import { classifyAddress, normalizeAddress } from "@/lib/market-data/identifiers";
@@ -88,6 +89,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
           <span className="num rounded-full border border-line px-3 py-1.5 md:hidden">{shortAddress(canonical)}</span>
           <span className="num hidden break-all md:inline">{canonical}</span>
           <CopyButton value={canonical} label="Copy" />
+          <WatchButton network={net.id} address={canonical} />
           {explorer && (
             <a href={explorer} target="_blank" rel="noopener noreferrer" className="btn !min-h-9 !px-3 text-xs">
               Explorer <ExternalLink size={12} />

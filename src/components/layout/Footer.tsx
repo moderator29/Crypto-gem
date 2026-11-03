@@ -20,6 +20,7 @@ export function Footer() {
           <h3 className="text-xs font-bold uppercase tracking-widest text-muted">Projects</h3>
           <Link className="block text-soft hover:text-text" href="/add-coin">Apply Listing</Link>
           <Link className="block text-soft hover:text-text" href="/promotion">Book advertising</Link>
+          <Link className="block text-soft hover:text-text" href="/dashboard">Dashboard</Link>
           <Link className="block text-soft hover:text-text" href="/login">Sign in</Link>
         </nav>
       </div>
