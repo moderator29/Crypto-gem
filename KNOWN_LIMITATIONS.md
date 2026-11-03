@@ -44,7 +44,15 @@ This file is the honest ledger. Anything not marked **Working** should not be pr
 - Privacy, Terms and About pages written for this product. They contain marked placeholders (company name, contact email, jurisdiction, refund terms) listed in `LEGAL_NOTES.md`. Counsel must review them before launch.
 - Desktop and tablet layouts: hero with side stack, sticky sortable market table (columns adapt at tablet width), right rail, denser Top Trending cards. Checked at 360, 390, 768, 1024 and 1280px with no horizontal overflow on 14 routes.
 
+- Design elevation: one design system (`DESIGN_SYSTEM.md`), Live Rail, search-first homepage, real Markets (six views, server-side sort and pagination), Chains and chain pages, Search with recent searches, Settings with Privy account linking, dashboard as six routed pages, animated navigation, skip link, focus management in the search dialog and drawer, toasts. Zero axe violations and no horizontal overflow on 21 routes at 360, 390, 768, 1024 and 1280px.
+- Supabase is the database and storage again; Privy handles sign-up, verification and wallets. RLS keyed to the Privy user id (JWT sub) is in `supabase/migrations/20261103000040_rls_privy.sql` and tested against Postgres.
+
 ## Not built yet
+
+- Price alerts (the table exists; no alerting job or page). The dashboard says so instead of pretending.
+- Saved filters for Markets (recent searches are kept in the browser only).
+- Wallet connection beyond sign-in: Privy provides it; there is no separate swap or send flow, by design (non-custodial, trades happen on external venues).
+- A browser Supabase client is not used: all data access is through server routes. The RLS policies exist for defence in depth and for a future minted-token client.
 
 - User dashboard (watchlists, alerts, portfolio, saved searches UI) and the project-owner dashboard.
 - Reconciliation cron for webhooks that never arrive, and refund handling.

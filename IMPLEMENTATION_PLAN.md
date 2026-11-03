@@ -6,7 +6,7 @@ Status key: done, partial, todo.
 | --- | --- | --- |
 | 0 | Recon, SteinzLabs audit, docs | done (visual references pending, none received) |
 | 1 | Foundation: Next 16, TS strict, Tailwind 4, themes, layout, tests | done |
-| 2 | Design system: header, drawer, bottom nav, search, glass, chips, skeletons, empty and error states | partial (tables, dialogs, tooltips, toasts, command palette beyond search to come) |
+| 2 | Design system (v3 done, see DESIGN_SYSTEM.md): header, drawer, bottom nav, search, glass, chips, skeletons, empty and error states | partial (tables, dialogs, tooltips, toasts, command palette beyond search to come) |
 | 3 | Discovery homepage: ticker, banner slots, tabs, chain filter | partial (no campaigns yet, so slots show availability; most watched, community favourites, upcoming, ecosystem sections need Supabase) |
 | 4 | Market data layer | partial (GeckoTerminal full, CoinGecko and CMC adapters for detection and global; reconciliation table in place; provider health endpoint to add) |
 | 5 | Token page and charts | partial (overview, chart, pools, risk, trade; holders, transactions, community, AI tabs todo) |
