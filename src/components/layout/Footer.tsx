@@ -13,17 +13,19 @@ export async function Footer() {
           <p className="text-xs text-muted">Data from GeckoTerminal and CoinGecko. Not financial advice. Trades happen on external venues with your own wallet.</p>
         </div>
         <nav aria-label="Explore" className="space-y-2 text-sm">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-muted">{t("footer.explore")}</h3>
-          <Link className="block text-soft hover:text-text" href="/">{t("nav.discover")}</Link>
-          <Link className="block text-soft hover:text-text" href="/boost">{t("nav.boost")}</Link>
-          <Link className="block text-soft hover:text-text" href="/promotion">{t("nav.promotion")}</Link>
+          <h3 className="eyebrow mb-3">{t("footer.explore")}</h3>
+          <Link className="block text-soft transition hover:text-text" href="/markets">{t("nav.markets")}</Link>
+          <Link className="block text-soft transition hover:text-text" href="/chains">Chains</Link>
+          <Link className="block text-soft transition hover:text-text" href="/pulse">{t("nav.pulse")}</Link>
+          <Link className="block text-soft transition hover:text-text" href="/copilot">{t("nav.copilot")}</Link>
         </nav>
         <nav aria-label="Projects" className="space-y-2 text-sm">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-muted">{t("footer.projects")}</h3>
-          <Link className="block text-soft hover:text-text" href="/add-coin">{t("nav.applyListing")}</Link>
-          <Link className="block text-soft hover:text-text" href="/promotion">{t("footer.bookAds")}</Link>
-          <Link className="block text-soft hover:text-text" href="/dashboard">{t("nav.dashboard")}</Link>
-          <Link className="block text-soft hover:text-text" href="/login">{t("footer.signIn")}</Link>
+          <h3 className="eyebrow mb-3">{t("footer.projects")}</h3>
+          <Link className="block text-soft transition hover:text-text" href="/add-coin">{t("nav.applyListing")}</Link>
+          <Link className="block text-soft transition hover:text-text" href="/boost">{t("nav.boost")}</Link>
+          <Link className="block text-soft transition hover:text-text" href="/promotion">{t("footer.bookAds")}</Link>
+          <Link className="block text-soft transition hover:text-text" href="/dashboard">{t("nav.dashboard")}</Link>
+          <Link className="block text-soft transition hover:text-text" href="/settings">{t("nav.settings")}</Link>
         </nav>
       </div>
       <p className="flex flex-wrap items-center justify-center gap-x-4 pt-6 text-xs text-muted"><Link href="/about" className="hover:text-text">About</Link><Link href="/privacy" className="hover:text-text">Privacy</Link><Link href="/terms" className="hover:text-text">Terms</Link></p>
