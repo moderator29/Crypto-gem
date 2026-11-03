@@ -44,13 +44,13 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
       <div className="aurora" aria-hidden="true" />
       <header className="sticky top-0 z-50 border-b border-line bg-[var(--surface)] backdrop-blur-xl">
         <div className="mx-auto flex h-[var(--header-h)] max-w-7xl items-center gap-3 px-4">
-          <button type="button" className="btn !px-0 w-11 lg:hidden" aria-label={t("menu.open")} onClick={() => setDrawer(true)}>
+          <button type="button" className="btn !px-0 w-11 xl:hidden" aria-label={t("menu.open")} onClick={() => setDrawer(true)}>
             <Menu size={20} />
           </button>
           <Link href="/" aria-label="Crypto Gems home" className="mr-2">
             <Logo />
           </Link>
-          <nav className="hidden items-center gap-0.5 lg:flex xl:gap-1" aria-label="Primary">
+          <nav className="hidden items-center gap-1 xl:flex" aria-label="Primary">
             {NAV.map((n) => (
               <Link key={n.href} href={n.href} aria-current={isActive(path, n.href) ? "page" : undefined} className="rounded-full px-3 py-2 text-sm font-semibold text-soft transition xl:px-4 hover:text-text aria-[current=page]:bg-[var(--border)] aria-[current=page]:text-text">
                 {t(n.key)}
@@ -75,7 +75,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
       </header>
 
       {drawer && (
-        <div className="fixed inset-0 z-[70] lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
+        <div className="fixed inset-0 z-[70] xl:hidden" role="dialog" aria-modal="true" aria-label="Menu">
           <div className="absolute inset-0 bg-black/55 backdrop-blur-sm" onClick={() => setDrawer(false)} />
           <aside className="glass absolute inset-y-0 left-0 flex w-[82%] max-w-xs flex-col gap-2 !rounded-l-none !bg-[var(--surface-solid)] p-4">
             <div className="mb-2 flex items-center justify-between">
@@ -103,7 +103,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
       <main className="mx-auto w-full max-w-7xl px-4 pt-4">{children}</main>
       {footer}
 
-      <nav className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[max(env(safe-area-inset-bottom),10px)] lg:hidden" aria-label="Mobile">
+      <nav className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[max(env(safe-area-inset-bottom),10px)] xl:hidden" aria-label="Mobile">
         <div className="glass mx-auto flex h-[56px] max-w-md items-center justify-around !rounded-full px-2 !bg-[var(--surface-solid)]">
           <BottomLink href="/" label={t("nav.home")} icon={Compass} active={isActive(path, "/")} />
           <BottomLink href="/copilot" label={t("nav.ai")} icon={Bot} active={isActive(path, "/copilot")} />

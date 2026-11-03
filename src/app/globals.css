@@ -273,7 +273,7 @@ body {
 .pad-nav {
   padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);
 }
-@media (min-width: 1024px) {
+@media (min-width: 1280px) {
   .pad-nav {
     padding-bottom: 48px;
   }
