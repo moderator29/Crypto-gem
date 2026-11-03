@@ -1,0 +1,296 @@
+"use client";
+
+import { AlertTriangle, ArrowLeft, BadgeCheck, CheckCircle2, Loader2, RefreshCw, Rocket, ScanSearch, Zap } from "lucide-react";
+import { useMemo, useState } from "react";
+import { LISTING_PACKAGES } from "@/lib/ads/catalog";
+import type { DetectedToken, Sourced } from "@/lib/detect/types";
+import { getNetwork, NETWORKS } from "@/lib/market-data/networks";
+import { priceUsd, usdCompact } from "@/lib/utils/format";
+import { TokenLogo } from "@/components/ui/TokenLogo";
+import { useDetect } from "./useDetect";
+
+type Mode = "express" | "standard";
+type Step = "mode" | "identify" | "review" | "package" | "summary";
+const STEPS: Array<{ id: Step; label: string }> = [
+  { id: "identify", label: "Identify" },
+  { id: "review", label: "Details" },
+  { id: "package", label: "Package" },
+  { id: "summary", label: "Review" },
+];
+
+interface Form {
+  name: string; symbol: string; description: string; descriptionZh: string; website: string; twitter: string; telegram: string;
+  discord: string; medium: string; coingecko: string; coinmarketcap: string; email: string; logoUrl: string;
+}
+const EMPTY: Form = { name: "", symbol: "", description: "", descriptionZh: "", website: "", twitter: "", telegram: "", discord: "", medium: "", coingecko: "", coinmarketcap: "", email: "", logoUrl: "" };
+
+const SOURCE_LABEL: Record<string, string> = { geckoterminal: "GeckoTerminal", coingecko: "CoinGecko", coinmarketcap: "CoinMarketCap", rpc: "On-chain", user: "You" };
+const src = (s: Sourced<unknown> | null) => (s ? SOURCE_LABEL[s.source] ?? s.source : null);
+
+function prefill(t: DetectedToken): Form {
+  const v = <T,>(s: Sourced<T> | null) => (s ? String(s.value) : "");
+  return { ...EMPTY, name: v(t.name), symbol: v(t.symbol), description: v(t.description), website: v(t.website), twitter: v(t.twitter), telegram: v(t.telegram), discord: v(t.discord), coingecko: v(t.coingeckoUrl), coinmarketcap: v(t.coinmarketcapUrl), logoUrl: v(t.logoUrl) };
+}
+
+const urlOk = (s: string) => {
+  if (!s) return true;
+  try {
+    const u = new URL(s);
+    return u.protocol === "https:" || u.protocol === "http:";
+  } catch {
+    return false;
+  }
+};
+
+export function Wizard() {
+  const [mode, setMode] = useState<Mode | null>(null);
+  const [step, setStep] = useState<Step>("mode");
+  const [address, setAddress] = useState("");
+  const [network, setNetwork] = useState<string | null>(null);
+  const [form, setForm] = useState<Form>(EMPTY);
+  const [touched, setTouched] = useState<Set<keyof Form>>(new Set());
+  const [pkg, setPkg] = useState<string>("pro");
+  const [terms, setTerms] = useState(false);
+  const [submit, setSubmit] = useState<{ state: "idle" | "busy" | "setup" | "error"; message?: string }>({ state: "idle" });
+  const { state, retry } = useDetect(step === "identify" ? address : "", network);
+
+  const token = state.token;
+  const chosenPkg = LISTING_PACKAGES.find((p) => p.id === pkg)!;
+  const net = getNetwork(token?.networkId ?? network ?? "");
+
+  const errors = useMemo(() => {
+    const e: Partial<Record<keyof Form, string>> = {};
+    if (!form.name.trim()) e.name = "Project name is required";
+    if (!form.symbol.trim()) e.symbol = "Ticker is required";
+    if (!form.description.trim() || form.description.trim().length < 30) e.description = "Describe the project in at least 30 characters";
+    for (const k of ["website", "twitter", "telegram", "discord", "medium", "coingecko", "coinmarketcap"] as const) if (!urlOk(form[k])) e[k] = "Enter a valid http(s) URL";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "A valid contact email is required";
+    return e;
+  }, [form]);
+
+  const set = (k: keyof Form, v: string) => {
+    setForm((f) => ({ ...f, [k]: v }));
+    setTouched((t) => new Set(t).add(k));
+  };
+
+  const useDetected = () => {
+    if (!token) return;
+    const pre = prefill(token);
+    setForm((f) => {
+      const next = { ...pre };
+      for (const k of touched) next[k] = f[k]; // never overwrite what the owner already typed
+      return next;
+    });
+    setStep("review");
+  };
+
+  const goBack = () => setStep(({ identify: "mode", review: "identify", package: "review", summary: "package", mode: "mode" } as Record<Step, Step>)[step]);
+
+  async function placeOrder() {
+    setSubmit({ state: "busy" });
+    try {
+      const res = await fetch("/api/listings", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ mode, network: token?.networkId ?? network, address: token?.address ?? address.trim(), package: pkg, form, detectedAt: token?.observedAt ?? null }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (res.status === 503) return setSubmit({ state: "setup", message: j.error });
+      if (!res.ok) return setSubmit({ state: "error", message: j.error ?? "Submission failed" });
+      setSubmit({ state: "idle" });
+    } catch {
+      setSubmit({ state: "error", message: "Network error. Your details are still here, try again." });
+    }
+  }
+
+  if (step === "mode") {
+    return (
+      <div className="grid gap-4 md:grid-cols-2">
+        {([
+          ["express", "Express Listing", "Paste your contract. We detect the chain and pre-fill everything we can find. Faster review and visibility packages.", Zap],
+          ["standard", "Standard Listing", "Submit your project through the normal review process. Best when the token has no pool yet or sits on an unsupported chain.", ScanSearch],
+        ] as const).map(([id, title, text, Icon]) => (
+          <button key={id} type="button" onClick={() => { setMode(id); setStep(id === "express" ? "identify" : "review"); }} className="glass hover-lift flex flex-col items-start gap-3 p-6 text-left">
+            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--border)] text-brand"><Icon size={22} /></span>
+            <span className="font-display text-xl font-bold">{title}</span>
+            <span className="text-sm text-soft">{text}</span>
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  const idx = STEPS.findIndex((s) => s.id === step);
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center gap-3">
+        <button type="button" onClick={goBack} className="btn !px-0 w-11" aria-label="Back"><ArrowLeft size={18} /></button>
+        <ol className="scroll-x flex-1" aria-label="Progress">
+          {STEPS.map((s, i) => (
+            <li key={s.id} aria-current={i === idx ? "step" : undefined} className="chip">{i + 1}. {s.label}</li>
+          ))}
+        </ol>
+      </div>
+
+      {step === "identify" && (
+        <section className="glass space-y-4 p-5 md:p-7" aria-label="Identify your token">
+          <div>
+            <h2 className="font-display text-2xl font-bold">Paste your contract address</h2>
+            <p className="mt-1 text-sm text-soft">We&apos;ll detect the chain and pre-fill the token details automatically.</p>
+          </div>
+          <input className="input num" value={address} onChange={(e) => { setAddress(e.target.value); setNetwork(null); }} onPaste={() => setNetwork(null)} placeholder="0x… or Solana mint" spellCheck={false} autoComplete="off" autoCapitalize="off" aria-label="Contract address" inputMode="text" />
+          <div className="scroll-x" aria-label="Supported chains">
+            {NETWORKS.filter((n) => n.contractLookup).slice(0, 14).map((n) => <span key={n.id} className="chip !min-h-8 !cursor-default text-xs">{n.name}</span>)}
+          </div>
+
+          {state.phase === "detecting" && (
+            <ul className="space-y-2" aria-live="polite" aria-label="Detection progress">
+              {state.stages.length === 0 && <li className="flex items-center gap-2 text-sm text-soft"><Loader2 size={15} className="animate-spin" /> Detecting token and blockchain…</li>}
+              {state.stages.map((s) => (
+                <li key={s.id} className="flex items-center gap-2 text-sm text-soft">
+                  {s.state === "running" ? <Loader2 size={15} className="animate-spin text-brand" /> : s.state === "done" ? <CheckCircle2 size={15} className="text-up" /> : s.state === "skipped" ? <span className="h-[15px] w-[15px] text-center text-muted">–</span> : <AlertTriangle size={15} className="text-warm" />}
+                  {s.label}{s.state === "skipped" ? " (no RPC configured)" : ""}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {state.phase === "done" && state.status === "multiple" && state.matches && (
+            <div className="space-y-2">
+              <p className="text-sm font-semibold">{state.message}</p>
+              {state.matches.map((m) => (
+                <button key={m.networkId} type="button" onClick={() => setNetwork(m.networkId)} className="glass-flat hover-lift flex w-full items-center gap-3 p-3 text-left">
+                  <TokenLogo src={m.token.imageUrl} symbol={m.token.symbol} size={36} />
+                  <span className="min-w-0 flex-1"><span className="block font-semibold">{m.token.name} <span className="text-muted">{m.token.symbol}</span></span><span className="block text-xs text-muted">{m.networkName}</span></span>
+                  <span className="num text-right text-xs text-muted">{usdCompact(m.topPool?.liquidityUsd)} liq</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {state.phase === "done" && (state.status === "found" || state.status === "partial") && token && (
+            <div className="glass-flat space-y-3 p-4">
+              <div className="flex items-center gap-3">
+                <TokenLogo src={token.logoUrl?.value} symbol={token.symbol?.value ?? "?"} size={48} />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate font-display text-lg font-bold">{token.name?.value ?? "Unnamed"} <span className="text-muted">{token.symbol?.value}</span></div>
+                  <div className="text-xs text-muted">{token.networkName} · <span className="num break-all">{token.address}</span></div>
+                </div>
+                <span className={`inline-flex items-center gap-1 text-xs font-semibold ${state.status === "found" ? "text-up" : "text-warm"}`}><BadgeCheck size={15} />{state.status === "found" ? "Detected" : "Partly detected"}</span>
+              </div>
+              <dl className="num grid grid-cols-2 gap-2 text-sm md:grid-cols-4">
+                {([["Price", priceUsd(token.priceUsd?.value)], ["Liquidity", usdCompact(token.liquidityUsd?.value)], ["24h volume", usdCompact(token.volume24hUsd?.value)], ["Pools", String(token.pools.length)]] as const).map(([k, v]) => (
+                  <div key={k}><dt className="text-xs text-muted">{k}</dt><dd className="font-semibold">{v}</dd></div>
+                ))}
+              </dl>
+              {token.missing.length > 0 && <p className="text-xs text-warm">Not found by any provider: {token.missing.join(", ")}. You will complete these next.</p>}
+              <p className="text-[11px] text-muted">Sources: {token.providerNotes.map((n) => `${SOURCE_LABEL[n.provider] ?? n.provider} ${n.status === "ok" ? "ok" : n.status === "not_configured" ? "not configured" : n.status === "no_match" ? "no match" : "unavailable"}`).join(" · ")}</p>
+              <button type="button" className="btn btn-primary w-full md:w-auto" onClick={useDetected}>Use these details</button>
+            </div>
+          )}
+
+          {state.phase === "done" && ["not_found", "invalid", "unsupported", "unavailable"].includes(state.status ?? "") && (
+            <div className="glass-flat space-y-3 p-4" role="alert">
+              <p className="flex items-start gap-2 text-sm"><AlertTriangle size={16} className="mt-0.5 shrink-0 text-warm" />{state.message}</p>
+              {state.status !== "invalid" && state.status !== "unsupported" && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <select className="input !min-h-11 !w-auto" value={network ?? ""} onChange={(e) => setNetwork(e.target.value || null)} aria-label="Select network manually">
+                    <option value="">Auto-detect network</option>
+                    {NETWORKS.filter((n) => n.contractLookup).map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
+                  </select>
+                  <button type="button" className="btn" onClick={retry}><RefreshCw size={15} /> Retry</button>
+                </div>
+              )}
+              <button type="button" className="btn" onClick={() => setStep("review")}>Continue and enter details manually</button>
+            </div>
+          )}
+        </section>
+      )}
+
+      {step === "review" && (
+        <section className="glass space-y-5 p-5 md:p-7" aria-label="Project details">
+          <h2 className="font-display text-2xl font-bold">Project details</h2>
+          {token && (
+            <div className="glass-flat p-3 text-sm">
+              <span className="font-semibold">On-chain facts</span> are shown from providers and cannot be edited: {token.networkName}, <span className="num break-all">{token.address}</span>
+              {token.decimals ? `, ${token.decimals.value} decimals` : ""}{token.totalSupply ? `, supply ${Number(token.totalSupply.value).toLocaleString("en-US")}` : ""}.
+            </div>
+          )}
+          {!token && mode === "standard" && (
+            <label className="block">
+              <span className="mb-1 block text-sm font-semibold">Network (optional)</span>
+              <select className="input" value={network ?? ""} onChange={(e) => setNetwork(e.target.value || null)}>
+                <option value="">Not on a supported chain yet</option>
+                {NETWORKS.map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
+              </select>
+            </label>
+          )}
+          <div className="grid gap-4 md:grid-cols-2">
+            {([
+              ["name", "Project name", "text"], ["symbol", "Ticker", "text"], ["website", "Website", "url"], ["twitter", "X / Twitter", "url"],
+              ["telegram", "Telegram", "url"], ["discord", "Discord", "url"], ["medium", "Medium", "url"], ["coingecko", "CoinGecko URL", "url"], ["coinmarketcap", "CoinMarketCap URL", "url"], ["email", "Contact email", "email"],
+            ] as const).map(([k, label, type]) => {
+              const detected = token ? (({ name: token.name, symbol: token.symbol, website: token.website, twitter: token.twitter, telegram: token.telegram, discord: token.discord, coingecko: token.coingeckoUrl, coinmarketcap: token.coinmarketcapUrl } as Record<string, Sourced<unknown> | null>)[k] ?? null) : null;
+              const edited = touched.has(k);
+              return (
+                <label key={k} className="block">
+                  <span className="mb-1 flex items-center justify-between text-sm font-semibold">{label}
+                    {detected && !edited && <span className="text-[11px] font-medium text-up">Detected via {src(detected)}</span>}
+                    {edited && <span className="text-[11px] font-medium text-muted">Edited by you</span>}
+                  </span>
+                  <input className="input" type={type} value={form[k]} onChange={(e) => set(k, e.target.value)} aria-invalid={Boolean(errors[k])} />
+                  {errors[k] && (form[k] || k === "email" || k === "name" || k === "symbol") && touched.has(k) && <span className="mt-1 block text-xs text-down">{errors[k]}</span>}
+                </label>
+              );
+            })}
+          </div>
+          <label className="block"><span className="mb-1 block text-sm font-semibold">Description</span>
+            <textarea className="input !min-h-28 py-3" value={form.description} onChange={(e) => set("description", e.target.value)} maxLength={2000} />
+            {touched.has("description") && errors.description && <span className="mt-1 block text-xs text-down">{errors.description}</span>}
+          </label>
+          <label className="block"><span className="mb-1 block text-sm font-semibold">Chinese description (optional)</span>
+            <textarea className="input !min-h-20 py-3" value={form.descriptionZh} onChange={(e) => set("descriptionZh", e.target.value)} maxLength={2000} lang="zh" />
+          </label>
+          <p className="text-xs text-muted">Descriptions and links are submitted by you and are shown to visitors as owner-provided. They are not verified.</p>
+          <button type="button" className="btn btn-primary w-full md:w-auto" disabled={Object.keys(errors).length > 0} onClick={() => setStep("package")}>Continue to packages</button>
+          {Object.keys(errors).length > 0 && <p className="text-xs text-muted">Complete the required fields to continue.</p>}
+        </section>
+      )}
+
+      {step === "package" && (
+        <section className="space-y-4" aria-label="Choose a package">
+          <h2 className="font-display text-2xl font-bold">Choose your package</h2>
+          <div className="grid gap-4 md:grid-cols-3">
+            {LISTING_PACKAGES.map((p) => (
+              <button key={p.id} type="button" onClick={() => setPkg(p.id)} aria-pressed={pkg === p.id} className={`glass hover-lift flex flex-col gap-3 p-5 text-left ${pkg === p.id ? "!border-[var(--brand)]" : ""}`}>
+                <span className="flex items-center justify-between"><span className="font-display text-lg font-bold">{p.name}</span>{pkg === p.id && <CheckCircle2 size={18} className="text-brand" />}</span>
+                <span className="num font-display text-3xl font-bold">${p.priceUsd.toLocaleString("en-US")}</span>
+                <ul className="space-y-1.5 text-sm text-soft">{p.perks.map((x) => <li key={x} className="flex gap-2"><span className="text-up">✓</span>{x}</li>)}</ul>
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-muted">Paying for a package does not verify a project or guarantee approval, and never changes organic rankings. Prices are set by Crypto Gems and can change.</p>
+          <button type="button" className="btn btn-primary" onClick={() => setStep("summary")}>Review order</button>
+        </section>
+      )}
+
+      {step === "summary" && (
+        <section className="glass space-y-4 p-5 md:p-7" aria-label="Order summary">
+          <h2 className="font-display text-2xl font-bold">Order summary</h2>
+          <dl className="grid gap-3 text-sm md:grid-cols-2">
+            {([["Project", form.name], ["Ticker", form.symbol], ["Network", net?.name ?? "Not specified"], ["Contract", token?.address ?? (address.trim() || "Not provided")], ["Package", `${chosenPkg.name}`], ["Contact", form.email]] as const).map(([k, v]) => (
+              <div key={k}><dt className="text-xs text-muted">{k}</dt><dd className="num break-all font-semibold">{v}</dd></div>
+            ))}
+          </dl>
+          <ul className="space-y-1 text-sm text-soft">{chosenPkg.perks.map((x) => <li key={x}>✓ {x}</li>)}</ul>
+          <label className="flex items-start gap-3 text-sm"><input type="checkbox" className="mt-1 h-4 w-4" checked={terms} onChange={(e) => setTerms(e.target.checked)} /> I confirm the information is accurate and accept the listing terms.</label>
+          <button type="button" className="btn btn-primary w-full md:w-auto" disabled={!terms || submit.state === "busy"} onClick={placeOrder}>
+            {submit.state === "busy" ? <Loader2 size={16} className="animate-spin" /> : <Rocket size={16} />} Continue to Secure Payment · ${chosenPkg.priceUsd.toLocaleString("en-US")}
+          </button>
+          {submit.state === "setup" && <p className="glass-flat p-3 text-sm text-warm" role="status">{submit.message}</p>}
+          {submit.state === "error" && <p className="text-sm text-down" role="alert">{submit.message}</p>}
+        </section>
+      )}
+    </div>
+  );
+}
