@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { getDb } from "@/lib/db";
 import { ACCESS } from "@/lib/admin/roles";
 import { auditOrFail, guard, json, parseBody } from "@/lib/admin/route";
 
@@ -9,13 +9,17 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   const auth = await guard(req, ACCESS.creatives);
   if (!auth.ok) return auth.response;
-  const { data, error } = await supabaseAdmin()
-    .from("campaign_creatives")
-    .select("id,campaign_id,variant,storage_path,width,height,review_status,review_note,advertising_campaigns(id,owner_id,placement_id,headline,destination_url,starts_at,ends_at,status)")
-    .eq("review_status", "pending")
-    .limit(100);
+  const db = getDb();
+  const { data, error } = await db.from("campaign_creatives").select("id,campaign_id,variant,storage_path,width,height,review_status,review_note").eq("review_status", "pending").limit(100);
   if (error) return json({ error: "Could not load creatives." }, 502);
-  return json({ items: data ?? [] });
+  const rows = (data ?? []) as Array<{ campaign_id: string }>;
+  const ids = [...new Set(rows.map((r) => r.campaign_id))];
+  const { data: camps, error: campErr } = ids.length
+    ? await db.from("advertising_campaigns").select("id,owner_id,placement_id,headline,destination_url,starts_at,ends_at,status").in("id", ids)
+    : { data: [], error: null };
+  if (campErr) return json({ error: "Could not load creatives." }, 502);
+  const byId = new Map(((camps ?? []) as Array<{ id: string }>).map((c) => [c.id, c]));
+  return json({ items: rows.map((r) => ({ ...r, advertising_campaigns: byId.get(r.campaign_id) ?? null })) });
 }
 
 const decision = z
@@ -33,7 +37,7 @@ export async function POST(req: Request) {
   const body = await parseBody(req, decision);
   if (!body.ok) return body.response;
   const { id, decision: verdict, note } = body.data;
-  const db = supabaseAdmin();
+  const db = getDb();
 
   const { data: before, error: readErr } = await db.from("campaign_creatives").select("id,campaign_id,variant,review_status,review_note").eq("id", id).maybeSingle();
   if (readErr) return json({ error: "Could not load the creative." }, 502);

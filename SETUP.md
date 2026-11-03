@@ -20,13 +20,20 @@ Identity is handled by Privy, so there is no sign-up form and no password. Users
 
 The server verifies each request's Privy access token against the app's public keys. No Privy secret is needed for that. User ids are Privy DIDs (`did:privy:...`) stored as text.
 
-## Database (Supabase, database only)
+## Database (Neon Postgres)
 
-Privy does not store business data, so orders, listings, payments, campaigns and watchlists live in Postgres. Supabase is used only as that managed Postgres. Supabase Auth is not used.
+Privy does not store business data, so orders, listings, payments, campaigns and watchlists live in Postgres on Neon.
 
-1. Create a Supabase project. Copy the project URL into `NEXT_PUBLIC_SUPABASE_URL` and the secret key into `SUPABASE_SECRET_KEY` (server only, never prefix with `NEXT_PUBLIC_`).
-2. Apply `supabase/migrations/*.sql` in order (SQL editor, or `supabase db push`). Row Level Security is on for every table with no client policies for private data, so the browser cannot read it. Only server routes with the secret key can.
-3. Grant the first super admin, see `ADMIN.md`.
+1. In the Vercel project open Storage, then Marketplace, and add Neon. This creates the database and sets `DATABASE_URL` for you. Use the pooled connection string (the host contains `-pooler`). For local work copy it into `.env.local`. It is server only, never prefix it with `NEXT_PUBLIC_`.
+2. Apply the schema: `DATABASE_URL=... npm run db:migrate`. It runs `db/migrations/*.sql` in file order, each file in a transaction, and records them in a `schema_migrations` table, so running it again applies only new files. If Neon gives you a direct (unpooled) string, set `MIGRATE_DATABASE_URL` to it for this step.
+3. The app never connects from the browser, and there are no row policies. Access control is in the server routes.
+4. Grant the first super admin, see `ADMIN.md`.
+
+The build does not need `DATABASE_URL`. Without it, pages show their empty states and write routes answer 503.
+
+## File storage (Vercel Blob)
+
+Logos and ad creatives are stored in Vercel Blob. In the Vercel project open Storage, create a Blob store (public) and connect it. That sets `BLOB_READ_WRITE_TOKEN`. Without it, uploads and ad booking answer 503. Stored files get public URLs on `*.public.blob.vercel-storage.com`, and the full URL is saved in the database.
 
 ## Market data
 

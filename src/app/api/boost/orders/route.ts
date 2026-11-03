@@ -2,7 +2,7 @@ import { z } from "zod";
 import { getBoostPack } from "@/lib/ads/catalog";
 import { CheckoutError, createPaymentForOrder } from "@/lib/payments/checkout";
 import { isConfigured } from "@/lib/payments/nowpayments";
-import { supabaseAdmin, supabaseConfigured, userFromRequest } from "@/lib/supabase/admin";
+import { getDb, dbConfigured, userFromRequest } from "@/lib/db";
 import { clientKey, rateLimit } from "@/lib/utils/rateLimit";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +16,7 @@ const body = z.object({ submissionId: z.string().uuid(), packId: z.string().min(
  * boosting only adds visibility; ownership is not required to promote a token.
  */
 export async function POST(req: Request) {
-  if (!supabaseConfigured() || !isConfigured()) return Response.json({ error: "Checkout is not live yet. See SETUP.md." }, { status: 503 });
+  if (!dbConfigured() || !isConfigured()) return Response.json({ error: "Checkout is not live yet. See SETUP.md." }, { status: 503 });
   if (!rateLimit(`boost:${clientKey(req)}`, 10, 60_000).ok) return Response.json({ error: "Too many requests" }, { status: 429 });
   const user = await userFromRequest(req);
   if (!user) return Response.json({ error: "Sign in to continue." }, { status: 401 });
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
   if (!parsed.success) return Response.json({ error: "Invalid request" }, { status: 422 });
   const { submissionId, packId, payCurrency } = parsed.data;
 
-  const db = supabaseAdmin();
+  const db = getDb();
   const { data: sub } = await db.from("token_submissions").select("id").eq("id", submissionId).eq("status", "published").maybeSingle();
   if (!sub) return Response.json({ error: "Only listed projects can be boosted. List the project first." }, { status: 409 });
   const { data: pack } = await db.from("boost_packs").select("id,price_usd,active").eq("id", packId).maybeSingle();

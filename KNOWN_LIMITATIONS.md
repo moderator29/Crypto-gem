@@ -13,7 +13,7 @@ This file is the honest ledger. Anything not marked **Working** should not be pr
 - Checkout path (code complete, untested live): `/api/listings` creates submission, order and provider payment with a server-decided price; `/pay/[orderId]` shows address, QR, countdown and live status; `/api/webhooks/nowpayments` verifies signature, replay, order binding and amount before marking paid. Privy sign-in (email code, wallet, Google) at `/login`. Webhook behaviour is covered by 7 tests.
 - Add Coin wizard UI: mode choice, live detection with real progress stages, multiple-chain picker, manual network fallback, provenance badges, form validation, package selection, order summary.
 - NOWPayments primitives: status mapping, HMAC-SHA512 IPN verification (constant time), order matching, underpayment detection. Unit tested.
-- Supabase schema with RLS, tested in-process against Postgres (PGlite): ownership, no self-publish, no self-verify, admin-only pricing, overlapping exclusive ad reservations rejected by the database, deduplicated ad events, idempotent webhook ledger.
+- Postgres schema, tested in-process against Postgres (PGlite): overlapping exclusive ad reservations rejected by the database, deduplicated ad events, idempotent webhook ledger, append-only audit log, seeded catalog. The query builder is tested against the same schema. Authorisation (ownership, no self-publish, admin-only pricing) lives in the server routes and is covered by route tests.
 - Light and dark themes, mobile-first layout, bottom navigation, drawer, search dialog. Verified at 390px with zero horizontal overflow.
 
 ## Configured but waiting on credentials
@@ -25,21 +25,22 @@ This file is the honest ledger. Anything not marked **Working** should not be pr
 | GeckoTerminal | optional pro key | Public tier is about 30 calls/min. Caching keeps normal use inside it, heavy traffic needs a paid plan |
 | EVM RPC | `RPC_<NETWORK>` per chain | On-chain metadata stage is skipped and labelled |
 | Privy | `NEXT_PUBLIC_PRIVY_APP_ID` | No sign-in, so no listing, boost, booking, dashboard or admin |
-| Database (Supabase as Postgres) | URL and secret key | No listings, orders, campaigns |
+| Database (Neon Postgres) | `DATABASE_URL` (pooled) | No listings, orders, campaigns |
+| File storage (Vercel Blob) | `BLOB_READ_WRITE_TOKEN` | No logo upload, no ad booking |
 | NOWPayments | API key, IPN secret | `/api/listings` answers 503 with the missing variable names |
 | Reown | project id | No wallet connect |
 | Anthropic | API key | No AI Copilot |
 
-## Built since the first milestone (code complete, tested with fakes and PGlite, not run against live Supabase, NOWPayments or Anthropic)
+## Built since the first milestone (code complete, tested with fakes and PGlite, not run against a live Neon database, Vercel Blob, NOWPayments or Anthropic)
 
-- Boost: listed-project picker with search, chain filter and pagination from Supabase, pack selection with sponsored allocations, sponsored preview (mobile and desktop), checkout through the shared payment flow, activation only after a verified `finished` payment with server-side windows (a repeat purchase queues behind a running boost), maintenance job for expiry, a labelled Sponsored strip on the homepage. Overlap is prevented by a database constraint.
+- Boost: listed-project picker with search, chain filter and pagination from the database, pack selection with sponsored allocations, sponsored preview (mobile and desktop), checkout through the shared payment flow, activation only after a verified `finished` payment with server-side windows (a repeat purchase queues behind a running boost), maintenance job for expiry, a labelled Sponsored strip on the homepage. Overlap is prevented by a database constraint.
 - Advertising: placement wireframe previews with the creative shown in place, booking wizard (placement, length, start date, creative upload, destination, review, pay), creative validation from file bytes (type, size, shape), availability and slot allocation (exclusive slots never double-sold), delivery with fair rotation and mobile creatives, impression tracking (visible for a second, one per visitor per hour, bots excluded) and click tracking with redirect.
 - AI Copilot: streaming chat with five read-only data tools, strict facts versus interpretation prompt, token-page context, per-minute and per-day limits. It cannot trade or move funds.
 - Admin (built by a second engineer, merged from `feat/admin`): role-guarded routes and UI for listing moderation, prices, payment methods, payments, creatives and an append-only audit log. See `ADMIN.md`.
 - Reference-driven UI: expandable market rows, Top Trending carousel, shortcut pills, full-screen mobile search, drawer theme pill, footer.
 
-- Sign-in with Privy (email code, wallet, Google). The server verifies Privy access tokens itself, with tests for wrong audience, wrong issuer, expiry, foreign keys, non-DID subjects and alg=none. Supabase is only the database.
-- Add Coin parity with the reference: Chinese Telegram, BTOK and Weibo links, logo upload with preview and remove (real-byte image checks, own-folder storage rule), step labels, Change button on the detection card.
+- Sign-in with Privy (email code, wallet, Google). The server verifies Privy access tokens itself, with tests for wrong audience, wrong issuer, expiry, foreign keys, non-DID subjects and alg=none. The database is Neon Postgres.
+- Add Coin parity with the reference: Chinese Telegram, BTOK and Weibo links, logo upload with preview and remove (real-byte image checks, own-folder storage rule on Vercel Blob), step labels, Change button on the detection card.
 - Community voting on listed projects: one vote per project per day, 30 minutes between votes, the rule shown next to the button.
 - Privacy, Terms and About pages written for this product. They contain marked placeholders (company name, contact email, jurisdiction, refund terms) listed in `LEGAL_NOTES.md`. Counsel must review them before launch.
 - Desktop and tablet layouts: hero with side stack, sticky sortable market table (columns adapt at tablet width), right rail, denser Top Trending cards. Checked at 360, 390, 768, 1024 and 1280px with no horizontal overflow on 14 routes.
@@ -57,7 +58,8 @@ This file is the honest ledger. Anything not marked **Working** should not be pr
 - Privy wallet sign-in does not replace a payment wallet: payments are crypto deposits through NOWPayments. The earlier Reown wallet-connect idea is not built and is not needed for sign-in.
 - Privy was configured but not exercised against a real Privy app (no app id here). Verification is tested with locally signed tokens.
 - Creative approval in admin does not itself schedule a campaign. The maintenance job promotes a paid campaign to scheduled or active once its desktop creative is approved, so the cron must be running (POST `/api/cron/maintenance` with `Authorization: Bearer $CRON_SECRET`, every few minutes).
-- Apply every migration in `supabase/migrations` in order, including `20261103000020_logos_bucket.sql` and `20261103000030_votes.sql`. `20261103000004_storage.sql` creates the public `creatives` bucket and is not covered by the PGlite tests.
+- Apply every migration with `npm run db:migrate` (see `SETUP.md`). The migrate script and the Neon and Blob drivers have not been run against a real Neon database or Blob store from the build environment. The query builder and schema are tested in PGlite only, so run the first migration and a smoke test (sign in, add a watchlist item, upload a logo) on a preview deployment before launch.
+- Neon's HTTP driver sends each statement as its own request, so multi-step writes (for example creating a campaign then its reservation) are not one transaction. The routes already compensate for the known cases (the campaign is removed if its reservation is refused).
 
 ## Provider constraints to plan for
 

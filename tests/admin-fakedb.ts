@@ -1,7 +1,7 @@
 export type Row = Record<string, unknown>;
 export type Tables = Record<string, Row[]>;
 
-/** In-memory stand-in for the parts of the Supabase query builder the admin routes use. */
+/** In-memory stand-in for the parts of the query builder the admin routes use. */
 export function createFakeDb(tables: Tables, failures: Set<string> = new Set()) {
   const from = (name: string) => {
     const preds: Array<(r: Row) => boolean> = [];
@@ -68,5 +68,5 @@ export function createFakeDb(tables: Tables, failures: Set<string> = new Set()) 
     };
     return q;
   };
-  return { from };
+  return { from, sql: async () => [] as Row[] };
 }

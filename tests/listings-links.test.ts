@@ -1,5 +1,5 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { listingInput, logoUrlAllowed, ownLogoPrefix } from "@/lib/listings";
+import { describe, expect, it } from "vitest";
+import { listingInput, logoUrlAllowed } from "@/lib/listings";
 import { checkLogoImage } from "@/lib/logo";
 
 const base = {
@@ -35,11 +35,7 @@ describe("listing links", () => {
 });
 
 describe("logo url rules", () => {
-  const old = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  afterEach(() => {
-    if (old === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL;
-    else process.env.NEXT_PUBLIC_SUPABASE_URL = old;
-  });
+  const BLOB = "https://abc123.public.blob.vercel-storage.com";
 
   it("allows empty and detected https provider logos, rejects http and junk", () => {
     expect(logoUrlAllowed("", "u1")).toBe(true);
@@ -50,11 +46,19 @@ describe("logo url rules", () => {
   });
 
   it("only allows own-storage logos from the caller's folder", () => {
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://proj.supabase.co";
-    expect(ownLogoPrefix()).toBe("https://proj.supabase.co/storage/v1/object/public/logos/");
-    expect(logoUrlAllowed("https://proj.supabase.co/storage/v1/object/public/logos/u1/a.png", "u1")).toBe(true);
-    expect(logoUrlAllowed("https://proj.supabase.co/storage/v1/object/public/logos/u2/a.png", "u1")).toBe(false);
-    expect(logoUrlAllowed("https://proj.supabase.co/other/path.png", "u1")).toBe(false);
+    expect(logoUrlAllowed(`${BLOB}/logos/u1/a.png`, "u1")).toBe(true);
+    expect(logoUrlAllowed(`${BLOB}/logos/did:privy:alice/a.png`, "did:privy:alice")).toBe(true);
+    expect(logoUrlAllowed(`${BLOB}/logos/u2/a.png`, "u1")).toBe(false);
+    expect(logoUrlAllowed(`${BLOB}/logos/u10/a.png`, "u1")).toBe(false);
+    expect(logoUrlAllowed(`${BLOB}/creatives/u1/a.png`, "u1")).toBe(false);
+    expect(logoUrlAllowed(`${BLOB}/other/path.png`, "u1")).toBe(false);
+    expect(logoUrlAllowed(`${BLOB}/logos/u1/../u2/a.png`, "u1")).toBe(false);
+    expect(logoUrlAllowed(`http://abc123.public.blob.vercel-storage.com/logos/u1/a.png`, "u1")).toBe(false);
+  });
+
+  it("treats lookalike hosts as ordinary external logos", () => {
+    expect(logoUrlAllowed("https://public.blob.vercel-storage.com.evil.example/logos/u2/a.png", "u1")).toBe(true);
+    expect(logoUrlAllowed("https://evil.example/abc.public.blob.vercel-storage.com/logos/u2/a.png", "u1")).toBe(true);
   });
 
   it("checks logo image shape and size", () => {

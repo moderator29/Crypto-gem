@@ -7,7 +7,7 @@ Status key: done, partial, todo.
 | 0 | Recon, SteinzLabs audit, docs | done (visual references pending, none received) |
 | 1 | Foundation: Next 16, TS strict, Tailwind 4, themes, layout, tests | done |
 | 2 | Design system: header, drawer, bottom nav, search, glass, chips, skeletons, empty and error states | partial (tables, dialogs, tooltips, toasts, command palette beyond search to come) |
-| 3 | Discovery homepage: ticker, banner slots, tabs, chain filter | partial (no campaigns yet, so slots show availability; most watched, community favourites, upcoming, ecosystem sections need Supabase) |
+| 3 | Discovery homepage: ticker, banner slots, tabs, chain filter | partial (no campaigns yet, so slots show availability; most watched, community favourites, upcoming, ecosystem sections need the database) |
 | 4 | Market data layer | partial (GeckoTerminal full, CoinGecko and CMC adapters for detection and global; reconciliation table in place; provider health endpoint to add) |
 | 5 | Token page and charts | partial (overview, chart, pools, risk, trade; holders, transactions, community, AI tabs todo) |
 | 6 | Add Coin and detection | partial (detection and wizard done; persistence, payment page, moderation todo) |
@@ -16,7 +16,7 @@ Status key: done, partial, todo.
 | 9 | AI Copilot | partial (chat and tools done; history and per-user quotas todo) |
 | 10 | Admin | partial (moderation, prices, payments, creatives, audit done; analytics and feature flags todo) |
 | 11 | i18n | partial (architecture, 14 languages for chrome, RTL; page bodies todo, native review needed) |
-| 12 | E2E, accessibility, performance, security hardening | partial (unit and RLS tests, mobile overflow check) |
+| 12 | E2E, accessibility, performance, security hardening | partial (unit, schema and query builder tests, mobile overflow check) |
 
 ## Next, in order
 

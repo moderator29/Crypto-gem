@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
+import { getDb, dbConfigured } from "@/lib/db";
 import { fulfilOrder } from "@/lib/payments/fulfil";
 import { checkIpnAgainstOrder, mapStatus, verifyIpn, type IpnPayload } from "@/lib/payments/nowpayments";
 
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
  * mark the order paid and move the listing into review.
  */
 export async function POST(req: Request) {
-  if (!supabaseConfigured()) return new Response("not configured", { status: 503 });
+  if (!dbConfigured()) return new Response("not configured", { status: 503 });
   const raw = await req.text();
   if (raw.length > 20_000) return new Response("too large", { status: 413 });
   let body: IpnPayload;
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   }
   if (!verifyIpn(body, req.headers.get("x-nowpayments-sig"), process.env.NOWPAYMENTS_IPN_SECRET)) return new Response("bad signature", { status: 401 });
 
-  const db = supabaseAdmin();
+  const db = getDb();
   const providerId = String(body.payment_id);
   const status = mapStatus(body.payment_status);
   const fingerprint = createHash("sha256").update(`${providerId}|${status}|${body.actually_paid ?? ""}`).digest("hex");

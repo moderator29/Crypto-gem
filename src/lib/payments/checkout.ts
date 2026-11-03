@@ -1,5 +1,5 @@
 import "server-only";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { getDb } from "@/lib/db";
 import { mapStatus, nowpayments } from "./nowpayments";
 
 export class CheckoutError extends Error {
@@ -17,7 +17,7 @@ const siteUrl = () => (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:300
  * An order that already has a live payment returns it instead of creating a duplicate.
  */
 export async function createPaymentForOrder(userId: string, orderId: string, payCurrency: string) {
-  const db = supabaseAdmin();
+  const db = getDb();
   const { data: order } = await db.from("orders").select("id,user_id,price_usd,status,kind").eq("id", orderId).eq("user_id", userId).maybeSingle();
   if (!order) throw new CheckoutError("Order not found", 404);
   if (order.status !== "pending") throw new CheckoutError("Order is not payable", 409);

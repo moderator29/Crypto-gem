@@ -1,4 +1,4 @@
-import { supabaseAdmin, supabaseConfigured, userFromRequest } from "@/lib/supabase/admin";
+import { getDb, dbConfigured, userFromRequest } from "@/lib/db";
 import { CheckoutError, createPaymentForOrder } from "@/lib/payments/checkout";
 import { isConfigured as nowConfigured } from "@/lib/payments/nowpayments";
 import { detectToken } from "@/lib/detect/engine";
@@ -10,8 +10,8 @@ export const dynamic = "force-dynamic";
 
 /** Creates a submission, its order and a provider payment. Price is decided here, never by the client. */
 export async function POST(req: Request) {
-  const missing = ["NEXT_PUBLIC_PRIVY_APP_ID", "NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SECRET_KEY", "NOWPAYMENTS_API_KEY", "NOWPAYMENTS_IPN_SECRET"].filter((k) => !process.env[k]);
-  if (missing.length > 0 || !supabaseConfigured() || !nowConfigured()) {
+  const missing = ["NEXT_PUBLIC_PRIVY_APP_ID", "DATABASE_URL", "NOWPAYMENTS_API_KEY", "NOWPAYMENTS_IPN_SECRET"].filter((k) => !process.env[k]);
+  if (missing.length > 0 || !dbConfigured() || !nowConfigured()) {
     return Response.json({ error: `Checkout is not live yet. Missing server configuration: ${missing.join(", ")}. See SETUP.md.` }, { status: 503 });
   }
   const rl = rateLimit(`listing:${clientKey(req)}`, 10, 60_000);
@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   const contract = checkContract(input.network, input.address);
   if (!contract.ok) return Response.json({ error: contract.error }, { status: 422 });
 
-  const db = supabaseAdmin();
+  const db = getDb();
   const { data: pkg } = await db.from("listing_packages").select("price_usd,active").eq("id", input.package).maybeSingle();
   if (pkg && !pkg.active) return Response.json({ error: "Package unavailable" }, { status: 400 });
   const price = packagePriceUsd(input.package, pkg ? Number(pkg.price_usd) : null);

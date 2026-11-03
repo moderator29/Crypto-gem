@@ -3,9 +3,9 @@ import { cooldownMinutes } from "@/lib/votes";
 import { createFakeDb, type Tables } from "./admin-fakedb";
 
 const state: { tables: Tables } = { tables: {} };
-vi.mock("@/lib/supabase/admin", () => ({
-  supabaseConfigured: () => true,
-  supabaseAdmin: () => createFakeDb(state.tables, new Set()),
+vi.mock("@/lib/db", () => ({
+  dbConfigured: () => true,
+  getDb: () => createFakeDb(state.tables, new Set()),
   userFromRequest: async (req: Request) => {
     const t = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
     return t?.startsWith("tok-") ? { id: `did:privy:${t.slice(4)}`, email: null } : null;

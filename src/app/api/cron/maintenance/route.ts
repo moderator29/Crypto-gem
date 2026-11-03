@@ -1,5 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
-import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
+import { getDb, dbConfigured } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -19,8 +19,8 @@ function authorised(req: Request): boolean {
  */
 export async function POST(req: Request) {
   if (!authorised(req)) return new Response("unauthorised", { status: 401 });
-  if (!supabaseConfigured()) return Response.json({ error: "Not configured" }, { status: 503 });
-  const db = supabaseAdmin();
+  if (!dbConfigured()) return Response.json({ error: "Not configured" }, { status: 503 });
+  const db = getDb();
   const now = new Date().toISOString();
   const [boosts, ads, orders, scheduled] = await Promise.all([
     db.from("boost_campaigns").update({ status: "expired" }).eq("status", "active").lt("ends_at", now).select("id"),
