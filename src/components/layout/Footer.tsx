@@ -26,7 +26,8 @@ export async function Footer() {
           <Link className="block text-soft hover:text-text" href="/login">{t("footer.signIn")}</Link>
         </nav>
       </div>
-      <p className="py-6 text-center text-xs text-muted">© {new Date().getFullYear()} Crypto Gems</p>
+      <p className="flex flex-wrap items-center justify-center gap-x-4 pt-6 text-xs text-muted"><Link href="/about" className="hover:text-text">About</Link><Link href="/privacy" className="hover:text-text">Privacy</Link><Link href="/terms" className="hover:text-text">Terms</Link></p>
+      <p className="pb-6 pt-2 text-center text-xs text-muted">©{new Date().getFullYear()} Crypto Gems</p>
     </footer>
   );
 }

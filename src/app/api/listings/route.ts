@@ -3,7 +3,7 @@ import { CheckoutError, createPaymentForOrder } from "@/lib/payments/checkout";
 import { isConfigured as nowConfigured } from "@/lib/payments/nowpayments";
 import { detectToken } from "@/lib/detect/engine";
 import type { DetectedToken } from "@/lib/detect/types";
-import { checkContract, listingInput, packagePriceUsd } from "@/lib/listings";
+import { checkContract, logoUrlAllowed, listingInput, packagePriceUsd } from "@/lib/listings";
 import { clientKey, rateLimit } from "@/lib/utils/rateLimit";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +23,7 @@ export async function POST(req: Request) {
   const parsed = listingInput.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Check the form: " + parsed.error.issues.map((i) => i.path.join(".")).join(", ") }, { status: 422 });
   const input = parsed.data;
+  if (!logoUrlAllowed(input.form.logoUrl, user.id)) return Response.json({ error: "Logo must be uploaded through Crypto Gems or come from a detected provider." }, { status: 422 });
   const contract = checkContract(input.network, input.address);
   if (!contract.ok) return Response.json({ error: contract.error }, { status: 422 });
 
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
   const { data: sub, error: subErr } = await db.from("token_submissions").insert({
     owner_id: user.id, mode: input.mode, network_id: input.network, address: contract.address,
     name: f.name, symbol: f.symbol, logo_url: f.logoUrl || null, description: f.description, description_zh: f.descriptionZh || null,
-    links: { website: f.website, twitter: f.twitter, telegram: f.telegram, discord: f.discord, medium: f.medium, coingecko: f.coingecko, coinmarketcap: f.coinmarketcap, contactEmail: f.email },
+    links: { website: f.website, twitter: f.twitter, telegram: f.telegram, discord: f.discord, medium: f.medium, coingecko: f.coingecko, coinmarketcap: f.coinmarketcap, ...(f.zhTelegram ? { zhTelegram: f.zhTelegram } : {}), ...(f.btok ? { btok: f.btok } : {}), ...(f.weibo ? { weibo: f.weibo } : {}), contactEmail: f.email },
     detected, detected_at: detected ? detected.observedAt : null,
     status: "awaiting_payment",
   }).select("id").single();
