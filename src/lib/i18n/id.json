@@ -30,5 +30,6 @@
  "quick.newListings": "Listing Baru",
  "slot.promoteHere": "Promosikan di sini",
  "slot.available": "Slot tersedia",
- "market.organicNote": "Peringkat organik berdasarkan volume, likuiditas, aktivitas, momentum, dan kebaruan. Penempatan berbayar tidak pernah mengubah urutan ini."
+ "market.organicNote": "Peringkat organik berdasarkan volume, likuiditas, aktivitas, momentum, dan kebaruan. Penempatan berbayar tidak pernah mengubah urutan ini.",
+ "nav.pulse": "Pulse"
 }

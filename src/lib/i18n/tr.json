@@ -30,5 +30,6 @@
  "quick.newListings": "Yeni Listelemeler",
  "slot.promoteHere": "Burada tanıtın",
  "slot.available": "Boş alan",
- "market.organicNote": "Organik sıralama hacim, likidite, aktivite, ivme ve tazeliğe dayanır. Ücretli yerleşimler bu sırayı asla değiştirmez."
+ "market.organicNote": "Organik sıralama hacim, likidite, aktivite, ivme ve tazeliğe dayanır. Ücretli yerleşimler bu sırayı asla değiştirmez.",
+ "nav.pulse": "Nabız"
 }

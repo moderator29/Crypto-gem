@@ -30,5 +30,6 @@
  "quick.newListings": "新規上場",
  "slot.promoteHere": "ここで宣伝",
  "slot.available": "空き枠",
- "market.organicNote": "オーガニック順位は出来高、流動性、アクティビティ、勢い、新しさで決まります。有料枠がこの順序を変えることはありません。"
+ "market.organicNote": "オーガニック順位は出来高、流動性、アクティビティ、勢い、新しさで決まります。有料枠がこの順序を変えることはありません。",
+ "nav.pulse": "パルス"
 }

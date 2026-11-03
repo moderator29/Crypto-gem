@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, Compass, LayoutDashboard, Megaphone, Menu, PlusCircle, Rocket, Search, X } from "lucide-react";
+import { Activity, Bot, Compass, LayoutDashboard, Megaphone, Menu, PlusCircle, Rocket, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -13,6 +13,7 @@ import { ThemePill, ThemeToggle } from "./ThemeToggle";
 
 const NAV = [
   { href: "/", key: "nav.discover", icon: Compass },
+  { href: "/pulse", key: "nav.pulse", icon: Activity },
   { href: "/promotion", key: "nav.promotion", icon: Megaphone },
   { href: "/boost", key: "nav.boost", icon: Rocket },
   { href: "/copilot", key: "nav.copilot", icon: Bot },

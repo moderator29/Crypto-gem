@@ -30,5 +30,6 @@
  "quick.newListings": "New Listings",
  "slot.promoteHere": "Promote here",
  "slot.available": "Available placement",
- "market.organicNote": "Organic rank from volume, liquidity, activity, momentum and freshness. Paid placements never change this order."
+ "market.organicNote": "Organic rank from volume, liquidity, activity, momentum and freshness. Paid placements never change this order.",
+ "nav.pulse": "Pulse"
 }

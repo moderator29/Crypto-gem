@@ -6,14 +6,17 @@ import { TopTrending } from "@/components/home/TopTrending";
 import { getBoostedProjects } from "@/lib/ads/boosted";
 import { getActiveCampaigns } from "@/lib/ads/delivery";
 import { BoostedStrip } from "@/components/home/BoostedStrip";
+import { getNetwork } from "@/lib/market-data/networks";
 import { getHomeData, type HomeData } from "@/lib/market-data/home";
 
 export const revalidate = 30;
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ network?: string }> }) {
+  const { network: q } = await searchParams;
+  const network = q && getNetwork(q)?.geckoterminal ? q : null;
   let data: HomeData | null = null;
   try {
-    data = await getHomeData();
+    data = await getHomeData(network);
   } catch {
     data = null;
   }
@@ -28,7 +31,7 @@ export default async function HomePage() {
       <QuickLinks />
       {data && <TopTrending items={data.organic} />}
       <div id="market" className="scroll-mt-20">
-        <MarketBoard initial={data} />
+        <MarketBoard initial={data} initialNetwork={network} />
       </div>
     </div>
   );

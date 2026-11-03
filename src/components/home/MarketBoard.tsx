@@ -23,11 +23,11 @@ type TabId = (typeof TABS)[number]["id"];
 const CHAINS = NETWORKS.filter((n) => n.geckoterminal && ["ethereum", "solana", "bsc", "base", "arbitrum", "polygon", "avalanche", "optimism", "ton", "tron", "sui", "robinhood"].includes(n.id));
 const POLL_MS = 45_000;
 
-export function MarketBoard({ initial }: { initial: HomeData | null }) {
+export function MarketBoard({ initial, initialNetwork = null }: { initial: HomeData | null; initialNetwork?: string | null }) {
   const { t: tr } = useT();
   const [data, setData] = useState<HomeData | null>(initial);
   const [tab, setTab] = useState<TabId>("organic");
-  const [network, setNetwork] = useState<string | null>(null);
+  const [network, setNetwork] = useState<string | null>(initialNetwork);
   const [state, setState] = useState<"ok" | "loading" | "error">(initial ? "ok" : "error");
   const [err, setErr] = useState<string | null>(initial ? null : "Market data is temporarily unavailable.");
   const reqId = useRef(0);
