@@ -429,6 +429,34 @@ h3 {
     width: auto;
   }
 }
+/* Price change flashes on live refresh. */
+.flash-up {
+  animation: flash-up 1s ease-out;
+}
+.flash-down {
+  animation: flash-down 1s ease-out;
+}
+@keyframes flash-up {
+  0% {
+    background: color-mix(in srgb, var(--up) 35%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--up) 35%, transparent);
+  }
+  100% {
+    background: transparent;
+    box-shadow: 0 0 0 4px transparent;
+  }
+}
+@keyframes flash-down {
+  0% {
+    background: color-mix(in srgb, var(--down) 35%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--down) 35%, transparent);
+  }
+  100% {
+    background: transparent;
+    box-shadow: 0 0 0 4px transparent;
+  }
+}
+
 /* Gentle entrance for every page body. */
 main > * {
   animation: rise 0.5s var(--ease) both;

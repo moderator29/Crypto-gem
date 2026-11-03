@@ -34,6 +34,14 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setSearchOpen(true);
+        return;
+      }
+      // "/" opens search, the convention on most data sites, unless the user is typing somewhere.
+      const el = e.target as HTMLElement | null;
+      const typing = el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable);
+      if (e.key === "/" && !typing && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        setSearchOpen(true);
       }
     };
     window.addEventListener("keydown", onKey);

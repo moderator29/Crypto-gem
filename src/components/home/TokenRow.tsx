@@ -2,7 +2,7 @@
 
 import { ChevronDown, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TokenLogo } from "@/components/ui/TokenLogo";
 import { getNetwork } from "@/lib/market-data/networks";
 import type { PoolSummary } from "@/lib/market-data/types";
@@ -31,6 +31,21 @@ function Detail({ k, children }: { k: string; children: React.ReactNode }) {
  */
 export function TokenRow({ pool, rank, note }: { pool: PoolSummary; rank?: number; note?: string }) {
   const [open, setOpen] = useState(false);
+  const [flash, setFlash] = useState<"up" | "down" | null>(null);
+  const prev = useRef(pool.priceUsd);
+  // Live feel: when a refresh changes the price, flash the cell green or red once.
+  useEffect(() => {
+    const before = prev.current;
+    prev.current = pool.priceUsd;
+    if (before === null || pool.priceUsd === null || before === pool.priceUsd) return;
+    const dir = pool.priceUsd > before ? "up" : "down";
+    const start = setTimeout(() => setFlash(dir), 0);
+    const end = setTimeout(() => setFlash(null), 1100);
+    return () => {
+      clearTimeout(start);
+      clearTimeout(end);
+    };
+  }, [pool.priceUsd]);
   const t = pool.baseToken;
   const net = getNetwork(pool.networkId);
   const panelId = `row-${pool.id.replace(/[^a-z0-9]/gi, "")}`;
@@ -60,7 +75,7 @@ export function TokenRow({ pool, rank, note }: { pool: PoolSummary; rank?: numbe
           </span>
         </span>
         <span className="num text-right md:text-left">
-          <span className="block font-semibold">{priceUsd(pool.priceUsd)}</span>
+          <span className={`block rounded font-semibold ${flash === "up" ? "flash-up" : flash === "down" ? "flash-down" : ""}`}>{priceUsd(pool.priceUsd)}</span>
           <span className="block text-xs md:hidden">
             <Change v={pool.change.h24} />
           </span>
