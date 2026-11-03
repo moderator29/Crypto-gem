@@ -1,5 +1,6 @@
-import { ArrowUpRight, ExternalLink, ShieldAlert, Info } from "lucide-react";
+import { ArrowUpRight, Bot, ExternalLink, ShieldAlert, Info } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AvailableSlot } from "@/components/home/AdSlots";
 import { Change } from "@/components/home/TokenRow";
@@ -173,6 +174,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
               <CopyButton value={canonical} label="Copy contract" />
             </div>
           </section>
+          <Link href={`/copilot?network=${net.id}&address=${encodeURIComponent(canonical)}`} className="btn w-full"><Bot size={16} /> Ask the Copilot about this token</Link>
           <AvailableSlot placement="token-page" variant="card" />
         </aside>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Compass, Megaphone, Menu, PlusCircle, Rocket, Search, Sparkles, X } from "lucide-react";
+import { Bot, Compass, Megaphone, Menu, PlusCircle, Rocket, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -13,6 +13,7 @@ const NAV = [
   { href: "/", label: "Discover", icon: Compass },
   { href: "/promotion", label: "Promotion", icon: Megaphone },
   { href: "/boost", label: "Boost", icon: Rocket },
+  { href: "/copilot", label: "AI Copilot", icon: Bot },
 ] as const;
 
 const isActive = (path: string, href: string) => (href === "/" ? path === "/" : path.startsWith(href));
@@ -98,15 +99,12 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
       <nav className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[max(env(safe-area-inset-bottom),10px)] lg:hidden" aria-label="Mobile">
         <div className="glass mx-auto flex h-[56px] max-w-md items-center justify-around !rounded-full px-2 !bg-[var(--surface-solid)]">
           <BottomLink href="/" label="Home" icon={Compass} active={isActive(path, "/")} />
-          <button type="button" onClick={() => setSearchOpen(true)} className="flex h-11 w-14 flex-col items-center justify-center text-[10px] font-semibold text-muted" aria-label="Search">
-            <Search size={20} />
-            Search
-          </button>
+          <BottomLink href="/copilot" label="AI" icon={Bot} active={isActive(path, "/copilot")} />
           <Link href="/add-coin" aria-label="Add Coin" className="btn btn-primary -mt-6 !h-14 !min-h-14 w-14 !rounded-full !px-0 shadow-lg">
             <PlusCircle size={26} />
           </Link>
           <BottomLink href="/promotion" label="Promote" icon={Megaphone} active={isActive(path, "/promotion")} />
-          <BottomLink href="/boost" label="Boost" icon={Sparkles} active={isActive(path, "/boost")} />
+          <BottomLink href="/boost" label="Boost" icon={Rocket} active={isActive(path, "/boost")} />
         </div>
       </nav>
       <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
