@@ -1,5 +1,5 @@
 import "server-only";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { DbClient } from "@/lib/db";
 import { getBoostPack } from "@/lib/ads/catalog";
 import { boostWindow } from "@/lib/boost";
 
@@ -7,7 +7,7 @@ import { boostWindow } from "@/lib/boost";
  * Runs the product side effects once an order is verified paid.
  * Each branch is guarded by the current status so a repeat call is harmless.
  */
-export async function fulfilOrder(db: SupabaseClient, order: { id: string; kind: string; ref_id: string }): Promise<void> {
+export async function fulfilOrder(db: DbClient, order: { id: string; kind: string; ref_id: string }): Promise<void> {
   const now = new Date();
   if (order.kind === "listing") {
     await db.from("token_submissions").update({ status: "pending_review", updated_at: now.toISOString() }).eq("id", order.ref_id).eq("status", "awaiting_payment");

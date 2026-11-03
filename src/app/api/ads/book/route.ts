@@ -5,7 +5,8 @@ import { findSlot, loadPlacement } from "@/lib/ads/booking";
 import { checkCreative, inspectImage } from "@/lib/ads/image";
 import { CheckoutError, createPaymentForOrder } from "@/lib/payments/checkout";
 import { isConfigured } from "@/lib/payments/nowpayments";
-import { supabaseAdmin, supabaseConfigured, userFromRequest } from "@/lib/supabase/admin";
+import { getDb, dbConfigured, userFromRequest } from "@/lib/db";
+import { putImage, storageConfigured } from "@/lib/storage";
 import { clientKey, rateLimit } from "@/lib/utils/rateLimit";
 
 export const dynamic = "force-dynamic";
@@ -23,7 +24,7 @@ function fail(error: string, status = 422) {
  * Price, availability, creative checks and slot allocation are all decided here.
  */
 export async function POST(req: Request) {
-  if (!supabaseConfigured() || !isConfigured()) return fail("Booking is not live yet. See SETUP.md.", 503);
+  if (!dbConfigured() || !storageConfigured() || !isConfigured()) return fail("Booking is not live yet. See SETUP.md.", 503);
   if (!rateLimit(`book:${clientKey(req)}`, 8, 60_000).ok) return fail("Too many requests", 429);
   const user = await userFromRequest(req);
   if (!user) return fail("Sign in to continue.", 401);
@@ -52,7 +53,7 @@ export async function POST(req: Request) {
   if (!/^[a-z0-9]{2,20}$/.test(payCurrency)) return fail("Choose a payment option");
   if (!(desktop instanceof File)) return fail("Upload a desktop creative");
 
-  const db = supabaseAdmin();
+  const db = getDb();
   const eff = await loadPlacement(db, placement.id);
   if (!eff || !eff.active) return fail("That placement is not available");
   const price = priceFor(eff.prices, days);
@@ -84,10 +85,13 @@ export async function POST(req: Request) {
     }
   }
   for (const f of files) {
-    const path = `${user.id}/${campaignId}-${f.variant}.${EXT[f.info.kind]}`;
-    const { error: uErr } = await db.storage.from("creatives").upload(path, f.bytes, { contentType: `image/${f.info.kind}`, upsert: false });
-    if (uErr) return fail("Could not store the creative. Try again.", 502);
-    await db.from("campaign_creatives").insert({ campaign_id: campaignId, variant: f.variant, storage_path: path, width: f.info.width, height: f.info.height });
+    let url: string;
+    try {
+      url = await putImage(`creatives/${user.id}/${campaignId}-${f.variant}.${EXT[f.info.kind]}`, f.bytes, f.info.kind);
+    } catch {
+      return fail("Could not store the creative. Try again.", 502);
+    }
+    await db.from("campaign_creatives").insert({ campaign_id: campaignId, variant: f.variant, storage_path: url, width: f.info.width, height: f.info.height });
   }
   const { data: order, error: oErr } = await db.from("orders").insert({ user_id: user.id, kind: "ad_campaign", ref_id: campaignId, price_usd: price }).select("id").single();
   if (oErr) return fail("Could not create the order", 500);

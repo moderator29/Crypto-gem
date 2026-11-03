@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { getDb } from "@/lib/db";
 import { isConfigured, nowpayments } from "@/lib/payments/nowpayments";
 import { ACCESS } from "@/lib/admin/roles";
 import { auditOrFail, guard, json, parseBody } from "@/lib/admin/route";
@@ -20,7 +20,7 @@ async function liveCurrencies(): Promise<{ set: Set<string> | null; status: "ok"
 export async function GET(req: Request) {
   const auth = await guard(req, ACCESS.paymentMethods);
   if (!auth.ok) return auth.response;
-  const [{ data, error }, live] = await Promise.all([supabaseAdmin().from("payment_methods").select("*").order("sort"), liveCurrencies()]);
+  const [{ data, error }, live] = await Promise.all([getDb().from("payment_methods").select("*").order("sort"), liveCurrencies()]);
   if (error) return json({ error: "Could not load payment methods." }, 502);
   const methods = ((data ?? []) as Array<{ provider_currency: string }>).map((m) => ({ ...m, providerListed: live.set ? live.set.has(m.provider_currency.toLowerCase()) : null }));
   return json({ providerStatus: live.status, methods });
@@ -35,7 +35,7 @@ export async function PUT(req: Request) {
   const body = await parseBody(req, toggle);
   if (!body.ok) return body.response;
   const { id, enabled } = body.data;
-  const db = supabaseAdmin();
+  const db = getDb();
 
   const { data: before, error: readErr } = await db.from("payment_methods").select("*").eq("id", id).maybeSingle();
   if (readErr) return json({ error: "Could not load the payment method." }, 502);

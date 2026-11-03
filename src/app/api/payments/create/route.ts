@@ -1,5 +1,5 @@
 import { CheckoutError, createPaymentForOrder } from "@/lib/payments/checkout";
-import { supabaseConfigured, userFromRequest } from "@/lib/supabase/admin";
+import { dbConfigured, userFromRequest } from "@/lib/db";
 import { isConfigured } from "@/lib/payments/nowpayments";
 import { clientKey, rateLimit } from "@/lib/utils/rateLimit";
 import { z } from "zod";
@@ -10,7 +10,7 @@ const body = z.object({ orderId: z.string().uuid(), payCurrency: z.string().rege
 
 /** (Re)creates the provider payment for an order, for example after expiry or to switch currency. */
 export async function POST(req: Request) {
-  if (!supabaseConfigured() || !isConfigured()) return Response.json({ error: "Payments are not configured." }, { status: 503 });
+  if (!dbConfigured() || !isConfigured()) return Response.json({ error: "Payments are not configured." }, { status: 503 });
   if (!rateLimit(`pay:${clientKey(req)}`, 15, 60_000).ok) return Response.json({ error: "Too many requests" }, { status: 429 });
   const user = await userFromRequest(req);
   if (!user) return Response.json({ error: "Sign in to continue." }, { status: 401 });

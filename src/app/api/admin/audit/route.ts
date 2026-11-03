@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { supabaseAdmin } from "@/lib/supabase/admin";
+import { getDb } from "@/lib/db";
 import { ACCESS } from "@/lib/admin/roles";
 import { guard, json } from "@/lib/admin/route";
 
@@ -19,7 +19,7 @@ export async function GET(req: Request) {
   const parsed = query.safeParse(Object.fromEntries(new URL(req.url).searchParams));
   if (!parsed.success) return json({ error: "Invalid filters" }, 422);
   const { action, actor, limit, offset } = parsed.data;
-  let qb = supabaseAdmin().from("admin_audit_logs").select("id,actor_id,action,target,before,after,created_at", { count: "exact" });
+  let qb = getDb().from("admin_audit_logs").select("id,actor_id,action,target,before,after,created_at", { count: "exact" });
   if (action) qb = qb.eq("action", action);
   if (actor) qb = qb.eq("actor_id", actor);
   const { data, count, error } = await qb.order("created_at", { ascending: false }).range(offset, offset + limit - 1);

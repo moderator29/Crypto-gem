@@ -1,25 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const uploads: Array<{ path: string; contentType?: string; size: number }> = [];
-let uploadError: { message: string } | null = null;
+let uploadError: Error | null = null;
+let configured = true;
 
-vi.mock("@/lib/supabase/admin", () => ({
-  supabaseConfigured: () => true,
-  supabaseAdmin: () => ({
-    storage: {
-      from: (bucket: string) => ({
-        upload: async (path: string, body: Uint8Array, opts: { contentType?: string }) => {
-          if (uploadError) return { error: uploadError };
-          uploads.push({ path: `${bucket}/${path}`, contentType: opts.contentType, size: body.length });
-          return { error: null };
-        },
-        getPublicUrl: (path: string) => ({ data: { publicUrl: `https://proj.supabase.co/storage/v1/object/public/${bucket}/${path}` } }),
-      }),
-    },
-  }),
+vi.mock("@/lib/db", () => ({
   userFromRequest: async (req: Request) => {
     const t = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
     return t?.startsWith("tok-") ? { id: t.slice(4), email: null } : null;
+  },
+}));
+
+vi.mock("@/lib/storage", () => ({
+  storageConfigured: () => configured,
+  putImage: async (path: string, body: Uint8Array, kind: string) => {
+    if (uploadError) throw uploadError;
+    uploads.push({ path, contentType: `image/${kind}`, size: body.length });
+    return `https://store1.public.blob.vercel-storage.com/${path}`;
   },
 }));
 
@@ -47,6 +44,7 @@ function upload(bytes: Uint8Array | string, uid: string | null = "did:privy:alic
 beforeEach(() => {
   uploads.length = 0;
   uploadError = null;
+  configured = true;
 });
 
 describe("POST /api/uploads/logo", () => {
@@ -82,13 +80,20 @@ describe("POST /api/uploads/logo", () => {
     const res = await POST(upload(png(256, 240)));
     expect(res.status).toBe(200);
     const { url } = await res.json();
-    expect(url).toMatch(/^https:\/\/proj\.supabase\.co\/storage\/v1\/object\/public\/logos\/did:privy:alice\/[0-9a-f-]{36}\.png$/);
+    expect(url).toMatch(/^https:\/\/store1\.public\.blob\.vercel-storage\.com\/logos\/did:privy:alice\/[0-9a-f-]{36}\.png$/);
     expect(uploads[0]).toMatchObject({ contentType: "image/png" });
     expect(uploads[0]!.path.startsWith("logos/did:privy:alice/")).toBe(true);
   });
 
+  it("returns 503 when blob storage is not connected", async () => {
+    configured = false;
+    const { POST } = await import("@/app/api/uploads/logo/route");
+    expect((await POST(upload(png(256, 256)))).status).toBe(503);
+    expect(uploads).toHaveLength(0);
+  });
+
   it("returns 502 when storage fails", async () => {
-    uploadError = { message: "boom" };
+    uploadError = new Error("boom");
     const { POST } = await import("@/app/api/uploads/logo/route");
     expect((await POST(upload(png(256, 256)))).status).toBe(502);
   });
