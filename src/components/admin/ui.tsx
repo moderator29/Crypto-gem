@@ -32,7 +32,7 @@ export function PageTitle({ title, hint, children }: { title: string; hint?: str
 export function Notice({ tone = "info", children }: { tone?: "info" | "error" | "ok"; children: ReactNode }) {
   const color = tone === "error" ? "text-down" : tone === "ok" ? "text-up" : "text-warm";
   return (
-    <p role={tone === "error" ? "alert" : "status"} className={`glass-flat flex items-start gap-2 p-3 text-sm ${color}`}>
+    <p role={tone === "error" ? "alert" : "status"} className={`card-flat flex items-start gap-2 p-3 text-sm ${color}`}>
       <AlertTriangle size={16} className="mt-0.5 shrink-0" />
       <span className="min-w-0 break-words">{children}</span>
     </p>
@@ -41,7 +41,7 @@ export function Notice({ tone = "info", children }: { tone?: "info" | "error" | 
 
 export function Empty({ title, hint }: { title: string; hint?: string }) {
   return (
-    <div className="glass-flat flex flex-col items-center gap-2 p-8 text-center">
+    <div className="card-flat flex flex-col items-center gap-2 p-8 text-center">
       <Inbox size={26} className="text-muted" />
       <p className="font-semibold">{title}</p>
       {hint && <p className="max-w-md text-sm text-soft">{hint}</p>}
@@ -83,7 +83,7 @@ export function DataTable<T>({ columns, rows, rowKey }: { columns: Column<T>[]; 
   const rest = columns.filter((c) => c !== primary);
   return (
     <>
-      <div className="glass hidden overflow-x-auto md:block">
+      <div className="card hidden overflow-x-auto md:block">
         <table className="w-full min-w-0 text-left text-sm">
           <thead>
             <tr className="border-b border-line text-xs uppercase tracking-wide text-muted">
@@ -105,7 +105,7 @@ export function DataTable<T>({ columns, rows, rowKey }: { columns: Column<T>[]; 
       </div>
       <ul className="space-y-3 md:hidden">
         {rows.map((r) => (
-          <li key={rowKey(r)} className="glass-flat min-w-0 space-y-2 p-4">
+          <li key={rowKey(r)} className="card-flat min-w-0 space-y-2 p-4">
             <div className="min-w-0 break-words font-semibold">{primary.render(r)}</div>
             {rest.map((c) => (
               <div key={c.key} className="flex items-start justify-between gap-3 text-sm">
@@ -158,10 +158,10 @@ function DialogBody({
   return (
     <div className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-labelledby={`${id}-t`}>
       <div className="absolute inset-0 bg-black/55 backdrop-blur-sm" onClick={() => !busy && onCancel()} />
-      <div className="glass relative w-full max-w-md space-y-4 !rounded-b-none !bg-[var(--surface-solid)] p-5 pb-[max(env(safe-area-inset-bottom),20px)] sm:!rounded-b-[var(--r-lg)]">
+      <div className="glass-float relative w-full max-w-md space-y-4 !rounded-b-none !bg-[var(--surface-1)] p-5 pb-[max(env(safe-area-inset-bottom),20px)] sm:!rounded-b-[var(--r-lg)]">
         <div className="flex items-start justify-between gap-3">
           <h2 id={`${id}-t`} className="font-display text-lg font-bold">{title}</h2>
-          <button type="button" className="btn !px-0 w-10 !min-h-10" aria-label="Close" onClick={onCancel} disabled={busy}>
+          <button type="button" className="btn btn-icon btn-sm" aria-label="Close" onClick={onCancel} disabled={busy}>
             <X size={16} />
           </button>
         </div>

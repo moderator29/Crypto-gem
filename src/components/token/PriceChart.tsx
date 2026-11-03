@@ -60,7 +60,7 @@ export function PriceChart({ networkId, pool }: { networkId: string; pool: strin
   }, [state, candles]);
 
   return (
-    <div className="glass p-3 md:p-4">
+    <div className="card p-3 md:p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <div className="scroll-x" role="group" aria-label="Timeframe">
           {FRAMES.map((f) => (
@@ -69,7 +69,7 @@ export function PriceChart({ networkId, pool }: { networkId: string; pool: strin
             </button>
           ))}
         </div>
-        <button type="button" className="btn !min-h-9 !px-0 w-9 shrink-0" aria-label="Refresh chart" onClick={() => { setTick((t) => t + 1); setState("loading"); }}>
+        <button type="button" className="btn btn-sm btn-icon shrink-0" aria-label="Refresh chart" onClick={() => { setTick((t) => t + 1); setState("loading"); }}>
           <RefreshCw size={15} />
         </button>
       </div>

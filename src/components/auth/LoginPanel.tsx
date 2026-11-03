@@ -14,11 +14,11 @@ export function LoginPanel({ next }: { next: string }) {
   }, [authenticated, next, router]);
 
   return (
-    <section className="glass space-y-4 p-6" aria-label="Sign in">
+    <section className="card space-y-4 p-6" aria-label="Sign in">
       <h1 className="font-display text-2xl font-bold">Sign in</h1>
       <p className="text-sm text-soft">Use an email code, your wallet, or Google. No password and no wallet is created for you.</p>
       {!configured ? (
-        <p className="glass-flat p-3 text-sm text-warm" role="status">Sign-in is not configured in this environment yet (Privy app id missing).</p>
+        <p className="card-flat p-3 text-sm text-warm" role="status">Sign-in is not configured in this environment yet (Privy app id missing).</p>
       ) : !ready || authenticated ? (
         <div className="skeleton h-12" aria-busy="true" />
       ) : (

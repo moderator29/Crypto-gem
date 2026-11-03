@@ -40,7 +40,7 @@ export function CreativesView() {
       {data && data.items.length > 0 && (
         <ul className="grid gap-3 md:grid-cols-2">
           {data.items.map((c) => (
-            <li key={c.id} className="glass-flat min-w-0 space-y-3 p-4">
+            <li key={c.id} className="card-flat min-w-0 space-y-3 p-4">
               <div>
                 <p className="break-words font-semibold">{c.advertising_campaigns?.headline ?? "No headline"}</p>
                 <p className="text-xs text-muted">{c.advertising_campaigns?.placement_id ?? NONE} / {c.variant} / {c.width}x{c.height}</p>

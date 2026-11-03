@@ -27,7 +27,7 @@ const STATUS: Record<string, string> = {
 const tone = (s: string) => (["published", "active", "paid", "approved"].includes(s) ? "text-up" : ["rejected", "suspended", "cancelled", "refunded"].includes(s) ? "text-down" : "text-warm");
 const Status = ({ s }: { s: string }) => <span className={`text-xs font-semibold ${tone(s)}`}>{STATUS[s] ?? s}</span>;
 const Empty = ({ text, href, cta }: { text: string; href?: string; cta?: string }) => (
-  <div className="glass-flat space-y-3 p-5 text-sm text-soft">
+  <div className="card-flat space-y-3 p-5 text-sm text-soft">
     <p>{text}</p>
     {href && <Link href={href} className="btn btn-primary inline-flex">{cta}</Link>}
   </div>
@@ -59,9 +59,9 @@ export function Dashboard() {
   }, [load]);
 
   if (state === "loading") return <div className="space-y-3" aria-busy="true"><div className="skeleton h-24" /><div className="skeleton h-48" /></div>;
-  if (state === "unavailable") return <div className="glass p-6 text-sm text-soft">Sign-in is not configured in this environment (Privy app id missing), so there is no dashboard data to show.</div>;
-  if (state === "signin") return <div className="glass space-y-3 p-6"><p>Sign in to manage your listings, boosts and campaigns.</p><Link className="btn btn-primary inline-flex" href="/login?next=/dashboard">Sign in</Link></div>;
-  if (state === "error" || !data) return <div className="glass p-6 text-down" role="alert">Could not load your dashboard. Try again shortly.</div>;
+  if (state === "unavailable") return <div className="card p-6 text-sm text-soft">Sign-in is not configured in this environment (Privy app id missing), so there is no dashboard data to show.</div>;
+  if (state === "signin") return <div className="card space-y-3 p-6"><p>Sign in to manage your listings, boosts and campaigns.</p><Link className="btn btn-primary inline-flex" href="/login?next=/dashboard">Sign in</Link></div>;
+  if (state === "error" || !data) return <div className="card p-6 text-down" role="alert">Could not load your dashboard. Try again shortly.</div>;
 
   const live = {
     listings: data.submissions.filter((s) => s.status === "published").length,
@@ -82,7 +82,7 @@ export function Dashboard() {
         <>
           <dl className="grid grid-cols-2 gap-2 md:grid-cols-3">
             {([["Published listings", live.listings], ["In review", live.review], ["Active boosts", live.boosts], ["Active campaigns", live.campaigns], ["Pending payments", live.pending], ["Total paid", `$${live.spend.toLocaleString("en-US")}`]] as const).map(([k, v]) => (
-              <div key={k} className="glass-flat p-4"><dt className="text-xs text-muted">{k}</dt><dd className="num mt-1 font-display text-2xl font-bold">{v}</dd></div>
+              <div key={k} className="card-flat p-4"><dt className="text-xs text-muted">{k}</dt><dd className="num mt-1 font-display text-2xl font-bold">{v}</dd></div>
             ))}
           </dl>
           <div className="grid gap-2 sm:grid-cols-3">
@@ -95,25 +95,25 @@ export function Dashboard() {
 
       {tab === "Listings" && (data.submissions.length === 0 ? <Empty text="You have not submitted a project yet." href="/add-coin" cta="List your token" /> : (
         <ul className="grid gap-2">{data.submissions.map((s) => (
-          <li key={s.id} className="glass-flat p-4">
+          <li key={s.id} className="card-flat p-4">
             <div className="flex items-center justify-between gap-3"><span className="min-w-0"><span className="block truncate font-semibold">{s.name} <span className="text-muted">{s.symbol}</span></span><span className="block truncate text-xs text-muted">{getNetwork(s.network_id ?? "")?.name ?? "No network"} · submitted {ageShort(s.created_at)} ago</span></span><Status s={s.status} /></div>
             {s.status === "rejected" && s.rejection_reason && <p className="mt-2 text-sm text-down">Reason: {s.rejection_reason}</p>}
             <div className="mt-2 flex flex-wrap gap-2 text-xs">
-              {s.status === "published" && s.network_id && s.address && <Link className="btn !min-h-9 !px-3 text-xs" href={`/token/${s.network_id}/${s.address}`}>View <ExternalLink size={12} /></Link>}
-              {s.status === "published" && <Link className="btn !min-h-9 !px-3 text-xs" href={`/boost/${s.id}`}><Rocket size={12} /> Boost</Link>}
-              {s.status === "awaiting_payment" && (() => { const o = data.orders.find((x) => x.kind === "listing" && x.status === "pending"); return o ? <Link className="btn btn-primary !min-h-9 !px-3 text-xs" href={`/pay/${o.id}`}>Finish payment</Link> : null; })()}
+              {s.status === "published" && s.network_id && s.address && <Link className="btn btn-sm" href={`/token/${s.network_id}/${s.address}`}>View <ExternalLink size={12} /></Link>}
+              {s.status === "published" && <Link className="btn btn-sm" href={`/boost/${s.id}`}><Rocket size={12} /> Boost</Link>}
+              {s.status === "awaiting_payment" && (() => { const o = data.orders.find((x) => x.kind === "listing" && x.status === "pending"); return o ? <Link className="btn btn-primary btn-sm" href={`/pay/${o.id}`}>Finish payment</Link> : null; })()}
             </div>
           </li>))}</ul>))}
 
       {tab === "Boosts" && (data.boosts.length === 0 ? <Empty text="No boosts yet. Boost a listed project for sponsored visibility." href="/boost" cta="Boost a project" /> : (
         <ul className="grid gap-2">{data.boosts.map((b) => (
-          <li key={b.id} className="glass-flat flex items-center justify-between gap-3 p-4"><span className="min-w-0"><span className="block truncate font-semibold">{b.projectName ?? "Project"} · {b.pack_id}</span><span className="num block text-xs text-muted">{fmt(b.starts_at)} to {fmt(b.ends_at)}</span></span><Status s={b.status} /></li>))}</ul>))}
+          <li key={b.id} className="card-flat flex items-center justify-between gap-3 p-4"><span className="min-w-0"><span className="block truncate font-semibold">{b.projectName ?? "Project"} · {b.pack_id}</span><span className="num block text-xs text-muted">{fmt(b.starts_at)} to {fmt(b.ends_at)}</span></span><Status s={b.status} /></li>))}</ul>))}
 
       {tab === "Campaigns" && (data.campaigns.length === 0 ? <Empty text="No advertising campaigns yet." href="/promotion" cta="Book advertising" /> : (
         <ul className="grid gap-2">{data.campaigns.map((c) => {
           const ctr = c.impressions > 0 ? ((c.clicks / c.impressions) * 100).toFixed(2) + "%" : "—";
           return (
-            <li key={c.id} className="glass-flat space-y-2 p-4">
+            <li key={c.id} className="card-flat space-y-2 p-4">
               <div className="flex items-center justify-between gap-3"><span className="min-w-0"><span className="block truncate font-semibold">{c.headline ?? c.placement_id}</span><span className="num block text-xs text-muted">{c.placement_id} · {fmt(c.starts_at)} to {fmt(c.ends_at)}</span></span><Status s={c.status} /></div>
               <dl className="num grid grid-cols-3 gap-2 text-sm"><div><dt className="text-xs text-muted">Impressions</dt><dd className="font-semibold">{c.impressions.toLocaleString("en-US")}</dd></div><div><dt className="text-xs text-muted">Clicks</dt><dd className="font-semibold">{c.clicks.toLocaleString("en-US")}</dd></div><div><dt className="text-xs text-muted">CTR</dt><dd className="font-semibold">{ctr}</dd></div></dl>
               <p className="text-[11px] text-muted">Impressions count a visitor once per hour after the ad was visible for a second. Bots excluded.</p>
@@ -122,11 +122,11 @@ export function Dashboard() {
 
       {tab === "Payments" && (data.orders.length === 0 ? <Empty text="No orders yet." /> : (
         <ul className="grid gap-2">{data.orders.map((o) => (
-          <li key={o.id} className="glass-flat flex items-center justify-between gap-3 p-4"><span><span className="block font-semibold capitalize">{o.kind.replace("_", " ")} · <span className="num">${Number(o.price_usd).toLocaleString("en-US")}</span></span><span className="num block text-xs text-muted">{fmt(o.created_at)}</span></span><span className="flex items-center gap-3"><Status s={o.status} />{o.status === "pending" && <Link className="btn btn-primary !min-h-9 !px-3 text-xs" href={`/pay/${o.id}`}>Pay</Link>}</span></li>))}</ul>))}
+          <li key={o.id} className="card-flat flex items-center justify-between gap-3 p-4"><span><span className="block font-semibold capitalize">{o.kind.replace("_", " ")} · <span className="num">${Number(o.price_usd).toLocaleString("en-US")}</span></span><span className="num block text-xs text-muted">{fmt(o.created_at)}</span></span><span className="flex items-center gap-3"><Status s={o.status} />{o.status === "pending" && <Link className="btn btn-primary btn-sm" href={`/pay/${o.id}`}>Pay</Link>}</span></li>))}</ul>))}
 
       {tab === "Watchlist" && (!watch || watch.items.length === 0 ? <Empty text="Your watchlist is empty. Use the Watch button on any token page." href="/" cta="Discover tokens" /> : (
         <ul className="grid gap-2">{watch.items.map((i) => (
-          <li key={`${i.network}:${i.address}`}><Link href={`/token/${i.network}/${i.address}`} className="glass-flat hover-lift flex items-center gap-3 p-3">
+          <li key={`${i.network}:${i.address}`}><Link href={`/token/${i.network}/${i.address}`} className="card-flat hover-lift flex items-center gap-3 p-3">
             <TokenLogo src={i.live?.imageUrl} symbol={i.live?.symbol ?? "?"} size={40} />
             <span className="min-w-0 flex-1"><span className="block truncate font-semibold">{i.live?.name ?? "Token"} <span className="text-muted">{i.live?.symbol}</span></span><span className="block truncate text-xs text-muted">{getNetwork(i.network)?.name ?? i.network}</span></span>
             <span className="num text-right text-sm"><span className="block font-semibold">{priceUsd(i.live?.priceUsd)}</span><span className="block text-xs text-muted">{usdCompact(i.live?.liquidityUsd)} liq</span></span><Star size={15} className="fill-[var(--warm)] text-warm" />

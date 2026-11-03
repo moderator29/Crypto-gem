@@ -35,7 +35,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         <div className="lg:col-span-2">{hero[0] ? <CampaignSlot campaign={hero[0]} variant="hero" /> : <AvailableSlot placement="hero" variant="hero" />}</div>
         <div className="hidden gap-4 md:grid md:grid-cols-2 lg:grid-cols-1">
           {sideAds[0] ? <CampaignSlot campaign={sideAds[0]} variant="card" /> : <AvailableSlot placement="side" variant="card" />}
-          <Link href="/boost" className="glass hover-lift flex min-h-[132px] flex-col justify-between gap-2 p-5">
+          <Link href="/boost" className="card hover-lift flex min-h-[132px] flex-col justify-between gap-2 p-5">
             <span className="inline-flex w-fit items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-warm"><Rocket size={12} /> For listed projects</span>
             <span>
               <span className="block font-display text-lg font-bold leading-tight">Boost your project to the top</span>

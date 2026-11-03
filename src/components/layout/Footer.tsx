@@ -6,7 +6,7 @@ export async function Footer() {
   const { t } = await getT();
   return (
     <footer className="pad-nav mx-auto mt-12 w-full max-w-[1360px] px-4">
-      <div className="glass grid gap-8 p-6 md:grid-cols-[1.4fr_1fr_1fr] md:p-8">
+      <div className="card grid gap-8 p-6 md:grid-cols-[1.4fr_1fr_1fr] md:p-8">
         <div className="space-y-3">
           <Logo />
           <p className="max-w-sm text-sm text-soft">{t("footer.tagline")}</p>

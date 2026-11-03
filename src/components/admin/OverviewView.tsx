@@ -35,7 +35,7 @@ export function OverviewView() {
         <>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
             {stats.map((s) => (
-              <div key={s.label} className="glass-flat min-w-0 space-y-2 p-4">
+              <div key={s.label} className="card-flat min-w-0 space-y-2 p-4">
                 <s.icon size={18} className="text-brand" />
                 <p className="break-words text-xl font-bold sm:text-2xl">{s.value}</p>
                 <p className="text-xs text-muted sm:text-sm">{s.label}</p>

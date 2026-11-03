@@ -16,7 +16,7 @@ const ITEMS: Item[] = [
   { key: "nav.applyListing", icon: PlusCircle, href: "/add-coin" },
 ];
 
-const CLS = "glass-flat flex shrink-0 snap-start items-center gap-2 px-4 py-3 text-sm font-semibold text-soft transition hover:text-text";
+const CLS = "card-flat flex shrink-0 snap-start items-center gap-2 px-4 py-3 text-sm font-semibold text-soft transition hover:text-text";
 
 export function QuickLinks() {
   const { t } = useT();

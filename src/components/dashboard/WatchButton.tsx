@@ -27,7 +27,7 @@ export function WatchButton({ network, address }: { network: string; address: st
   }, [network, address]);
 
   if (state === "unavailable") return null;
-  if (state === "signin") return <Link href={`/login?next=/token/${network}/${address}`} className="btn !min-h-9 !px-3 text-xs"><Star size={14} /> Watch</Link>;
+  if (state === "signin") return <Link href={`/login?next=/token/${network}/${address}`} className="btn btn-sm"><Star size={14} /> Watch</Link>;
 
   async function toggle() {
     const jwt = await accessToken();
@@ -43,7 +43,7 @@ export function WatchButton({ network, address }: { network: string; address: st
   }
 
   return (
-    <button type="button" className="btn !min-h-9 !px-3 text-xs" aria-pressed={state === "on"} disabled={state === "loading"} onClick={toggle}>
+    <button type="button" className="btn btn-sm" aria-pressed={state === "on"} disabled={state === "loading"} onClick={toggle}>
       <Star size={14} className={state === "on" ? "fill-[var(--warm)] text-warm" : ""} /> {state === "on" ? "Watching" : "Watch"}
     </button>
   );

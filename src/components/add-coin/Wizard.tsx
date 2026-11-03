@@ -172,9 +172,9 @@ export function Wizard() {
           ["express", "Express Listing", "Paste your contract. We detect the chain and pre-fill everything we can find. Faster review and visibility packages.", Zap],
           ["standard", "Standard Listing", "Submit your project through the normal review process. Best when the token has no pool yet or sits on an unsupported chain.", ScanSearch],
         ] as const).map(([id, title, text, Icon]) => (
-          <button key={id} type="button" onClick={() => { setMode(id); setStep(id === "express" ? "identify" : "review"); }} className="glass hover-lift flex flex-col items-start gap-3 p-6 text-left">
+          <button key={id} type="button" onClick={() => { setMode(id); setStep(id === "express" ? "identify" : "review"); }} className="card hover-lift flex flex-col items-start gap-3 p-6 text-left">
             <span className="grid h-11 w-11 place-items-center rounded-2xl icon-tile"><Icon size={22} /></span>
-            <span className="flex items-center gap-2 font-display text-xl font-bold">{title}{id === "express" && <span className="chip !min-h-6 !cursor-default !px-2 text-[10px] text-warm">Fastest</span>}</span>
+            <span className="flex items-center gap-2 font-display text-xl font-bold">{title}{id === "express" && <span className="badge badge-warn">Fastest</span>}</span>
             <span className="text-sm text-soft">{text}</span>
           </button>
         ))}
@@ -186,7 +186,7 @@ export function Wizard() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-3">
-        <button type="button" onClick={goBack} className="btn !px-0 w-11" aria-label="Back"><ArrowLeft size={18} /></button>
+        <button type="button" onClick={goBack} className="btn btn-icon" aria-label="Back"><ArrowLeft size={18} /></button>
         <ol className="scroll-x flex-1" aria-label="Progress">
           {STEPS.map((s, i) => (
             <li key={s.id} aria-current={i === idx ? "step" : undefined} className="chip">
@@ -197,7 +197,7 @@ export function Wizard() {
       </div>
 
       {step === "identify" && (
-        <section className="glass space-y-4 p-5 md:p-7" aria-label="Identify your token">
+        <section className="card space-y-4 p-5 md:p-7" aria-label="Identify your token">
           <div>
             <StepLabel n={idx + 1} />
             <h2 className="font-display text-2xl font-bold">Paste your contract address</h2>
@@ -205,7 +205,7 @@ export function Wizard() {
           </div>
           <input className="input num" value={address} onChange={(e) => { setAddress(e.target.value); setNetwork(null); }} onPaste={() => setNetwork(null)} placeholder="0x… or Solana mint" spellCheck={false} autoComplete="off" autoCapitalize="off" aria-label="Contract address" inputMode="text" />
           <div className="scroll-x" aria-label="Supported chains">
-            {NETWORKS.filter((n) => n.contractLookup).slice(0, 14).map((n) => <span key={n.id} className="chip !min-h-8 !cursor-default text-xs">{n.name}</span>)}
+            {NETWORKS.filter((n) => n.contractLookup).slice(0, 14).map((n) => <span key={n.id} className="badge shrink-0">{n.name}</span>)}
           </div>
 
           {state.phase === "detecting" && (
@@ -224,7 +224,7 @@ export function Wizard() {
             <div className="space-y-2">
               <p className="text-sm font-semibold">{state.message}</p>
               {state.matches.map((m) => (
-                <button key={m.networkId} type="button" onClick={() => setNetwork(m.networkId)} className="glass-flat hover-lift flex w-full items-center gap-3 p-3 text-left">
+                <button key={m.networkId} type="button" onClick={() => setNetwork(m.networkId)} className="card-flat hover-lift flex w-full items-center gap-3 p-3 text-left">
                   <TokenLogo src={m.token.imageUrl} symbol={m.token.symbol} size={36} />
                   <span className="min-w-0 flex-1"><span className="block font-semibold">{m.token.name} <span className="text-muted">{m.token.symbol}</span></span><span className="block text-xs text-muted">{m.networkName}</span></span>
                   <span className="num text-right text-xs text-muted">{usdCompact(m.topPool?.liquidityUsd)} liq</span>
@@ -234,7 +234,7 @@ export function Wizard() {
           )}
 
           {state.phase === "done" && (state.status === "found" || state.status === "partial") && token && (
-            <div className="glass-flat space-y-3 p-4">
+            <div className="card-flat space-y-3 p-4">
               <div className="flex items-center gap-3">
                 <TokenLogo src={token.logoUrl?.value} symbol={token.symbol?.value ?? "?"} size={48} />
                 <div className="min-w-0 flex-1">
@@ -256,7 +256,7 @@ export function Wizard() {
           )}
 
           {state.phase === "done" && ["not_found", "invalid", "unsupported", "unavailable"].includes(state.status ?? "") && (
-            <div className="glass-flat space-y-3 p-4" role="alert">
+            <div className="card-flat space-y-3 p-4" role="alert">
               <p className="flex items-start gap-2 text-sm"><AlertTriangle size={16} className="mt-0.5 shrink-0 text-warm" />{state.message}</p>
               {state.status !== "invalid" && state.status !== "unsupported" && (
                 <div className="flex flex-wrap items-center gap-2">
@@ -274,10 +274,10 @@ export function Wizard() {
       )}
 
       {step === "review" && (
-        <section className="glass space-y-5 p-5 md:p-7" aria-label="Project details">
+        <section className="card space-y-5 p-5 md:p-7" aria-label="Project details">
           <div><StepLabel n={idx + 1} /><h2 className="font-display text-2xl font-bold">Project details</h2></div>
           {token && (
-            <div className="glass-flat p-3 text-sm">
+            <div className="card-flat p-3 text-sm">
               <span className="font-semibold">On-chain facts</span> are shown from providers and cannot be edited: {token.networkName}, <span className="num break-all">{token.address}</span>
               {token.decimals ? `, ${token.decimals.value} decimals` : ""}{token.totalSupply ? `, supply ${Number(token.totalSupply.value).toLocaleString("en-US")}` : ""}.
             </div>
@@ -305,7 +305,7 @@ export function Wizard() {
 
           <div className="space-y-2">
             <span className="block text-sm font-semibold">Logo</span>
-            <div className="glass-flat flex flex-col items-center gap-3 p-4 text-center sm:flex-row sm:text-left" style={{ borderStyle: "dashed" }}>
+            <div className="card-flat flex flex-col items-center gap-3 p-4 text-center sm:flex-row sm:text-left" style={{ borderStyle: "dashed" }}>
               <div className="relative">
                 <TokenLogo src={form.logoUrl || null} symbol={form.symbol || "?"} size={72} />
                 {form.logoUrl && (
@@ -357,7 +357,7 @@ export function Wizard() {
           <div><StepLabel n={idx + 1} /><h2 className="font-display text-2xl font-bold">Choose your package</h2></div>
           <div className="grid gap-4 md:grid-cols-3">
             {LISTING_PACKAGES.map((p) => (
-              <button key={p.id} type="button" onClick={() => setPkg(p.id)} aria-pressed={pkg === p.id} className={`glass hover-lift flex flex-col gap-3 p-5 text-left ${pkg === p.id ? "!border-[var(--brand)]" : ""}`}>
+              <button key={p.id} type="button" onClick={() => setPkg(p.id)} aria-pressed={pkg === p.id} className={`card hover-lift flex flex-col gap-3 p-5 text-left ${pkg === p.id ? "!border-[var(--brand)]" : ""}`}>
                 <span className="flex items-center justify-between"><span className="font-display text-lg font-bold">{p.name}</span>{pkg === p.id && <CheckCircle2 size={18} className="text-brand" />}</span>
                 <span className="num font-display text-3xl font-bold">${p.priceUsd.toLocaleString("en-US")}</span>
                 <ul className="space-y-1.5 text-sm text-soft">{p.perks.map((x) => <li key={x} className="flex gap-2"><span className="text-up">✓</span>{x}</li>)}</ul>
@@ -370,7 +370,7 @@ export function Wizard() {
       )}
 
       {step === "summary" && (
-        <section className="glass space-y-4 p-5 md:p-7" aria-label="Order summary">
+        <section className="card space-y-4 p-5 md:p-7" aria-label="Order summary">
           <div><StepLabel n={idx + 1} /><h2 className="font-display text-2xl font-bold">Order summary</h2></div>
           <dl className="grid gap-3 text-sm md:grid-cols-2">
             {([["Project", form.name], ["Ticker", form.symbol], ["Network", net?.name ?? "Not specified"], ["Contract", token?.address ?? (address.trim() || "Not provided")], ["Package", `${chosenPkg.name}`], ["Contact", form.email]] as const).map(([k, v]) => (
@@ -392,11 +392,11 @@ export function Wizard() {
               {methods.map((m) => <option key={m.id} value={m.provider_currency}>{m.label} ({m.network})</option>)}
             </select>
           </label>
-          {needSignin && <p className="glass-flat p-3 text-sm" role="status">Sign in first so the order is tied to your account. <Link href="/login?next=/add-coin" className="font-semibold text-brand">Sign in</Link>. Your details here are kept only until you leave this page.</p>}
+          {needSignin && <p className="card-flat p-3 text-sm" role="status">Sign in first so the order is tied to your account. <Link href="/login?next=/add-coin" className="font-semibold text-brand">Sign in</Link>. Your details here are kept only until you leave this page.</p>}
           <button type="button" className="btn btn-primary w-full md:w-auto" disabled={!terms || !payCurrency || submit.state === "busy"} onClick={placeOrder}>
             {submit.state === "busy" ? <Loader2 size={16} className="animate-spin" /> : <Rocket size={16} />} Continue to Secure Payment · ${chosenPkg.priceUsd.toLocaleString("en-US")}
           </button>
-          {submit.state === "setup" && <p className="glass-flat p-3 text-sm text-warm" role="status">{submit.message}</p>}
+          {submit.state === "setup" && <p className="card-flat p-3 text-sm text-warm" role="status">{submit.message}</p>}
           {submit.state === "error" && <p className="text-sm text-down" role="alert">{submit.message}</p>}
         </section>
       )}

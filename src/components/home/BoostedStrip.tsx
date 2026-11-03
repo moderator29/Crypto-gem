@@ -14,7 +14,7 @@ export function BoostedStrip({ items }: { items: BoostedProject[] }) {
         {items.map((p) => {
           const href = p.networkId && p.address ? `/token/${p.networkId}/${p.address}` : "/";
           return (
-            <Link key={p.id} href={href} rel="sponsored" className="glass-flat hover-lift flex min-w-[220px] shrink-0 snap-start items-center gap-3 p-3">
+            <Link key={p.id} href={href} rel="sponsored" className="card-flat hover-lift flex min-w-[220px] shrink-0 snap-start items-center gap-3 p-3">
               <TokenLogo src={p.logoUrl} symbol={p.symbol} size={40} />
               <span className="min-w-0"><span className="block truncate font-semibold">{p.name}</span><span className="block truncate text-xs text-muted">{p.symbol} · {getNetwork(p.networkId ?? "")?.name ?? ""}</span></span>
             </Link>

@@ -84,7 +84,7 @@ export function BookingWizard({ initial }: { initial: PlacementId }) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div className="space-y-5">
-        <section className="glass space-y-4 p-5" aria-label="Placement and dates">
+        <section className="card space-y-4 p-5" aria-label="Placement and dates">
           <h2 className="font-display text-lg font-bold">1. Placement and dates</h2>
           <div className="scroll-x" role="group" aria-label="Placement">
             {PLACEMENTS.map((p) => <button key={p.id} type="button" className="chip" aria-pressed={placement.id === p.id} onClick={() => { setPlacement(p); setDesktop(null); setMobile(null); }}>{p.name}</button>)}
@@ -94,7 +94,7 @@ export function BookingWizard({ initial }: { initial: PlacementId }) {
             {durations.map((d) => {
               const x = discount(placement, d);
               return (
-                <button key={d} type="button" aria-pressed={effDays === d} onClick={() => setDays(d)} className={`glass-flat p-3 text-center ${effDays === d ? "!border-[var(--brand)]" : ""}`}>
+                <button key={d} type="button" aria-pressed={effDays === d} onClick={() => setDays(d)} className={`card-flat p-3 text-center ${effDays === d ? "!border-[var(--brand)]" : ""}`}>
                   <div className="text-xs text-muted">{d} day{d > 1 ? "s" : ""}</div>
                   <div className="num font-bold">${placement.prices[d]?.toLocaleString("en-US")}</div>
                   {x && x.pct > 0 && <div className="num text-[11px] text-up">save {x.pct}%</div>}
@@ -108,7 +108,7 @@ export function BookingWizard({ initial }: { initial: PlacementId }) {
           {avail?.configured === false && <p className="text-xs text-muted">Live availability needs the database. It is checked again on submit.</p>}
         </section>
 
-        <section className="glass space-y-4 p-5" aria-label="Creative">
+        <section className="card space-y-4 p-5" aria-label="Creative">
           <h2 className="font-display text-lg font-bold">2. Creative and destination</h2>
           {(["desktop", "mobile"] as const).map((v) => {
             const rec = v === "desktop" ? placement.desktop : placement.mobile;
@@ -116,7 +116,7 @@ export function BookingWizard({ initial }: { initial: PlacementId }) {
             return (
               <div key={v} className="space-y-1.5">
                 <span className="text-sm font-semibold capitalize">{v} image {v === "mobile" && <span className="font-normal normal-case text-muted">(optional, falls back to desktop)</span>}</span>
-                <label className="glass-flat flex cursor-pointer items-center gap-3 p-3 text-sm">
+                <label className="card-flat flex cursor-pointer items-center gap-3 p-3 text-sm">
                   <ImagePlus size={18} className="text-brand" />
                   <span className="min-w-0 flex-1 truncate">{pick ? pick.file.name : `Upload JPG, PNG or WebP, about ${rec.w}×${rec.h}, up to 2 MB`}</span>
                   <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => pickFile(v, e.target.files?.[0])} />
@@ -130,7 +130,7 @@ export function BookingWizard({ initial }: { initial: PlacementId }) {
           <p className="text-xs text-muted">Creatives are reviewed before going live. Misleading claims, unsafe links and impersonation are rejected without refund of the review.</p>
         </section>
 
-        <section className="glass space-y-4 p-5" aria-label="Review and pay">
+        <section className="card space-y-4 p-5" aria-label="Review and pay">
           <h2 className="font-display text-lg font-bold">3. Review and pay</h2>
           <dl className="grid grid-cols-2 gap-3 text-sm">
             <div><dt className="text-xs text-muted">Placement</dt><dd className="font-semibold">{placement.name}</dd></div>
@@ -146,12 +146,12 @@ export function BookingWizard({ initial }: { initial: PlacementId }) {
           </label>
           <label className="flex items-start gap-3 text-sm"><input type="checkbox" className="mt-1 h-4 w-4" checked={terms} onChange={(e) => setTerms(e.target.checked)} /> I accept the advertising terms. The campaign starts only after payment is verified and the creative is approved.</label>
           <button type="button" className="btn btn-primary w-full" disabled={!ready} onClick={submit}>{busy && <Loader2 size={16} className="animate-spin" />} Continue to Secure Payment · ${price?.toLocaleString("en-US")}</button>
-          {msg && <p className="glass-flat p-3 text-sm" role={msg.kind === "error" ? "alert" : "status"}>{msg.text} {msg.kind === "signin" && <Link href="/login?next=/promotion/book" className="font-semibold text-brand">Sign in</Link>}</p>}
+          {msg && <p className="card-flat p-3 text-sm" role={msg.kind === "error" ? "alert" : "status"}>{msg.text} {msg.kind === "signin" && <Link href="/login?next=/promotion/book" className="font-semibold text-brand">Sign in</Link>}</p>}
         </section>
       </div>
 
       <aside className="lg:sticky lg:top-20 lg:self-start">
-        <div className="glass space-y-3 p-4">
+        <div className="card space-y-3 p-4">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-bold">Live preview</h2>
             <div className="inline-flex rounded-full border border-line p-1" role="group" aria-label="Preview device">

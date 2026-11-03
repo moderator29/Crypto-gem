@@ -44,7 +44,7 @@ export function PaymentMethodsView() {
       {data && data.methods.length > 0 && (
         <ul className="grid gap-3 md:grid-cols-2">
           {data.methods.map((m) => (
-            <li key={m.id} className="glass-flat flex min-w-0 items-center justify-between gap-3 p-4">
+            <li key={m.id} className="card-flat flex min-w-0 items-center justify-between gap-3 p-4">
               <div className="min-w-0">
                 <p className="break-words font-semibold">{m.label} <span className="font-normal text-soft">on {m.network}</span></p>
                 <p className="break-all text-xs text-muted">{m.provider_currency}</p>

@@ -69,8 +69,8 @@ export function PaymentPanel({ orderId }: { orderId: string }) {
   }
 
   if (state === "loading") return <div className="skeleton h-72" aria-busy="true" />;
-  if (state === "signin") return <div className="glass p-6"><p className="mb-3">Sign in to view this payment.</p><Link className="btn btn-primary" href={`/login?next=/pay/${orderId}`}>Sign in</Link></div>;
-  if (state === "error" || !data) return <div className="glass p-6 text-down" role="alert">This order could not be loaded.</div>;
+  if (state === "signin") return <div className="card p-6"><p className="mb-3">Sign in to view this payment.</p><Link className="btn btn-primary" href={`/login?next=/pay/${orderId}`}>Sign in</Link></div>;
+  if (state === "error" || !data) return <div className="card p-6 text-down" role="alert">This order could not be loaded.</div>;
 
   const p = data.payment;
   const remaining = p?.expires_at ? Math.max(0, Math.floor((Date.parse(p.expires_at) - now) / 1000)) : null;
@@ -78,14 +78,14 @@ export function PaymentPanel({ orderId }: { orderId: string }) {
   const needsNew = !p || ["expired", "failed"].includes(p.status);
 
   return (
-    <section className="glass space-y-5 p-5 md:p-7" aria-label="Payment details">
+    <section className="card space-y-5 p-5 md:p-7" aria-label="Payment details">
       <div className="flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold">Payment</h1>
         <span className="num text-lg font-bold">${Number(data.order.price_usd).toLocaleString("en-US")}</span>
       </div>
 
       {done && (
-        <div className="glass-flat flex items-start gap-3 p-4" role="status">
+        <div className="card-flat flex items-start gap-3 p-4" role="status">
           <CheckCircle2 className="mt-0.5 text-up" /> <div><p className="font-semibold">Payment confirmed</p><p className="text-sm text-soft">Your listing is now in review. We will notify you of the decision.</p></div>
         </div>
       )}

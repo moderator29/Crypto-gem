@@ -141,7 +141,7 @@ export function MarketBoard({ initial, initialNetwork = null }: { initial: HomeD
       )}
 
       {state === "error" && (
-        <div className="glass flex flex-col items-start gap-3 p-5" role="alert">
+        <div className="card flex flex-col items-start gap-3 p-5" role="alert">
           <span className="flex items-center gap-2 font-semibold">
             <AlertTriangle size={18} className="text-down" /> {err}
           </span>
@@ -155,7 +155,7 @@ export function MarketBoard({ initial, initialNetwork = null }: { initial: HomeD
       {state === "ok" && data && (
         <>
           {rows.length === 0 ? (
-            <div className="glass p-6 text-sm text-soft">
+            <div className="card p-6 text-sm text-soft">
               {tab === "heating" ? "No token is showing unusual volume acceleration with meaningful liquidity right now." : "No tokens match this view."}
             </div>
           ) : (

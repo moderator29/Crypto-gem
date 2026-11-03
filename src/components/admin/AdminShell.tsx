@@ -92,7 +92,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
 function Gate({ title, text, children }: { title: string; text: string; children?: ReactNode }) {
   return (
-    <div className="glass mx-auto flex max-w-md flex-col items-center gap-3 p-8 text-center">
+    <div className="card mx-auto flex max-w-md flex-col items-center gap-3 p-8 text-center">
       <ShieldAlert size={28} className="text-warm" />
       <h1 className="font-display text-xl font-bold">{title}</h1>
       <p className="text-sm text-soft">{text}</p>

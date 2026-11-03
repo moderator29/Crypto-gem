@@ -23,20 +23,20 @@ export interface LegalSection {
 }
 
 /**
- * Shared shell for legal pages: glass header, table of contents with anchors, readable prose width.
+ * Shared shell for legal pages: card header, table of contents with anchors, readable prose width.
  * `owner` is a static developer note emitted as an HTML comment so placeholders are easy to find in source.
  */
 export function LegalPage({ title, intro, sections, owner }: { title: string; intro: ReactNode; sections: LegalSection[]; owner: string }) {
   return (
     <div className="mx-auto w-full max-w-3xl space-y-5">
       <div hidden dangerouslySetInnerHTML={{ __html: `<!-- ${owner.replace(/-->/g, "")} -->` }} />
-      <header className="glass p-6 md:p-8">
+      <header className="card p-6 md:p-8">
         <h1 className="font-display text-3xl font-bold leading-tight md:text-4xl">{title}</h1>
         <p className="mt-1 text-xs text-muted">Last updated {LAST_UPDATED}</p>
         <div className="mt-4 text-soft">{intro}</div>
       </header>
 
-      <nav aria-label="Contents" className="glass-flat p-5">
+      <nav aria-label="Contents" className="card-flat p-5">
         <h2 className="text-xs font-bold uppercase tracking-widest text-muted">Contents</h2>
         <ol className="mt-3 grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
           {sections.map((s, i) => (
@@ -46,7 +46,7 @@ export function LegalPage({ title, intro, sections, owner }: { title: string; in
       </nav>
 
       {sections.map((s, i) => (
-        <section key={s.id} id={s.id} aria-labelledby={`${s.id}-h`} className="glass scroll-mt-24 space-y-3 p-6 md:p-8">
+        <section key={s.id} id={s.id} aria-labelledby={`${s.id}-h`} className="card scroll-mt-24 space-y-3 p-6 md:p-8">
           <h2 id={`${s.id}-h`} className="font-display text-xl font-bold md:text-2xl">{i + 1}. {s.title}</h2>
           <div className="space-y-3 break-words text-sm leading-relaxed text-soft md:text-base [&_a]:text-brand [&_li]:ml-5 [&_li]:list-disc [&_ul]:space-y-1.5">{s.body}</div>
         </section>

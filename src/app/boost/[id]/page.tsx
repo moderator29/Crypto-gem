@@ -25,13 +25,13 @@ export default async function BoostProjectPage({ params }: { params: Promise<{ i
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      <Link href="/boost" className="btn !min-h-10 inline-flex"><ArrowLeft size={16} /> Back</Link>
-      <header className="glass space-y-4 p-5">
+      <Link href="/boost" className="btn btn-sm inline-flex"><ArrowLeft size={16} /> Back</Link>
+      <header className="card space-y-4 p-5">
         <div>
           <h1 className="font-display text-2xl font-bold">Boost Packs</h1>
           <p className="text-sm text-soft">Pick a pack, choose a payment network and go live automatically after confirmation.</p>
         </div>
-        <div className="glass-flat flex items-center gap-3 p-3">
+        <div className="card-flat flex items-center gap-3 p-3">
           <TokenLogo src={p.logo_url} symbol={p.symbol} size={48} />
           <div className="min-w-0">
             <div className="truncate font-semibold">{p.name} <span className="text-muted">{p.symbol}</span></div>

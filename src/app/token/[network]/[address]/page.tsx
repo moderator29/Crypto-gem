@@ -41,7 +41,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
       const kind = (poolsRes.reason as { kind?: string })?.kind;
       if (kind !== "not_found") {
         return (
-          <div className="glass mx-auto mt-10 max-w-lg p-6" role="alert">
+          <div className="card mx-auto mt-10 max-w-lg p-6" role="alert">
             <h1 className="font-display text-xl font-bold">Market data is temporarily unavailable</h1>
             <p className="mt-2 text-sm text-soft">We could not reach the data provider. Reload in a minute.</p>
           </div>
@@ -85,7 +85,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
 
   return (
     <div className="space-y-4">
-      <header className="glass space-y-3 p-4 md:p-5">
+      <header className="card space-y-3 p-4 md:p-5">
         <div className="flex items-center gap-3 md:gap-4">
           <TokenLogo src={identity?.imageUrl} symbol={identity?.symbol ?? "?"} size={48} />
           <div className="min-w-0 flex-1">
@@ -106,25 +106,25 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
           <span className="num rounded-full border border-line px-3 py-1.5 md:hidden">{shortAddress(canonical)}</span>
           <span className="num hidden break-all md:inline">{canonical}</span>
           {trade[0] && (
-            <a href={trade[0].url} target="_blank" rel="noopener noreferrer nofollow" className="btn btn-primary !min-h-9 !px-4 text-xs">
+            <a href={trade[0].url} target="_blank" rel="noopener noreferrer nofollow" className="btn btn-primary btn-sm">
               Trade on {trade[0].label.replace("View pool on ", "")} <ArrowUpRight size={13} />
             </a>
           )}
           <CopyButton value={canonical} label="Copy" />
           <WatchButton network={net.id} address={canonical} />
           {explorer && (
-            <a href={explorer} target="_blank" rel="noopener noreferrer" className="btn !min-h-9 !px-3 text-xs">
+            <a href={explorer} target="_blank" rel="noopener noreferrer" className="btn btn-sm">
               Explorer <ExternalLink size={12} />
             </a>
           )}
         </div>
       </header>
 
-      {top ? <PriceChart networkId={net.id} pool={top.address} /> : <div className="glass p-6 text-sm text-soft">No trading pool with chart data exists for this token yet.</div>}
+      {top ? <PriceChart networkId={net.id} pool={top.address} /> : <div className="card p-6 text-sm text-soft">No trading pool with chart data exists for this token yet.</div>}
 
       <section className="grid grid-cols-2 gap-2 md:grid-cols-6" aria-label="Market statistics">
         {stats.map(([k, v]) => (
-          <div key={k} className="glass-flat p-3.5">
+          <div key={k} className="card-flat p-3.5">
             <div className="text-xs text-muted">{k}</div>
             <div className="num mt-1 text-lg font-bold">{v}</div>
           </div>
@@ -133,14 +133,14 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
 
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <div className="space-y-4">
-          <section className="glass p-4 md:p-5" aria-label="Pools">
+          <section className="card p-4 md:p-5" aria-label="Pools">
             <h2 className="mb-3 font-display text-lg font-bold">Pools ({sorted.length})</h2>
             {sorted.length === 0 ? (
               <p className="text-sm text-muted">No pools found.</p>
             ) : (
               <div className="grid gap-2">
                 {sorted.slice(0, 10).map((p) => (
-                  <div key={p.id} className="glass-flat flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 text-sm">
+                  <div key={p.id} className="card-flat flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 text-sm">
                     <span className="min-w-0">
                       <span className="block truncate font-semibold">{p.name}</span>
                       <span className="block text-xs text-muted">
@@ -157,7 +157,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
             )}
           </section>
 
-          <section className="glass p-4 md:p-5" aria-label="Market risk signals">
+          <section className="card p-4 md:p-5" aria-label="Market risk signals">
             <h2 className="mb-1 flex items-center gap-2 font-display text-lg font-bold">
               <ShieldAlert size={18} /> Market risk signals
             </h2>
@@ -169,7 +169,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
             ) : (
               <ul className="grid gap-2">
                 {risks.map((r) => (
-                  <li key={r.code} className="glass-flat flex gap-3 p-3 text-sm">
+                  <li key={r.code} className="card-flat flex gap-3 p-3 text-sm">
                     <span className={`mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full ${r.level === "high" ? "bg-down" : r.level === "medium" ? "bg-warm" : "bg-brand"}`} role="img" aria-label={`${r.level} risk`} />
                     {r.message}
                   </li>
@@ -180,7 +180,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
         </div>
 
         <aside className="space-y-4">
-          <section className="glass p-4" aria-label="Trade">
+          <section className="card p-4" aria-label="Trade">
             <h2 className="font-display text-lg font-bold">Trade</h2>
             <p className="mb-3 mt-1 text-xs text-muted">Crypto Gems does not execute trades. You will leave this site and trade with your own wallet.</p>
             {trade.length === 0 ? (
@@ -198,7 +198,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
               <CopyButton value={canonical} label="Copy contract" />
             </div>
           </section>
-          {listing && <section className="glass p-4" aria-label="Community vote"><h2 className="mb-2 font-display text-lg font-bold">Community favourite</h2><VoteButton submissionId={listing.id} initialVotes={listing.votes} /></section>}
+          {listing && <section className="card p-4" aria-label="Community vote"><h2 className="mb-2 font-display text-lg font-bold">Community favourite</h2><VoteButton submissionId={listing.id} initialVotes={listing.votes} /></section>}
           <Link href={`/copilot?network=${net.id}&address=${encodeURIComponent(canonical)}`} className="btn w-full"><Bot size={16} /> Ask the Copilot about this token</Link>
           <AvailableSlot placement="token-page" variant="card" />
         </aside>

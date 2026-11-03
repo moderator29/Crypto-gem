@@ -63,13 +63,13 @@ export function BoostProjects() {
       </div>
 
       {state === "loading" && <div className="space-y-2" aria-busy="true">{Array.from({ length: 5 }, (_, i) => <div key={i} className="skeleton h-[72px]" />)}</div>}
-      {state === "error" && <div className="glass flex items-center gap-2 p-5 text-sm" role="alert"><AlertTriangle size={16} className="text-down" /> Could not load projects. Try again shortly.</div>}
+      {state === "error" && <div className="card flex items-center gap-2 p-5 text-sm" role="alert"><AlertTriangle size={16} className="text-down" /> Could not load projects. Try again shortly.</div>}
 
       {state === "ok" && data && !data.configured && (
-        <div className="glass p-6 text-sm text-soft">The project database is not connected in this environment, so there is nothing to select. Only listed projects can be boosted, so none are invented.</div>
+        <div className="card p-6 text-sm text-soft">The project database is not connected in this environment, so there is nothing to select. Only listed projects can be boosted, so none are invented.</div>
       )}
       {state === "ok" && data?.configured && data.projects.length === 0 && (
-        <div className="glass space-y-3 p-6 text-sm text-soft">
+        <div className="card space-y-3 p-6 text-sm text-soft">
           <p>{q || network ? "No listed projects match." : "No projects are listed yet."} Boost is available to projects already listed on Crypto Gems.</p>
           <Link href="/add-coin" className="btn btn-primary inline-flex">List your token first</Link>
         </div>
@@ -78,7 +78,7 @@ export function BoostProjects() {
         <ul className="grid gap-2">
           {data.projects.map((p) => (
             <li key={p.id}>
-              <Link href={`/boost/${p.id}`} className="glass-flat hover-lift flex items-center gap-3 p-3">
+              <Link href={`/boost/${p.id}`} className="card-flat hover-lift flex items-center gap-3 p-3">
                 <TokenLogo src={p.logo_url} symbol={p.symbol} size={48} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-semibold">{p.name}</span>
@@ -96,7 +96,7 @@ export function BoostProjects() {
           {Array.from({ length: Math.min(pages, 7) }, (_, i) => i + 1).map((n) => (
             <button key={n} type="button" className="chip !min-h-10 !w-10 !justify-center !px-0" aria-pressed={page === n} onClick={() => change(() => setPage(n))}>{n}</button>
           ))}
-          {pages > 7 && <span className="chip !cursor-default">… {pages}</span>}
+          {pages > 7 && <span className="badge">… {pages}</span>}
         </div>
       )}
     </section>

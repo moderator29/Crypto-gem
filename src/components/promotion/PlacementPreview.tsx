@@ -41,7 +41,7 @@ export function PlacementPreview({ placement, device, creative }: { placement: P
 
   if (placement === "token-page") {
     return (
-      <div className={`${frame} glass-flat space-y-2 p-3`} aria-label="Token page preview">
+      <div className={`${frame} card-flat space-y-2 p-3`} aria-label="Token page preview">
         <div className="flex items-center gap-2"><div className={`${bar} h-6 w-6 rounded-full`} /><div className={`${bar} h-3 w-24`} /><div className={`${bar} ml-auto h-3 w-12`} /></div>
         <div className={`${bar} h-24`} />
         <div className={device === "mobile" ? "space-y-2" : "grid grid-cols-[1fr_30%] gap-2"}>
@@ -53,7 +53,7 @@ export function PlacementPreview({ placement, device, creative }: { placement: P
   }
 
   return (
-    <div className={`${frame} glass-flat space-y-2 p-3`} aria-label="Discover page preview">
+    <div className={`${frame} card-flat space-y-2 p-3`} aria-label="Discover page preview">
       <div className="flex items-center gap-2"><div className={`${bar} h-4 w-4`} /><div className={`${bar} h-2.5 w-16`} /><div className={`${bar} ml-auto h-4 w-10 rounded-full`} /></div>
       <div className={`${bar} h-4`} />
       <Zone on={is("hero")} label="Hero" creative={is("hero") ? creative : null} className={device === "mobile" ? "h-20" : "h-24"} />

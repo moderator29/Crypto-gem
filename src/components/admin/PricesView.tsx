@@ -109,14 +109,14 @@ function PriceCard({ table, row, editable, onSaved }: { table: Table; row: Row; 
   const show = (f: Field, v: string | boolean) => (f.kind === "bool" ? (v ? "Yes" : "No") : f.kind === "usd" ? (v === "" ? NONE : fmtUsd(Number(v))) : String(v) || NONE);
 
   return (
-    <li className="glass-flat min-w-0 space-y-3 p-4">
+    <li className="card-flat min-w-0 space-y-3 p-4">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="break-words font-semibold">{row.name}</p>
           <p className="text-xs text-muted">{row.id}</p>
         </div>
         {editable && !editing && (
-          <button type="button" className="btn !min-h-10 !px-3" onClick={() => setEditing(true)} aria-label={`Edit ${row.name}`}>
+          <button type="button" className="btn btn-sm" onClick={() => setEditing(true)} aria-label={`Edit ${row.name}`}>
             <Pencil size={15} /> Edit
           </button>
         )}

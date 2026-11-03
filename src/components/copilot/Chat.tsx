@@ -77,20 +77,20 @@ export function Chat({ context }: { context: Ctx | null }) {
 
   const suggestions = context ? TOKEN_SUGGESTIONS : SUGGESTIONS;
   return (
-    <div className="glass flex h-[calc(100dvh-var(--header-h)-var(--nav-h)-48px)] min-h-[420px] flex-col lg:h-[calc(100dvh-var(--header-h)-120px)]">
+    <div className="card flex h-[calc(100dvh-var(--header-h)-var(--nav-h)-48px)] min-h-[420px] flex-col lg:h-[calc(100dvh-var(--header-h)-120px)]">
       <div className="flex-1 space-y-4 overflow-y-auto p-4" aria-live="polite">
         {messages.length === 0 && (
           <div className="space-y-4 py-6 text-center">
             <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl icon-tile"><Sparkles size={22} /></span>
             <p className="text-sm text-soft">{context ? "Ask about this token. I read live market data before answering." : "Ask about tokens, pools and market activity. I read live market data before answering."}</p>
             <div className="mx-auto flex max-w-md flex-col gap-2">
-              {suggestions.map((s) => <button key={s} type="button" className="glass-flat hover-lift px-4 py-3 text-left text-sm" onClick={() => ask(s)}>{s}</button>)}
+              {suggestions.map((s) => <button key={s} type="button" className="card-flat hover-lift px-4 py-3 text-left text-sm" onClick={() => ask(s)}>{s}</button>)}
             </div>
           </div>
         )}
         {messages.map((m, i) => (
           <div key={i} className={m.role === "user" ? "flex justify-end" : "flex"}>
-            <div className={`max-w-[92%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm leading-relaxed ${m.role === "user" ? "bg-gradient-to-br from-[var(--brand)] to-[var(--brand-2)] text-white" : "glass-flat"}`}>
+            <div className={`max-w-[92%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm leading-relaxed ${m.role === "user" ? "bg-gradient-to-br from-[var(--brand)] to-[var(--brand-2)] text-white" : "card-flat"}`}>
               {m.content || (busy && i === messages.length - 1 ? <Loader2 size={16} className="animate-spin text-brand" /> : null)}
             </div>
           </div>
@@ -102,7 +102,7 @@ export function Chat({ context }: { context: Ctx | null }) {
       <form className="border-t border-line p-3" onSubmit={(e) => { e.preventDefault(); ask(input); }}>
         <div className="flex gap-2">
           <input className="input" value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask about a token or the market" maxLength={1000} aria-label="Message" />
-          <button className="btn btn-primary !px-0 w-12 shrink-0" disabled={busy || !input.trim()} aria-label="Send"><Send size={17} /></button>
+          <button className="btn btn-primary btn-icon shrink-0" disabled={busy || !input.trim()} aria-label="Send"><Send size={17} /></button>
         </div>
         <p className="mt-2 text-[11px] text-muted">Answers use live data from GeckoTerminal, can be wrong, and are not financial advice. The Copilot cannot trade or move funds.</p>
       </form>

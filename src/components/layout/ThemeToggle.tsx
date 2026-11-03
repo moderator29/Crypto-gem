@@ -16,7 +16,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
   return (
     <button
       type="button"
-      className={`btn !px-0 w-11 ${className}`}
+      className={`btn btn-icon ${className}`}
       aria-label={`Switch to ${next} theme`}
       onClick={() => {
         document.documentElement.setAttribute("data-theme", next);

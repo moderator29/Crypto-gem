@@ -33,7 +33,7 @@ export function AuthButton({ className = "" }: { className?: string }) {
         <UserRound size={16} /> <span className="truncate">{label ?? "Account"}</span>
       </button>
       {open && (
-        <div role="menu" className="glass absolute right-0 top-[calc(100%+8px)] z-[90] w-56 space-y-1 !bg-[var(--surface-solid)] p-2">
+        <div role="menu" className="glass-float absolute right-0 top-[calc(100%+8px)] z-[90] w-56 space-y-1 !bg-[var(--surface-2)] p-2">
           <Link role="menuitem" href="/dashboard" className="flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold hover:bg-[var(--border)]" onClick={() => setOpen(false)}>Dashboard</Link>
           {userId && (
             <button role="menuitem" type="button" className="flex min-h-11 w-full items-center gap-2 rounded-xl px-3 text-left text-sm font-semibold hover:bg-[var(--border)]" onClick={() => { void navigator.clipboard?.writeText(userId); setOpen(false); }}>

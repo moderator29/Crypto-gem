@@ -23,17 +23,17 @@ export function TopTrending({ items }: { items: RankedPool[] }) {
           <Flame size={20} className="text-warm" /> {t("home.topTrending")}
         </h2>
         <div className="flex gap-2">
-          <button type="button" className="btn !min-h-10 !px-0 w-10" aria-label="Scroll left" onClick={() => by(-1)}>
+          <button type="button" className="btn btn-icon btn-sm" aria-label="Scroll left" onClick={() => by(-1)}>
             <ChevronLeft size={18} />
           </button>
-          <button type="button" className="btn !min-h-10 !px-0 w-10" aria-label="Scroll right" onClick={() => by(1)}>
+          <button type="button" className="btn btn-icon btn-sm" aria-label="Scroll right" onClick={() => by(1)}>
             <ChevronRight size={18} />
           </button>
         </div>
       </div>
       <div ref={ref} className="scroll-x pb-1">
         {items.slice(0, 12).map((p, i) => (
-          <Link key={p.id} href={`/token/${p.networkId}/${p.baseToken.address}`} className="glass hover-lift w-[158px] shrink-0 snap-start overflow-hidden !rounded-2xl sm:w-[188px]">
+          <Link key={p.id} href={`/token/${p.networkId}/${p.baseToken.address}`} className="card hover-lift w-[158px] shrink-0 snap-start overflow-hidden !rounded-2xl sm:w-[188px]">
             <div className="relative grid h-[88px] place-items-center bg-[radial-gradient(circle_at_50%_30%,var(--aurora-a),transparent_75%)] sm:h-[104px]">
               <TokenLogo src={p.baseToken.imageUrl} symbol={p.baseToken.symbol} size={64} />
               <span className="num absolute left-2.5 top-2 rounded-full bg-black/40 px-2 py-0.5 text-[11px] font-bold text-warm backdrop-blur">#{i + 1}</span>

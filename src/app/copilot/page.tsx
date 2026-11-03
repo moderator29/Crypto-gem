@@ -18,7 +18,7 @@ export default async function CopilotPage({ searchParams }: { searchParams: Prom
       {configured ? (
         <Chat context={ctx} />
       ) : (
-        <div className="glass space-y-2 p-6 text-sm text-soft" role="status">
+        <div className="card space-y-2 p-6 text-sm text-soft" role="status">
           <p className="font-display text-lg font-bold text-text">The Copilot is offline right now</p>
           <p>It answers from live market data and is switched off until its AI service is connected. Nothing is simulated.</p>
           {process.env.NODE_ENV !== "production" && <p className="text-xs text-muted">Setup: set ANTHROPIC_API_KEY (see SETUP.md).</p>}

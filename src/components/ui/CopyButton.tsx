@@ -2,21 +2,25 @@
 
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
+import { useToast } from "./Toast";
 
-export function CopyButton({ value, label = "Copy" }: { value: string; label?: string }) {
+export function CopyButton({ value, label = "Copy", what = "Copied to clipboard" }: { value: string; label?: string; what?: string }) {
   const [done, setDone] = useState(false);
+  const toast = useToast();
   return (
     <button
       type="button"
-      className="btn !min-h-9 !px-3 text-xs"
+      className="btn btn-sm"
       aria-label={label}
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(value);
           setDone(true);
-          setTimeout(() => setDone(false), 1500);
+          toast.success(what);
+          setTimeout(() => setDone(false), 1800);
         } catch {
           setDone(false);
+          toast.error("Could not copy", "Select the text and copy it manually.");
         }
       }}
     >

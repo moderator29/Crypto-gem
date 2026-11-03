@@ -10,7 +10,7 @@ export function HomeRail({ heating }: { heating: HeatingUp[] }) {
   return (
     <aside className="hidden space-y-4 xl:block" aria-label="Market sidebar">
       <div className="sticky top-20 space-y-4">
-        <section className="glass space-y-3 p-4">
+        <section className="card space-y-3 p-4">
           <h2 className="flex items-center gap-2 font-display text-lg font-bold"><Flame size={17} className="text-warm" /> Heating up</h2>
           {heating.length === 0 ? (
             <p className="text-sm text-soft">Nothing is running well above its own 24h pace with meaningful liquidity right now.</p>
@@ -31,11 +31,11 @@ export function HomeRail({ heating }: { heating: HeatingUp[] }) {
             </ul>
           )}
         </section>
-        <Link href="/pulse" className="glass hover-lift flex items-center gap-3 p-4">
+        <Link href="/pulse" className="card hover-lift flex items-center gap-3 p-4">
           <span className="grid h-10 w-10 place-items-center rounded-xl icon-tile"><Activity size={18} /></span>
           <span><span className="block font-semibold">Market Pulse</span><span className="block text-xs text-muted">Chain heatmap and unusual volume</span></span>
         </Link>
-        <Link href="/copilot" className="glass hover-lift flex items-center gap-3 p-4">
+        <Link href="/copilot" className="card hover-lift flex items-center gap-3 p-4">
           <span className="grid h-10 w-10 place-items-center rounded-xl icon-tile"><Bot size={18} /></span>
           <span><span className="block font-semibold">Ask the Copilot</span><span className="block text-xs text-muted">Research any token with live data</span></span>
         </Link>

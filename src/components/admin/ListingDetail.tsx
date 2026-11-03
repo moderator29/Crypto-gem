@@ -145,7 +145,7 @@ function Body({ data, canWrite, onAction }: { data: Detail; canWrite: boolean; o
       ) : (
         <ul className="space-y-3">
           {data.notes.map((n) => (
-            <li key={n.id} className="glass-flat min-w-0 space-y-1 p-4 text-sm">
+            <li key={n.id} className="card-flat min-w-0 space-y-1 p-4 text-sm">
               <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
                 <span>{n.kind.replaceAll("_", " ")} by {n.author.slice(0, 8)}</span>
                 <span>{fmtDate(n.created_at)}</span>

@@ -53,7 +53,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
       <div className="aurora" aria-hidden="true" />
       <header className="site-header sticky top-0 z-50">
         <div className="mx-auto flex h-[var(--header-h)] max-w-[1360px] items-center gap-3 px-4">
-          <button type="button" className="btn !px-0 w-11 xl:hidden" aria-label={t("menu.open")} onClick={() => setDrawer(true)}>
+          <button type="button" className="btn btn-icon xl:hidden" aria-label={t("menu.open")} onClick={() => setDrawer(true)}>
             <Menu size={20} />
           </button>
           <Link href="/" aria-label="Crypto Gems home" className="mr-2">
@@ -71,7 +71,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
               <Search size={16} /> <span className="text-sm font-medium">{t("search.tokens")}</span>
               <kbd className="ml-auto rounded-md border border-line px-1.5 text-[11px]">⌘K</kbd>
             </button>
-            <button type="button" onClick={() => setSearchOpen(true)} className="btn !px-0 w-11 sm:hidden" aria-label="Search">
+            <button type="button" onClick={() => setSearchOpen(true)} className="btn btn-icon sm:hidden" aria-label="Search">
               <Search size={18} />
             </button>
             <ThemeToggle className="hidden sm:inline-flex" />
@@ -87,10 +87,10 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
       {drawer && (
         <div className="fixed inset-0 z-[70] xl:hidden" role="dialog" aria-modal="true" aria-label="Menu">
           <div className="absolute inset-0 bg-black/55 backdrop-blur-sm" onClick={() => setDrawer(false)} />
-          <aside className="glass absolute inset-y-0 left-0 flex w-[82%] max-w-xs flex-col gap-2 !rounded-l-none !bg-[var(--surface-solid)] p-4">
+          <aside className="glass-float absolute inset-y-0 left-0 flex w-[84%] max-w-xs flex-col gap-2 !rounded-l-none !bg-[var(--surface-1)] p-4">
             <div className="mb-2 flex items-center justify-between">
               <Logo />
-              <button type="button" className="btn !px-0 w-11" aria-label="Close menu" onClick={() => setDrawer(false)}>
+              <button type="button" className="btn btn-icon" aria-label="Close menu" onClick={() => setDrawer(false)}>
                 <X size={18} />
               </button>
             </div>
@@ -115,7 +115,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
       {footer}
 
       <nav className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[max(env(safe-area-inset-bottom),10px)] xl:hidden" aria-label="Mobile">
-        <div className="glass mx-auto flex h-[56px] max-w-md items-center justify-around !rounded-full px-2 !bg-[color-mix(in_srgb,var(--bg)_80%,transparent)]">
+        <div className="glass-float mx-auto flex h-[58px] max-w-md items-center justify-around !rounded-full px-2">
           <BottomLink href="/" label={t("nav.home")} icon={Compass} active={isActive(path, "/")} />
           <BottomLink href="/copilot" label={t("nav.ai")} icon={Bot} active={isActive(path, "/copilot")} />
           <Link href="/add-coin" aria-label="Add Coin" className="btn btn-primary -mt-6 !h-14 !min-h-14 w-14 !rounded-full !px-0 shadow-lg">

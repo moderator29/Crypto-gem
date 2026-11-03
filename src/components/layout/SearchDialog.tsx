@@ -60,7 +60,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   const shown = q.trim().length < 2 ? [] : results;
   return (
     <div className="fixed inset-0 z-[80] flex items-stretch justify-center bg-[var(--bg)] sm:items-start sm:bg-black/55 sm:p-3 sm:pt-[10vh] sm:backdrop-blur-sm" onMouseDown={onClose} role="dialog" aria-modal="true" aria-label="Search">
-      <div className="glass flex w-full max-w-xl flex-col overflow-hidden !rounded-none !border-0 !bg-[var(--bg)] sm:!rounded-[var(--r-lg)] sm:!border sm:!bg-[var(--surface-solid)]" onMouseDown={(e) => e.stopPropagation()}>
+      <div className="flex w-full max-w-xl flex-col overflow-hidden bg-[var(--canvas)] sm:glass-float sm:!bg-[var(--surface-1)]" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-3 border-b border-line px-4">
           <button type="button" onClick={onClose} aria-label="Back" className="grid h-9 w-9 place-items-center rounded-full text-soft sm:hidden">
             <ArrowLeft size={20} />

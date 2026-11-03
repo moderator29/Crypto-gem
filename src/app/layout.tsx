@@ -1,6 +1,7 @@
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import type { Metadata, Viewport } from "next";
+import { ToastProvider } from "@/components/ui/Toast";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
 import { Footer } from "@/components/layout/Footer";
@@ -35,7 +36,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <I18nProvider locale={locale} messages={messagesFor(locale)}>
           <AuthProvider>
-            <SiteChrome footer={<Footer />}>{children}</SiteChrome>
+            <ToastProvider>
+              <SiteChrome footer={<Footer />}>{children}</SiteChrome>
+            </ToastProvider>
           </AuthProvider>
         </I18nProvider>
       </body>

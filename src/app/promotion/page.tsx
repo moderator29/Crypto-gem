@@ -12,7 +12,7 @@ export default async function PromotionPage({ searchParams }: { searchParams: Pr
   const { placement } = await searchParams;
   return (
     <div className="space-y-6">
-      <header className="glass p-6 md:p-10">
+      <header className="card p-6 md:p-10">
         <h1 className="font-display text-3xl font-bold leading-tight md:text-5xl">Put your project in front of the market.</h1>
         <p className="mt-3 max-w-2xl text-soft">
           Reach active crypto traders through premium placements across Crypto Gems. Choose your audience, select your placement, launch your campaign and track its performance.
@@ -24,13 +24,13 @@ export default async function PromotionPage({ searchParams }: { searchParams: Pr
 
       <section aria-label="Placements" className="grid gap-4 md:grid-cols-2">
         {PLACEMENTS.map((p) => (
-          <article key={p.id} id={p.id} className={`glass space-y-4 p-5 ${placement === p.id ? "!border-[var(--brand)]" : ""}`}>
+          <article key={p.id} id={p.id} className={`card space-y-4 p-5 ${placement === p.id ? "!border-[var(--brand)]" : ""}`}>
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h2 className="font-display text-xl font-bold">{p.name}</h2>
                 <p className="mt-1 text-sm text-soft">{p.blurb}</p>
               </div>
-              <span className="chip !cursor-default shrink-0 text-xs">
+              <span className="badge shrink-0">
                 <Layers size={12} /> {p.exclusive ? "Exclusive" : "Shared"}
               </span>
             </div>
@@ -62,7 +62,7 @@ export default async function PromotionPage({ searchParams }: { searchParams: Pr
                 const dc = discount(p, d);
                 const price = p.prices[d];
                 return (
-                  <div key={d} className="glass-flat p-3 text-center">
+                  <div key={d} className="card-flat p-3 text-center">
                     <div className="text-xs text-muted">
                       {d} day{d > 1 ? "s" : ""}
                     </div>
@@ -77,7 +77,7 @@ export default async function PromotionPage({ searchParams }: { searchParams: Pr
         ))}
       </section>
 
-      <section className="glass p-5 text-sm text-soft" aria-label="How booking works">
+      <section className="card p-5 text-sm text-soft" aria-label="How booking works">
         <h2 className="mb-1 font-display text-lg font-bold text-text">How it works</h2>
         Pick a placement and dates, upload your creative and see it in place, then pay in crypto. Your campaign goes live only after payment is verified by our server and the creative is approved. Prices are the current price book and are managed by administrators. We report only measured impressions (visible for at least a second, one per visitor per hour, bots excluded) and clicks.
       </section>
