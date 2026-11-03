@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
+import { notify } from "@/lib/notify";
 import { fulfilOrder } from "@/lib/payments/fulfil";
 import { checkIpnAgainstOrder, mapStatus, verifyIpn, type IpnPayload } from "@/lib/payments/nowpayments";
 
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
   const { error: dupe } = await db.from("payment_events").insert({ payment_id: payment.id, provider_payment_id: providerId, status, payload: body, fingerprint });
   if (dupe) return new Response(dupe.code === "23505" ? "duplicate" : "error", { status: dupe.code === "23505" ? 200 : 500 });
 
-  const { data: order } = await db.from("orders").select("id,price_usd,status,kind,ref_id").eq("id", payment.order_id).maybeSingle();
+  const { data: order } = await db.from("orders").select("id,price_usd,status,kind,ref_id,user_id").eq("id", payment.order_id).maybeSingle();
   if (!order) return new Response("order missing", { status: 404 });
   const check = checkIpnAgainstOrder(body, { orderId: order.id, providerPaymentId: providerId, priceUsd: Number(order.price_usd), payCurrency: payment.pay_currency, payAmount: Number(payment.pay_amount) });
   if (!check.ok) return new Response(`rejected: ${check.reason}`, { status: 200 });
@@ -46,6 +47,7 @@ export async function POST(req: Request) {
   if (check.status === "finished" && order.status === "pending") {
     await db.from("orders").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", order.id).eq("status", "pending");
     await fulfilOrder(db, { id: order.id, kind: order.kind, ref_id: order.ref_id });
+    if (order.user_id) await notify(db, order.user_id as string, "payment", "Payment confirmed", `Your ${String(order.kind).replace("_", " ")} order is paid and now in progress.`, "/dashboard/payments");
   }
   return new Response("ok");
 }

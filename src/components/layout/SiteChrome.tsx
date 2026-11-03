@@ -1,34 +1,93 @@
 "use client";
 
 import { LayoutGroup, motion } from "framer-motion";
-import { Activity, Sparkles, ChartCandlestick, Clock3, Flame, Grid2x2, Link2, Star, Compass, LayoutDashboard, Megaphone, Menu, PlusCircle, Rocket, Search, Settings, X } from "lucide-react";
+import { Menu, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AuthButton } from "@/components/auth/AuthButton";
 import { useT } from "@/components/i18n/I18nProvider";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { Logo } from "@/components/ui/Logo";
-import type { MessageKey } from "@/lib/i18n/messages";
+import { NavIcon, type NavIconName } from "@/components/ui/NavIcon";
 import { SearchDialog } from "./SearchDialog";
-import { ThemePill, ThemeToggle } from "./ThemeToggle";
+import { ThemeToggle } from "./ThemeToggle";
 
-const NAV = [
-  { href: "/markets", key: "nav.markets", icon: ChartCandlestick },
-  { href: "/pulse", key: "nav.pulse", icon: Activity },
-  { href: "/promotion", key: "nav.promotion", icon: Megaphone },
-  { href: "/boost", key: "nav.boost", icon: Rocket },
-  { href: "/copilot", key: "nav.copilot", icon: Sparkles },
-] as const satisfies ReadonlyArray<{ href: string; key: MessageKey; icon: unknown }>;
+interface NavItem { href: string; label: string; icon: NavIconName; match?: (p: string) => boolean }
+interface NavGroup { title: string | null; items: NavItem[] }
 
-const isActive = (path: string, href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+const GROUPS: NavGroup[] = [
+  { title: null, items: [{ href: "/", label: "Discover", icon: "home", match: (p) => p === "/" }] },
+  {
+    title: "Markets",
+    items: [
+      { href: "/markets", label: "Markets", icon: "markets", match: (p) => p === "/markets" },
+      { href: "/markets/new", label: "New pairs", icon: "fresh", match: (p) => p.startsWith("/markets/new") },
+      { href: "/markets/heating", label: "Heating up", icon: "heating", match: (p) => p.startsWith("/markets/heating") },
+      { href: "/markets/map", label: "Price map", icon: "map", match: (p) => p.startsWith("/markets/map") },
+      { href: "/chains", label: "Chains", icon: "chains", match: (p) => p.startsWith("/chains") },
+    ],
+  },
+  {
+    title: "Tools",
+    items: [
+      { href: "/copilot", label: "AI Copilot", icon: "copilot", match: (p) => p.startsWith("/copilot") },
+      { href: "/pulse", label: "Market Pulse", icon: "pulse", match: (p) => p.startsWith("/pulse") },
+      { href: "/compare", label: "Compare", icon: "compare", match: (p) => p.startsWith("/compare") },
+      { href: "/status", label: "Data status", icon: "status", match: (p) => p.startsWith("/status") },
+    ],
+  },
+  {
+    title: "Grow a project",
+    items: [
+      { href: "/add-coin", label: "Add coin", icon: "add", match: (p) => p.startsWith("/add-coin") },
+      { href: "/boost", label: "Boost", icon: "boost", match: (p) => p.startsWith("/boost") },
+      { href: "/promotion", label: "Promotion", icon: "promo", match: (p) => p.startsWith("/promotion") },
+    ],
+  },
+  {
+    title: "Your account",
+    items: [
+      { href: "/dashboard/watchlist", label: "Watchlist", icon: "star", match: (p) => p.startsWith("/dashboard/watchlist") },
+      { href: "/alerts", label: "Price alerts", icon: "alert", match: (p) => p.startsWith("/alerts") },
+      { href: "/notifications", label: "Notifications", icon: "inbox", match: (p) => p.startsWith("/notifications") },
+      { href: "/dashboard", label: "Dashboard", icon: "dashboard", match: (p) => p === "/dashboard" || /^\/dashboard\/(listings|boosts|campaigns|payments)/.test(p) },
+      { href: "/settings", label: "Settings", icon: "settings", match: (p) => p.startsWith("/settings") },
+    ],
+  },
+];
+
 const SPRING = { type: "spring", stiffness: 420, damping: 38 } as const;
+
+/** The big navigation list. Used as the persistent desktop sidebar and inside the mobile drawer. */
+function NavList({ path, id }: { path: string; id: string }) {
+  return (
+    <LayoutGroup id={id}>
+      <nav aria-label="Primary" className="flex flex-col gap-5">
+        {GROUPS.map((g, gi) => (
+          <div key={gi} className="flex flex-col gap-0.5">
+            {g.title && <p className="eyebrow px-3 pb-1.5">{g.title}</p>}
+            {g.items.map((n) => {
+              const active = (n.match ?? ((p) => p === n.href))(path);
+              return (
+                <Link key={n.href} href={n.href} aria-current={active ? "page" : undefined} className={`nav-row relative flex min-h-12 items-center gap-3.5 rounded-xl px-3 text-[15px] font-semibold transition-colors ${active ? "text-text" : "text-soft hover:text-text"}`}>
+                  {active && <motion.span layoutId="nav-bg" transition={SPRING} className="absolute inset-0 rounded-xl bg-[var(--surface-3)] shadow-[inset_0_0_0_1px_var(--line-2)]" />}
+                  {active && <motion.span layoutId="nav-bar" transition={SPRING} className="absolute inset-y-2.5 left-0 w-[3px] rounded-full bg-[var(--brand)]" />}
+                  <span className={`relative z-10 grid h-8 w-8 place-items-center rounded-lg ${active ? "bg-[color-mix(in_srgb,var(--brand)_14%,transparent)] text-text" : "text-soft"}`}><NavIcon name={n.icon} size={21} /></span>
+                  <span className="relative z-10">{n.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+    </LayoutGroup>
+  );
+}
 
 export function SiteChrome({ children, footer }: { children: React.ReactNode; footer: React.ReactNode }) {
   const path = usePathname();
   const { t } = useT();
-  const navGroup = useId();
-  const dockGroup = useId();
   const [searchOpen, setSearchOpen] = useState(false);
   const [drawer, setDrawer] = useState(false);
   const drawerRef = useRef<HTMLElement>(null);
@@ -77,40 +136,27 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
       <a href="#content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-lg focus:bg-[var(--surface-3)] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold">Skip to content</a>
 
       <header className="site-header sticky top-0 z-50">
-        <div className="mx-auto flex h-[var(--header-h)] max-w-[1360px] items-center gap-3 px-4">
+        <div className="mx-auto flex h-[var(--header-h)] max-w-[1640px] items-center gap-3 px-4">
           <button type="button" className="btn btn-icon xl:hidden" aria-label={t("menu.open")} aria-expanded={drawer} onClick={() => setDrawer(true)}>
             <Menu size={20} />
           </button>
-          <Link href="/" aria-label="Crypto Gems home" className="mr-3">
+          <Link href="/" aria-label="Crypto Gems home" className="mr-2 xl:w-56">
             <Logo />
           </Link>
-
-          <LayoutGroup id={navGroup}>
-            <nav className="hidden items-center gap-0.5 xl:flex" aria-label="Primary">
-              {NAV.map((n) => {
-                const active = isActive(path, n.href);
-                return (
-                  <Link key={n.href} href={n.href} aria-current={active ? "page" : undefined} className={`relative rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors ${active ? "text-text" : "text-soft hover:text-text"}`}>
-                    {active && <motion.span layoutId="nav-active" transition={SPRING} className="absolute inset-0 rounded-lg bg-[var(--surface-3)] shadow-[inset_0_0_0_1px_var(--line-2)]" />}
-                    {active && <motion.span layoutId="nav-underline" transition={SPRING} className="absolute inset-x-3 -bottom-[13px] h-[2px] rounded-full bg-[var(--brand)] shadow-[0_0_12px_var(--neon-glow)]" />}
-                    <span className="relative z-10">{t(n.key)}</span>
-                  </Link>
-                );
-              })}
-            </nav>
-          </LayoutGroup>
-
+          <button type="button" onClick={() => setSearchOpen(true)} className="btn hidden !justify-start gap-3 text-muted sm:inline-flex sm:w-64 lg:w-96" aria-label="Search">
+            <Search size={16} aria-hidden="true" /> <span className="text-sm font-medium normal-case tracking-normal">{t("search.tokens")}</span>
+            <kbd className="ml-auto rounded-md border border-line px-1.5 text-[11px]">/</kbd>
+          </button>
           <div className="ml-auto flex items-center gap-2">
-            <button type="button" onClick={() => setSearchOpen(true)} className="btn hidden !justify-start gap-3 text-muted sm:inline-flex sm:w-44 xl:w-64" aria-label="Search">
-              <Search size={16} aria-hidden="true" /> <span className="text-sm font-medium">{t("search.tokens")}</span>
-              <kbd className="ml-auto rounded-md border border-line px-1.5 text-[11px]">/</kbd>
-            </button>
             <button type="button" onClick={() => setSearchOpen(true)} className="btn btn-icon sm:hidden" aria-label="Search">
               <Search size={18} />
             </button>
+            <Link href="/notifications" className="btn btn-icon bell-ring" aria-label="Notifications">
+              <NavIcon name="bell" size={20} />
+            </Link>
             <ThemeToggle className="hidden sm:inline-flex" />
             <Link href="/add-coin" className="btn btn-primary hidden sm:inline-flex">
-              <PlusCircle size={16} /> {t("nav.addCoin")}
+              <NavIcon name="add" size={18} className="[&_.acc]:!stroke-current" /> {t("nav.addCoin")}
             </Link>
             <LanguageSwitcher className="hidden sm:inline-flex" />
             <AuthButton className="hidden sm:block" />
@@ -121,77 +167,33 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
       {drawer && (
         <div className="fixed inset-0 z-[70] xl:hidden" role="dialog" aria-modal="true" aria-label="Menu">
           <div className="absolute inset-0 animate-[fade_var(--dur-3)_ease-out_both] bg-black/60 backdrop-blur-sm" onClick={() => setDrawer(false)} />
-          <aside ref={drawerRef} className="glass-float absolute inset-y-0 left-0 flex w-[86%] max-w-xs animate-[slide-in_var(--dur-3)_var(--ease-out)_both] flex-col gap-1 overflow-y-auto !rounded-l-none !bg-[var(--surface-1)] p-4">
-            <div className="mb-3 flex items-center justify-between">
+          <aside ref={drawerRef} className="sidebar-in absolute inset-y-0 left-0 flex w-[88%] max-w-sm flex-col gap-5 overflow-y-auto border-r border-line bg-[var(--surface-1)] p-4">
+            <div className="flex items-center justify-between">
               <Logo />
               <button type="button" className="btn btn-icon" aria-label="Close menu" onClick={() => setDrawer(false)}>
                 <X size={18} />
               </button>
             </div>
-            <DrawerLink href="/" label={t("nav.discover")} icon={Compass} active={isActive(path, "/")} />
-            <p className="eyebrow px-3 pb-1 pt-5">Start exploring</p>
-            <DrawerLink href="/markets" label="Markets" icon={ChartCandlestick} active={path === "/markets"} />
-            <DrawerLink href="/markets/new" label="New pairs" icon={Clock3} active={path.startsWith("/markets/new")} />
-            <DrawerLink href="/markets/heating" label="Heating up" icon={Flame} active={path.startsWith("/markets/heating")} />
-            <DrawerLink href="/markets/map" label="Price map" icon={Grid2x2} active={path.startsWith("/markets/map")} />
-            <DrawerLink href="/chains" label="Chains" icon={Link2} active={path.startsWith("/chains")} />
-            <DrawerLink href="/pulse" label={t("nav.pulse")} icon={Activity} active={isActive(path, "/pulse")} />
-            <DrawerLink href="/copilot" label={t("nav.copilot")} icon={Sparkles} active={isActive(path, "/copilot")} />
-            <p className="eyebrow px-3 pb-1 pt-5">Other</p>
-            <DrawerLink href="/promotion" label={t("nav.promotion")} icon={Megaphone} active={isActive(path, "/promotion")} />
-            <DrawerLink href="/boost" label={t("nav.boost")} icon={Rocket} active={isActive(path, "/boost")} />
-            <DrawerLink href="/dashboard/watchlist" label="Watchlist" icon={Star} active={path.startsWith("/dashboard/watchlist")} />
-            <DrawerLink href="/dashboard" label={t("nav.dashboard")} icon={LayoutDashboard} active={path === "/dashboard"} />
-            <DrawerLink href="/settings" label={t("nav.settings")} icon={Settings} active={isActive(path, "/settings")} />
-            <div className="mt-auto flex flex-col gap-3 border-t border-line pt-4">
-              <Link href="/add-coin" className="btn btn-primary w-full">
-                <PlusCircle size={16} /> {t("nav.addCoin")}
-              </Link>
-              <AuthButton className="w-full [&>button]:w-full" />
-              <div className="flex items-center justify-between gap-3">
-                <ThemePill />
-                <LanguageSwitcher />
-              </div>
+            <AuthButton className="w-full [&>button]:w-full" />
+            <NavList path={path} id="drawer-nav" />
+            <div className="mt-auto flex items-center justify-between gap-3 border-t border-line pt-4">
+              <ThemeToggle />
+              <LanguageSwitcher />
             </div>
           </aside>
         </div>
       )}
 
-      <main id="content" className="mx-auto w-full max-w-[1360px] px-4 pt-6 md:pt-8">{children}</main>
-      {footer}
-
-      <nav className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[max(env(safe-area-inset-bottom),10px)] xl:hidden" aria-label="Mobile">
-        <LayoutGroup id={dockGroup}>
-          <div className="glass-float mx-auto grid h-[60px] max-w-md grid-cols-5 items-center !rounded-full px-1.5">
-            <DockLink href="/" label={t("nav.home")} icon={Compass} active={isActive(path, "/")} />
-            <DockLink href="/markets" label={t("nav.markets")} icon={ChartCandlestick} active={isActive(path, "/markets")} />
-            <Link href="/add-coin" aria-label={t("nav.addCoin")} className="btn btn-primary btn-icon mx-auto -mt-7 !h-[52px] !w-[52px] !rounded-full shadow-[0_8px_24px_rgba(232,67,42,0.5)]">
-              <PlusCircle size={24} />
-            </Link>
-            <DockLink href="/copilot" label={t("nav.ai")} icon={Sparkles} active={isActive(path, "/copilot")} />
-            <DockLink href="/boost" label={t("nav.boost")} icon={Rocket} active={isActive(path, "/boost")} />
-          </div>
-        </LayoutGroup>
-      </nav>
+      <div className="mx-auto flex w-full max-w-[1640px] items-start">
+        <aside aria-label="Site navigation" className="sticky top-[var(--header-h)] hidden h-[calc(100dvh-var(--header-h))] w-64 shrink-0 overflow-y-auto border-r border-line px-3 py-5 xl:block">
+          <NavList path={path} id="side-nav" />
+        </aside>
+        <div className="min-w-0 flex-1">
+          <main id="content" className="mx-auto w-full max-w-[1240px] px-4 pt-6 md:pt-8">{children}</main>
+          {footer}
+        </div>
+      </div>
       <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
-  );
-}
-
-function DockLink({ href, label, icon: Icon, active }: { href: string; label: string; icon: typeof Compass; active: boolean }) {
-  return (
-    <Link href={href} aria-current={active ? "page" : undefined} className={`relative mx-auto flex h-12 w-14 flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${active ? "text-brand" : "text-muted"}`}>
-      {active && <motion.span layoutId="dock-active" transition={SPRING} className="absolute inset-0 rounded-2xl bg-[color-mix(in_srgb,var(--brand)_14%,transparent)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--brand)_30%,transparent)]" />}
-      <Icon size={20} aria-hidden="true" className="relative z-10" />
-      <span className="relative z-10">{label}</span>
-    </Link>
-  );
-}
-
-function DrawerLink({ href, label, icon: Icon, active }: { href: string; label: string; icon: typeof Compass; active: boolean }) {
-  return (
-    <Link href={href} aria-current={active ? "page" : undefined} className={`flex min-h-12 items-center gap-3 rounded-xl px-3 font-semibold transition-colors ${active ? "bg-[var(--surface-3)] text-text shadow-[inset_0_0_0_1px_var(--line-2)]" : "text-soft hover:bg-[var(--surface-2)] hover:text-text"}`}>
-      <Icon size={19} aria-hidden="true" className={active ? "text-brand" : ""} /> {label}
-    </Link>
   );
 }

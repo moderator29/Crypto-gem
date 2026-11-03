@@ -27,3 +27,9 @@ Twenty ideas ranked by value to traders and to revenue. Everything here uses rea
 18. **Verified badge programme** with a public checklist, so the badge means something.
 19. **Referral links** for projects that bring listings, paid from fee revenue with an audit trail.
 20. **Public status page** for data providers (GeckoTerminal, CoinGecko, payments), so slow data is explained, not guessed.
+
+## Status
+
+Built: 1 price alerts (page, API, checked by the maintenance job, delivers a notification), 3 compare tokens, 6 token security check (GoPlus, EVM chains), 10 mini chart toggle, 11 compact density toggle, 20 data status page, plus a notifications inbox that also reports payment confirmations and listing decisions.
+
+Not built yet: 2 portfolio (needs a wallet data provider key), 4 saved screens, 5 new pair alerts, 7 holder concentration, 8 verified socials, 9 command palette, 12 pinned watchlist strip, 13 update timestamps, 14 share cards, 15 keyboard navigation, 16 buyer performance page, 17 listing timeline, 18 verified badge programme, 19 referrals.

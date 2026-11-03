@@ -61,9 +61,9 @@
   /* Radius scale */
   --r-xs: 6px;
   --r-sm: 8px;
-  --r-md: 12px;
-  --r-lg: 16px;
-  --r-xl: 24px;
+  --r-md: 10px;
+  --r-lg: 14px;
+  --r-xl: 20px;
   --r-pill: 999px;
 
   /* Control heights */
@@ -250,15 +250,15 @@ h3 {
   .glass {
     position: relative;
     border-radius: var(--r-lg);
-    background: linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 60%, var(--surface-1)) 0%, var(--surface-1) 38%);
+    background: var(--surface-1);
     border: 1px solid var(--line-1);
     box-shadow: var(--highlight), var(--shadow-sm);
     transition: border-color var(--dur-2) var(--ease-out), background var(--dur-2) var(--ease-out), box-shadow var(--dur-3) var(--ease-out), transform var(--dur-3) var(--ease-out);
   }
   .card-lit {
     background:
-      radial-gradient(120% 100% at 0% 0%, color-mix(in srgb, var(--neon) 16%, transparent), transparent 52%),
-      linear-gradient(180deg, var(--surface-2), var(--surface-1));
+      radial-gradient(90% 70% at 0% 0%, color-mix(in srgb, var(--neon) 10%, transparent), transparent 60%),
+      var(--surface-1);
     border-color: var(--line-2);
   }
   .card-lit::before {
@@ -360,13 +360,13 @@ h3 {
   .btn-primary {
     color: #fff;
     border-color: rgba(255, 150, 120, 0.4);
-    background: linear-gradient(180deg, #ff5a3c 0%, #e8432a 100%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 1px 2px rgba(60, 10, 0, 0.5), 0 6px 18px rgba(232, 67, 42, 0.32);
+    background: linear-gradient(180deg, #ff5a3c 0%, #ee4527 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 1px 2px rgba(60, 10, 0, 0.45), 0 4px 14px rgba(232, 67, 42, 0.28);
   }
   .btn-primary:hover {
-    background: linear-gradient(180deg, #55a2ff 0%, #2674ff 100%);
-    border-color: rgba(170, 215, 255, 0.55);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34), 0 1px 2px rgba(60, 10, 0, 0.5), 0 8px 26px rgba(232, 67, 42, 0.5);
+    background: linear-gradient(180deg, #ff7152 0%, #f4502f 100%);
+    border-color: rgba(255, 190, 170, 0.55);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 1px 2px rgba(60, 10, 0, 0.45), 0 8px 22px rgba(232, 67, 42, 0.42);
   }
   .btn-ghost {
     background: transparent;
@@ -722,3 +722,25 @@ h3 {
     width: auto;
   }
 }
+
+/* Icons and motion. Icon accents follow the brand colour; hover plays one short, calm gesture. */
+.nav-icon .acc { stroke: var(--brand); }
+.nav-row .nav-icon,
+.nav-tile .nav-icon { transition: transform var(--dur-3) var(--ease-out); }
+.nav-row:hover .nav-icon,
+.nav-tile:hover .nav-icon { animation: icon-nudge 520ms var(--ease-out); }
+.nav-row[aria-current="page"] .nav-icon .acc { stroke-dasharray: 60; animation: icon-draw 700ms var(--ease-out) both; }
+.bell-ring .nav-icon { transform-origin: 50% 8%; animation: bell-ring 3.2s ease-in-out infinite; }
+.spark-draw path:last-child { stroke-dasharray: 1; stroke-dashoffset: 1; animation: spark-draw 900ms var(--ease-out) 120ms forwards; }
+.row-in { animation: rise 420ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 28ms); }
+.sidebar-in { animation: slide-in var(--dur-3) var(--ease-out) both; }
+@keyframes icon-nudge { 0% { transform: scale(1) rotate(0); } 35% { transform: scale(1.14) rotate(-7deg); } 70% { transform: scale(1.06) rotate(4deg); } 100% { transform: scale(1) rotate(0); } }
+@keyframes icon-draw { from { stroke-dashoffset: 60; } to { stroke-dashoffset: 0; } }
+@keyframes bell-ring { 0%, 78%, 100% { transform: rotate(0); } 82% { transform: rotate(14deg); } 86% { transform: rotate(-12deg); } 90% { transform: rotate(8deg); } 94% { transform: rotate(-4deg); } }
+@keyframes spark-draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .nav-row:hover .nav-icon, .nav-tile:hover .nav-icon, .bell-ring .nav-icon, .row-in, .sidebar-in { animation: none; }
+  .spark-draw path:last-child { animation: none; stroke-dashoffset: 0; }
+}
+.spark-draw-line { stroke-dasharray: 1; stroke-dashoffset: 1; animation: spark-draw 1100ms var(--ease-out) forwards; }
+@media (prefers-reduced-motion: reduce) { .spark-draw-line { animation: none; stroke-dashoffset: 0; } }

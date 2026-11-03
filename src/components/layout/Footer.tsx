@@ -5,7 +5,7 @@ import { getT } from "@/lib/i18n/server";
 export async function Footer() {
   const { t } = await getT();
   return (
-    <footer className="pad-nav mx-auto mt-12 w-full max-w-[1360px] px-4">
+    <footer className="mx-auto mt-12 w-full max-w-[1240px] px-4">
       <div className="card grid gap-8 p-6 md:grid-cols-[1.4fr_1fr_1fr] md:p-8">
         <div className="space-y-3">
           <Logo />

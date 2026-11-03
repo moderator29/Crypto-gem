@@ -1,9 +1,12 @@
+"use client";
+
 import { ArrowDown, ArrowUp } from "lucide-react";
 import Link from "next/link";
 import type { SortDir, SortKey } from "@/lib/market-data/lists";
 import { TokenLogo } from "@/components/ui/TokenLogo";
 import type { PoolSummary } from "@/lib/market-data/types";
 import { priceUsd, usdCompact } from "@/lib/utils/format";
+import { useDisplayPrefs } from "@/lib/displayPrefs";
 import { Sparkline } from "./Sparkline";
 import { WatchStar } from "./WatchStar";
 
@@ -49,6 +52,7 @@ function Head({ k, label, className = "", sp }: { k: SortKey; label: string; cla
 
 /** Price board: watch star, rank, token, price with 24h change beneath, cap, volume and a real 7 day trend. */
 export function PriceTable({ pools, startRank = 1, sorting }: { pools: PoolSummary[]; startRank?: number; sorting?: SortProps }) {
+  const prefs = useDisplayPrefs();
   return (
     <div className="card overflow-hidden">
       <div className={`grid items-center gap-x-2 border-b border-line px-2.5 py-2.5 text-[11px] md:gap-x-3 md:px-3 font-semibold uppercase tracking-wider text-muted ${COLS}`}>
@@ -65,7 +69,7 @@ export function PriceTable({ pools, startRank = 1, sorting }: { pools: PoolSumma
           const t = p.baseToken;
           const cap = p.marketCapUsd && p.marketCapUsd > 0 ? p.marketCapUsd : p.fdvUsd;
           return (
-            <li key={p.id} className={`relative grid items-center gap-x-2 border-b border-line px-2.5 py-2.5 md:gap-x-3 md:px-3 transition last:border-0 hover:bg-[var(--surface-2)] ${COLS}`}>
+            <li key={p.id} style={{ ["--i" as string]: i }} className={`row-in relative grid items-center gap-x-2 border-b border-line px-2.5 ${prefs.compact ? "py-1.5" : "py-2.5"} md:gap-x-3 md:px-3 transition last:border-0 hover:bg-[var(--surface-2)] ${COLS}`}>
               <WatchStar network={p.networkId} address={t.address} symbol={t.symbol} />
               <span className="num hidden text-sm text-muted md:block">{startRank + i}</span>
               <span className="flex min-w-0 items-center gap-3">
@@ -86,7 +90,7 @@ export function PriceTable({ pools, startRank = 1, sorting }: { pools: PoolSumma
                 <span className="text-xs text-muted">{p.fdvUsd && p.fdvUsd !== cap ? usdCompact(p.fdvUsd) : ""}</span>
               </span>
               <span className="num hidden text-sm font-semibold md:block">{usdCompact(p.volumeUsd.h24)}</span>
-              <span className="flex justify-end md:justify-start"><Sparkline network={p.networkId} pool={p.address} width={68} height={28} /></span>
+              <span className="flex justify-end md:justify-start">{prefs.charts && <Sparkline network={p.networkId} pool={p.address} width={68} height={28} />}</span>
             </li>
           );
         })}

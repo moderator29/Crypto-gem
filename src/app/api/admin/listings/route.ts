@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { notify } from "@/lib/notify";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { ACCESS } from "@/lib/admin/roles";
 import { auditOrFail, guard, json, parseBody } from "@/lib/admin/route";
@@ -63,7 +64,7 @@ export async function POST(req: Request) {
   const { id, action: act, reason } = body.data;
   const db = supabaseAdmin();
 
-  const { data: before, error: readErr } = await db.from("token_submissions").select("id,status,rejection_reason,published_at").eq("id", id).maybeSingle();
+  const { data: before, error: readErr } = await db.from("token_submissions").select("id,status,rejection_reason,published_at,owner_id,name").eq("id", id).maybeSingle();
   if (readErr) return json({ error: "Could not load the submission." }, 502);
   if (!before) return json({ error: "Submission not found" }, 404);
 
@@ -97,6 +98,8 @@ export async function POST(req: Request) {
     }
   }
 
+  const TITLES: Record<string, string> = { approve: "Listing approved", publish: "Listing is live", reject: "Listing rejected", request_changes: "Changes requested" };
+  if (TITLES[act] && before.owner_id) await notify(db, before.owner_id as string, "listing", TITLES[act], `${before.name ?? "Your listing"}${reason ? `: ${reason}` : ""}`, "/dashboard/listings");
   const failed = await auditOrFail(auth.actor, `listing.${act}`, `token_submissions:${id}`, { status: before.status, rejection_reason: before.rejection_reason }, { ...after, ...(reason ? { reason } : {}) });
   if (failed) return failed;
   return json({ ok: true, status: after.status });

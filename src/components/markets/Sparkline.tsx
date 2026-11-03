@@ -57,7 +57,7 @@ export function Sparkline({ network, pool, width = 96, height = 32 }: { network:
   const color = up ? "var(--up)" : "var(--down)";
   const id = `sp-${network}-${pool}`.replace(/[^A-Za-z0-9]/g, "");
   return (
-    <svg ref={ref as never} width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={up ? "7 day trend, up" : "7 day trend, down"} className="overflow-visible">
+    <svg ref={ref as never} width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={up ? "7 day trend, up" : "7 day trend, down"} className="spark-draw overflow-visible">
       <defs>
         <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
           <stop offset="0" stopColor={color} stopOpacity="0.28" />
@@ -65,7 +65,7 @@ export function Sparkline({ network, pool, width = 96, height = 32 }: { network:
         </linearGradient>
       </defs>
       <path d={`${d} L${width},${height} L0,${height} Z`} fill={`url(#${id})`} />
-      <path d={d} fill="none" stroke={color} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+      <path d={d} pathLength={1} fill="none" stroke={color} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
     </svg>
   );
 }

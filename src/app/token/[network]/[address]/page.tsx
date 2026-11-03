@@ -8,6 +8,8 @@ import { PriceChart } from "@/components/token/PriceChart";
 import { VoteButton } from "@/components/token/VoteButton";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 import { WatchButton } from "@/components/dashboard/WatchButton";
+import { NavIcon } from "@/components/ui/NavIcon";
+import { RiskPanel } from "@/components/token/RiskPanel";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { TokenLogo } from "@/components/ui/TokenLogo";
 import { classifyAddress, normalizeAddress } from "@/lib/market-data/identifiers";
@@ -112,6 +114,12 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
           )}
           <CopyButton value={canonical} label="Copy" />
           <WatchButton network={net.id} address={canonical} />
+          <Link href={`/alerts?network=${net.id}&address=${encodeURIComponent(canonical)}&symbol=${encodeURIComponent(identity?.symbol ?? "")}&name=${encodeURIComponent(identity?.name ?? "")}&price=${top?.priceUsd ?? ""}`} className="btn btn-sm">
+            <NavIcon name="alert" size={16} /> Alert
+          </Link>
+          <Link href={`/compare?a=${net.id}:${encodeURIComponent(canonical)}`} className="btn btn-sm">
+            <NavIcon name="compare" size={16} /> Compare
+          </Link>
           {explorer && (
             <a href={explorer} target="_blank" rel="noopener noreferrer" className="btn btn-sm">
               Explorer <ExternalLink size={12} />
@@ -177,6 +185,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
               </ul>
             )}
           </section>
+          <RiskPanel networkId={net.id} address={canonical} />
         </div>
 
         <aside className="space-y-4">
