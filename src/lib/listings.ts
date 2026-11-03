@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { LISTING_PACKAGES } from "@/lib/ads/catalog";
 import { classifyAddress, normalizeAddress } from "@/lib/market-data/identifiers";
+import { LOGO_BUCKET } from "@/lib/logo";
 import { getNetwork } from "@/lib/market-data/networks";
 
 const httpUrl = z.string().trim().max(300).refine((s) => {
@@ -11,6 +12,38 @@ const httpUrl = z.string().trim().max(300).refine((s) => {
   }
 }, "Enter a valid http(s) URL");
 const optUrl = z.union([z.literal(""), httpUrl]);
+
+/** Public URL prefix of our logo bucket, or null when Supabase is not configured. */
+export function ownLogoPrefix(): string | null {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!base) return null;
+  try {
+    const u = new URL(base);
+    return `${u.origin}/storage/v1/object/public/${LOGO_BUCKET}/`;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Logo URL rules. Always https. A URL on our own storage host must sit under the
+ * caller's own folder, so nobody can reference another user's upload. Any other
+ * https URL is accepted only as a provider-detected logo.
+ */
+export function logoUrlAllowed(url: string, userId: string): boolean {
+  if (url === "") return true;
+  let u: URL;
+  try {
+    u = new URL(url);
+  } catch {
+    return false;
+  }
+  if (u.protocol !== "https:" || url.length > 500) return false;
+  const own = ownLogoPrefix();
+  if (own && url.startsWith(own)) return url.slice(own.length).startsWith(`${userId}/`);
+  const ownHost = own ? new URL(own).host : null;
+  return u.host !== ownHost;
+}
 
 export const listingInput = z.object({
   mode: z.enum(["express", "standard"]),
@@ -24,6 +57,7 @@ export const listingInput = z.object({
     description: z.string().trim().min(30).max(2000),
     descriptionZh: z.string().trim().max(2000).optional().default(""),
     website: optUrl, twitter: optUrl, telegram: optUrl, discord: optUrl, medium: optUrl, coingecko: optUrl, coinmarketcap: optUrl,
+    zhTelegram: optUrl.optional().default(""), btok: optUrl.optional().default(""), weibo: optUrl.optional().default(""),
     logoUrl: z.union([z.literal(""), z.string().url().startsWith("https://").max(500)]),
     email: z.string().email().max(200),
   }),

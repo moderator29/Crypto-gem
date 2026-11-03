@@ -1,7 +1,7 @@
 "use client";
 
-import { AlertTriangle, ArrowLeft, BadgeCheck, CheckCircle2, Loader2, RefreshCw, Rocket, ScanSearch, Zap } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { AlertTriangle, ArrowLeft, BadgeCheck, CheckCircle2, Globe, Loader2, RefreshCw, Rocket, ScanSearch, Upload, X, Zap } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { accessToken } from "@/lib/auth/client";
@@ -10,6 +10,7 @@ import type { DetectedToken, Sourced } from "@/lib/detect/types";
 import { getNetwork, NETWORKS } from "@/lib/market-data/networks";
 import { priceUsd, usdCompact } from "@/lib/utils/format";
 import { TokenLogo } from "@/components/ui/TokenLogo";
+import { LOGO_MAX_BYTES } from "@/lib/logo";
 import { useDetect } from "./useDetect";
 
 type Mode = "express" | "standard";
@@ -23,9 +24,15 @@ const STEPS: Array<{ id: Step; label: string }> = [
 
 interface Form {
   name: string; symbol: string; description: string; descriptionZh: string; website: string; twitter: string; telegram: string;
-  discord: string; medium: string; coingecko: string; coinmarketcap: string; email: string; logoUrl: string;
+  discord: string; medium: string; coingecko: string; coinmarketcap: string; zhTelegram: string; btok: string; weibo: string; email: string; logoUrl: string;
 }
-const EMPTY: Form = { name: "", symbol: "", description: "", descriptionZh: "", website: "", twitter: "", telegram: "", discord: "", medium: "", coingecko: "", coinmarketcap: "", email: "", logoUrl: "" };
+const EMPTY: Form = { name: "", symbol: "", description: "", descriptionZh: "", website: "", twitter: "", telegram: "", discord: "", medium: "", coingecko: "", coinmarketcap: "", zhTelegram: "", btok: "", weibo: "", email: "", logoUrl: "" };
+
+type LinkKey = "website" | "twitter" | "telegram" | "discord" | "medium" | "coingecko" | "coinmarketcap" | "zhTelegram" | "btok" | "weibo";
+const LINKS: Array<[LinkKey, string]> = [
+  ["website", "Website"], ["twitter", "X / Twitter"], ["telegram", "Telegram"], ["zhTelegram", "Chinese Telegram"], ["discord", "Discord"], ["medium", "Medium"],
+  ["btok", "BTOK"], ["weibo", "Weibo"], ["coingecko", "CoinGecko URL"], ["coinmarketcap", "CoinMarketCap URL"],
+];
 
 const SOURCE_LABEL: Record<string, string> = { geckoterminal: "GeckoTerminal", coingecko: "CoinGecko", coinmarketcap: "CoinMarketCap", rpc: "On-chain", user: "You" };
 const src = (s: Sourced<unknown> | null) => (s ? SOURCE_LABEL[s.source] ?? s.source : null);
@@ -37,6 +44,7 @@ function prefill(t: DetectedToken): Form {
 
 const urlOk = (s: string) => {
   if (!s) return true;
+  if (s.length > 300) return false;
   try {
     const u = new URL(s);
     return u.protocol === "https:" || u.protocol === "http:";
@@ -44,6 +52,10 @@ const urlOk = (s: string) => {
     return false;
   }
 };
+
+function StepLabel({ n }: { n: number }) {
+  return <p className="num mb-1 text-[11px] font-bold uppercase tracking-widest text-muted">Step {String(n).padStart(2, "0")}</p>;
+}
 
 export function Wizard() {
   const [mode, setMode] = useState<Mode | null>(null);
@@ -59,6 +71,9 @@ export function Wizard() {
   const [methods, setMethods] = useState<Array<{ id: string; label: string; provider_currency: string; network: string }>>([]);
   const [payCurrency, setPayCurrency] = useState("");
   const [needSignin, setNeedSignin] = useState(false);
+  const [logoBusy, setLogoBusy] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const { state, retry } = useDetect(step === "identify" ? address : "", network);
 
   useEffect(() => {
@@ -75,10 +90,18 @@ export function Wizard() {
     if (!form.name.trim()) e.name = "Project name is required";
     if (!form.symbol.trim()) e.symbol = "Ticker is required";
     if (!form.description.trim() || form.description.trim().length < 30) e.description = "Describe the project in at least 30 characters";
-    for (const k of ["website", "twitter", "telegram", "discord", "medium", "coingecko", "coinmarketcap"] as const) if (!urlOk(form[k])) e[k] = "Enter a valid http(s) URL";
+    for (const [k] of LINKS) if (!urlOk(form[k])) e[k] = "Enter a valid http(s) URL";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "A valid contact email is required";
     return e;
   }, [form]);
+
+  const detectedBy = (k: keyof Form): Sourced<unknown> | null =>
+    token ? (({ name: token.name, symbol: token.symbol, website: token.website, twitter: token.twitter, telegram: token.telegram, discord: token.discord, coingecko: token.coingeckoUrl, coinmarketcap: token.coinmarketcapUrl } as Record<string, Sourced<unknown> | null>)[k] ?? null) : null;
+  const badge = (k: keyof Form) => {
+    const d = detectedBy(k);
+    if (touched.has(k)) return <span className="text-[11px] font-medium text-muted">Edited by you</span>;
+    return d ? <span className="text-[11px] font-medium text-up">Detected via {src(d)}</span> : null;
+  };
 
   const set = (k: keyof Form, v: string) => {
     setForm((f) => ({ ...f, [k]: v }));
@@ -95,6 +118,28 @@ export function Wizard() {
     });
     setStep("review");
   };
+
+  async function uploadLogo(file: File) {
+    setLogoError(null);
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) return setLogoError("Use a JPG, PNG or WebP image");
+    if (file.size > LOGO_MAX_BYTES) return setLogoError("Image must be 1 MB or smaller");
+    setLogoBusy(true);
+    try {
+      const jwt = await accessToken();
+      const body = new FormData();
+      body.append("file", file);
+      const res = await fetch("/api/uploads/logo", { method: "POST", headers: jwt ? { Authorization: `Bearer ${jwt}` } : {}, body });
+      const j = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      if (res.status === 401) return setLogoError("Sign in to upload a logo.");
+      if (!res.ok || !j.url) return setLogoError(j.error ?? "Upload failed");
+      set("logoUrl", j.url);
+    } catch {
+      setLogoError("Network error. Try the upload again.");
+    } finally {
+      setLogoBusy(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
 
   const goBack = () => setStep(({ identify: "mode", review: "identify", package: "review", summary: "package", mode: "mode" } as Record<Step, Step>)[step]);
 
@@ -144,7 +189,9 @@ export function Wizard() {
         <button type="button" onClick={goBack} className="btn !px-0 w-11" aria-label="Back"><ArrowLeft size={18} /></button>
         <ol className="scroll-x flex-1" aria-label="Progress">
           {STEPS.map((s, i) => (
-            <li key={s.id} aria-current={i === idx ? "step" : undefined} className="chip">{i + 1}. {s.label}</li>
+            <li key={s.id} aria-current={i === idx ? "step" : undefined} className="chip">
+              <span className="num text-[11px] font-bold tracking-widest text-muted">{String(i + 1).padStart(2, "0")}</span> {s.label}
+            </li>
           ))}
         </ol>
       </div>
@@ -152,6 +199,7 @@ export function Wizard() {
       {step === "identify" && (
         <section className="glass space-y-4 p-5 md:p-7" aria-label="Identify your token">
           <div>
+            <StepLabel n={idx + 1} />
             <h2 className="font-display text-2xl font-bold">Paste your contract address</h2>
             <p className="mt-1 text-sm text-soft">We&apos;ll detect the chain and pre-fill the token details automatically.</p>
           </div>
@@ -195,6 +243,7 @@ export function Wizard() {
                 </div>
                 <span className={`inline-flex items-center gap-1 text-xs font-semibold ${state.status === "found" ? "text-up" : "text-warm"}`}><BadgeCheck size={15} />{state.status === "found" ? "Detected" : "Partly detected"}</span>
               </div>
+              <button type="button" className="btn" onClick={() => { setAddress(""); setNetwork(null); }}><RefreshCw size={15} /> Change</button>
               <dl className="num grid grid-cols-2 gap-2 text-sm md:grid-cols-4">
                 {([["Price", priceUsd(token.priceUsd?.value)], ["Liquidity", usdCompact(token.liquidityUsd?.value)], ["24h volume", usdCompact(token.volume24hUsd?.value)], ["Pools", String(token.pools.length)]] as const).map(([k, v]) => (
                   <div key={k}><dt className="text-xs text-muted">{k}</dt><dd className="font-semibold">{v}</dd></div>
@@ -226,7 +275,7 @@ export function Wizard() {
 
       {step === "review" && (
         <section className="glass space-y-5 p-5 md:p-7" aria-label="Project details">
-          <h2 className="font-display text-2xl font-bold">Project details</h2>
+          <div><StepLabel n={idx + 1} /><h2 className="font-display text-2xl font-bold">Project details</h2></div>
           {token && (
             <div className="glass-flat p-3 text-sm">
               <span className="font-semibold">On-chain facts</span> are shown from providers and cannot be edited: {token.networkName}, <span className="num break-all">{token.address}</span>
@@ -243,23 +292,52 @@ export function Wizard() {
             </label>
           )}
           <div className="grid gap-4 md:grid-cols-2">
-            {([
-              ["name", "Project name", "text"], ["symbol", "Ticker", "text"], ["website", "Website", "url"], ["twitter", "X / Twitter", "url"],
-              ["telegram", "Telegram", "url"], ["discord", "Discord", "url"], ["medium", "Medium", "url"], ["coingecko", "CoinGecko URL", "url"], ["coinmarketcap", "CoinMarketCap URL", "url"], ["email", "Contact email", "email"],
-            ] as const).map(([k, label, type]) => {
-              const detected = token ? (({ name: token.name, symbol: token.symbol, website: token.website, twitter: token.twitter, telegram: token.telegram, discord: token.discord, coingecko: token.coingeckoUrl, coinmarketcap: token.coinmarketcapUrl } as Record<string, Sourced<unknown> | null>)[k] ?? null) : null;
-              const edited = touched.has(k);
-              return (
+            {([["name", "Project name", "text"], ["symbol", "Ticker", "text"], ["email", "Contact email", "email"]] as const).map(([k, label, type]) => (
+              <label key={k} className="block">
+                <span className="mb-1 flex items-center justify-between text-sm font-semibold">{label}
+                  {badge(k)}
+                </span>
+                <input className="input" type={type} value={form[k]} onChange={(e) => set(k, e.target.value)} aria-invalid={Boolean(errors[k])} />
+                {errors[k] && touched.has(k) && <span className="mt-1 block text-xs text-down">{errors[k]}</span>}
+              </label>
+            ))}
+          </div>
+
+          <div className="space-y-2">
+            <span className="block text-sm font-semibold">Logo</span>
+            <div className="glass-flat flex flex-col items-center gap-3 p-4 text-center sm:flex-row sm:text-left" style={{ borderStyle: "dashed" }}>
+              <div className="relative">
+                <TokenLogo src={form.logoUrl || null} symbol={form.symbol || "?"} size={72} />
+                {form.logoUrl && (
+                  <button type="button" onClick={() => set("logoUrl", "")} className="absolute -right-2 -top-2 grid h-7 w-7 place-items-center rounded-full bg-[var(--border-strong)]" aria-label="Remove logo"><X size={14} /></button>
+                )}
+              </div>
+              <div className="min-w-0 flex-1 space-y-1">
+                <p className="text-sm text-soft">{form.logoUrl ? (touched.has("logoUrl") ? "Uploaded by you" : `Detected via ${src(token?.logoUrl ?? null) ?? "provider"}`) : "No logo yet. Upload one or continue without."}</p>
+                <p className="text-xs text-muted">JPG, PNG or WebP. Up to 1 MB, roughly square, at least 128px.</p>
+              </div>
+              <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" id="logo-file" onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadLogo(f); }} />
+              <label htmlFor="logo-file" className="btn cursor-pointer">{logoBusy ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />} Upload</label>
+            </div>
+            {logoError && <p className="text-xs text-down" role="alert">{logoError}</p>}
+          </div>
+
+          <div className="space-y-3">
+            <h3 className="font-display text-lg font-bold">Links</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              {LINKS.map(([k, label]) => (
                 <label key={k} className="block">
                   <span className="mb-1 flex items-center justify-between text-sm font-semibold">{label}
-                    {detected && !edited && <span className="text-[11px] font-medium text-up">Detected via {src(detected)}</span>}
-                    {edited && <span className="text-[11px] font-medium text-muted">Edited by you</span>}
+                    {badge(k)}
                   </span>
-                  <input className="input" type={type} value={form[k]} onChange={(e) => set(k, e.target.value)} aria-invalid={Boolean(errors[k])} />
-                  {errors[k] && (form[k] || k === "email" || k === "name" || k === "symbol") && touched.has(k) && <span className="mt-1 block text-xs text-down">{errors[k]}</span>}
+                  <span className="relative block">
+                    <Globe size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" aria-hidden="true" />
+                    <input className="input !pl-10" type="url" inputMode="url" value={form[k]} onChange={(e) => set(k, e.target.value)} aria-invalid={Boolean(errors[k])} placeholder="https://" maxLength={300} />
+                  </span>
+                  {errors[k] && form[k] && touched.has(k) && <span className="mt-1 block text-xs text-down">{errors[k]}</span>}
                 </label>
-              );
-            })}
+              ))}
+            </div>
           </div>
           <label className="block"><span className="mb-1 block text-sm font-semibold">Description</span>
             <textarea className="input !min-h-28 py-3" value={form.description} onChange={(e) => set("description", e.target.value)} maxLength={2000} />
@@ -276,7 +354,7 @@ export function Wizard() {
 
       {step === "package" && (
         <section className="space-y-4" aria-label="Choose a package">
-          <h2 className="font-display text-2xl font-bold">Choose your package</h2>
+          <div><StepLabel n={idx + 1} /><h2 className="font-display text-2xl font-bold">Choose your package</h2></div>
           <div className="grid gap-4 md:grid-cols-3">
             {LISTING_PACKAGES.map((p) => (
               <button key={p.id} type="button" onClick={() => setPkg(p.id)} aria-pressed={pkg === p.id} className={`glass hover-lift flex flex-col gap-3 p-5 text-left ${pkg === p.id ? "!border-[var(--brand)]" : ""}`}>
@@ -293,12 +371,19 @@ export function Wizard() {
 
       {step === "summary" && (
         <section className="glass space-y-4 p-5 md:p-7" aria-label="Order summary">
-          <h2 className="font-display text-2xl font-bold">Order summary</h2>
+          <div><StepLabel n={idx + 1} /><h2 className="font-display text-2xl font-bold">Order summary</h2></div>
           <dl className="grid gap-3 text-sm md:grid-cols-2">
             {([["Project", form.name], ["Ticker", form.symbol], ["Network", net?.name ?? "Not specified"], ["Contract", token?.address ?? (address.trim() || "Not provided")], ["Package", `${chosenPkg.name}`], ["Contact", form.email]] as const).map(([k, v]) => (
               <div key={k}><dt className="text-xs text-muted">{k}</dt><dd className="num break-all font-semibold">{v}</dd></div>
             ))}
           </dl>
+          {LINKS.some(([k]) => form[k]) && (
+            <dl className="grid gap-3 text-sm md:grid-cols-2" aria-label="Links">
+              {LINKS.filter(([k]) => form[k]).map(([k, label]) => (
+                <div key={k}><dt className="text-xs text-muted">{label}</dt><dd className="break-all font-semibold">{form[k]}</dd></div>
+              ))}
+            </dl>
+          )}
           <ul className="space-y-1 text-sm text-soft">{chosenPkg.perks.map((x) => <li key={x}>✓ {x}</li>)}</ul>
           <label className="flex items-start gap-3 text-sm"><input type="checkbox" className="mt-1 h-4 w-4" checked={terms} onChange={(e) => setTerms(e.target.checked)} /> I confirm the information is accurate and accept the listing terms.</label>
           <label className="block"><span className="mb-1 block text-sm font-semibold">Pay with</span>
