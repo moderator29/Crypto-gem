@@ -7,11 +7,11 @@ const state = vi.hoisted(() => ({
   provider: { configured: true, fail: false, currencies: ["usdtbsc", "sol"] as string[] },
 }));
 
-vi.mock("@/lib/db", async () => {
+vi.mock("@/lib/supabase/admin", async () => {
   const { createFakeDb: make } = await import("./admin-fakedb");
   return {
-    dbConfigured: () => true,
-    getDb: () => make(state.tables, state.failures),
+    supabaseConfigured: () => true,
+    supabaseAdmin: () => make(state.tables, state.failures),
     userFromRequest: async (req: Request) => {
       const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
       return token?.startsWith("tok-") ? { id: token.slice(4), email: `${token.slice(4)}@example.test` } : null;

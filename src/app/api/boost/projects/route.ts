@@ -1,4 +1,4 @@
-import { getDb, dbConfigured } from "@/lib/db";
+import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 import { getNetwork } from "@/lib/market-data/networks";
 
 export const dynamic = "force-dynamic";
@@ -7,14 +7,14 @@ const PAGE = 20;
 
 /** Listed (published) projects eligible for a boost, with their current boost state. Nothing is fabricated: no database means no list. */
 export async function GET(req: Request) {
-  if (!dbConfigured()) return Response.json({ configured: false, projects: [], total: 0 });
+  if (!supabaseConfigured()) return Response.json({ configured: false, projects: [], total: 0 });
   const u = new URL(req.url);
   const q = (u.searchParams.get("q") ?? "").trim().slice(0, 60).replace(/[%,()]/g, "");
   const network = u.searchParams.get("network");
   const page = Math.max(1, Math.min(500, Number(u.searchParams.get("page") ?? 1) || 1));
   if (network && !getNetwork(network)) return Response.json({ error: "Unknown network" }, { status: 400 });
 
-  const db = getDb();
+  const db = supabaseAdmin();
   let query = db.from("token_submissions").select("id,name,symbol,network_id,address,logo_url,verification", { count: "exact" }).eq("status", "published");
   if (network) query = query.eq("network_id", network);
   if (q) query = query.or(`name.ilike.%${q}%,symbol.ilike.%${q}%,address.ilike.%${q}%`);

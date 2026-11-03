@@ -6,15 +6,15 @@ import { BoostConfigurator } from "@/components/boost/BoostConfigurator";
 import { TokenLogo } from "@/components/ui/TokenLogo";
 import { BOOST_PACKS, type BoostPack } from "@/lib/ads/catalog";
 import { getNetwork } from "@/lib/market-data/networks";
-import { getDb, dbConfigured } from "@/lib/db";
+import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = { title: "Boost packs" };
 export const dynamic = "force-dynamic";
 
 export default async function BoostProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  if (!/^[0-9a-f-]{36}$/i.test(id) || !dbConfigured()) notFound();
-  const db = getDb();
+  if (!/^[0-9a-f-]{36}$/i.test(id) || !supabaseConfigured()) notFound();
+  const db = supabaseAdmin();
   const { data: p } = await db.from("token_submissions").select("id,name,symbol,network_id,address,logo_url").eq("id", id).eq("status", "published").maybeSingle();
   if (!p) notFound();
 

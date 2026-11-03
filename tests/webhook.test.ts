@@ -4,7 +4,7 @@ import { signIpn } from "@/lib/payments/nowpayments";
 type Row = Record<string, unknown>;
 const tables: Record<string, Row[]> = {};
 
-/** Minimal in-memory stand-in for the query builder used by the webhook route. */
+/** Minimal in-memory stand-in for the Supabase query builder used by the webhook route. */
 function fakeDb() {
   const from = (name: string) => {
     const filters: Array<[string, unknown]> = [];
@@ -44,7 +44,7 @@ function fakeDb() {
   return { from };
 }
 
-vi.mock("@/lib/db", () => ({ dbConfigured: () => true, getDb: () => fakeDb() }));
+vi.mock("@/lib/supabase/admin", () => ({ supabaseConfigured: () => true, supabaseAdmin: () => fakeDb() }));
 
 const SECRET = "ipn-secret";
 const base = { payment_id: 777, payment_status: "finished", order_id: "ord-1", price_amount: 300, price_currency: "usd", pay_currency: "usdtbsc", actually_paid: 300 };

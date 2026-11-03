@@ -1,5 +1,5 @@
 import "server-only";
-import type { DbClient } from "@/lib/db";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { allocate, type Booking } from "./availability";
 import { getPlacement } from "./catalog";
 
@@ -14,7 +14,7 @@ export interface EffectivePlacement {
 }
 
 /** Admin-managed row wins over the default catalog, so price and slot changes need no deploy. */
-export async function loadPlacement(db: DbClient, id: string): Promise<EffectivePlacement | null> {
+export async function loadPlacement(db: SupabaseClient, id: string): Promise<EffectivePlacement | null> {
   const def = getPlacement(id);
   if (!def) return null;
   const { data: row } = await db.from("advertising_placements").select("*").eq("id", id).maybeSingle();
@@ -24,7 +24,7 @@ export async function loadPlacement(db: DbClient, id: string): Promise<Effective
 
 const LIVE = ["awaiting_payment", "pending_creative", "approved", "scheduled", "active", "paused"];
 
-export async function findSlot(db: DbClient, p: EffectivePlacement, startsAt: number, endsAt: number) {
+export async function findSlot(db: SupabaseClient, p: EffectivePlacement, startsAt: number, endsAt: number) {
   const { data: existing } = await db.from("advertising_campaigns").select("id,starts_at,ends_at").eq("placement_id", p.id).in("status", LIVE).lt("starts_at", new Date(endsAt).toISOString()).gt("ends_at", new Date(startsAt).toISOString());
   const { data: resv } = p.exclusive && existing?.length ? await db.from("exclusive_reservations").select("campaign_id,slot").in("campaign_id", existing.map((c) => c.id)) : { data: [] as Array<{ campaign_id: string; slot: number }> };
   const slotOf = new Map((resv ?? []).map((r) => [r.campaign_id, r.slot]));

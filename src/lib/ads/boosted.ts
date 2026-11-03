@@ -1,5 +1,5 @@
 import "server-only";
-import { getDb, dbConfigured } from "@/lib/db";
+import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 
 export interface BoostedProject {
   id: string;
@@ -17,9 +17,9 @@ export interface BoostedProject {
  * merged into organic ranking and every consumer must label it Sponsored.
  */
 export async function getBoostedProjects(limit = 6): Promise<BoostedProject[]> {
-  if (!dbConfigured()) return [];
+  if (!supabaseConfigured()) return [];
   try {
-    const db = getDb();
+    const db = supabaseAdmin();
     const now = new Date().toISOString();
     const { data: boosts } = await db.from("boost_campaigns").select("submission_id,pack_id,starts_at").eq("status", "active").lte("starts_at", now).gte("ends_at", now);
     if (!boosts?.length) return [];

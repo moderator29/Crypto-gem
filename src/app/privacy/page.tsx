@@ -39,8 +39,7 @@ export default function PrivacyPage() {
             <p>We use these providers to run the service. Each receives only what its function needs.</p>
             <ul>
               <li>Privy: sign-in and wallet authentication.</li>
-              <li>Neon: database host for application data (accounts, orders, listings and campaigns).</li>
-              <li>Vercel: website hosting, and Vercel Blob for public image storage of logos and ad creatives.</li>
+              <li>Supabase: database host for application data and public image storage for logos.</li>
               <li>NOWPayments: payment processing for listings and campaigns.</li>
               <li>GeckoTerminal, CoinGecko and CoinMarketCap: market data lookups. These requests carry contract addresses and search terms, not your account identity.</li>
               <li>Anthropic: Copilot messages are sent to Anthropic to generate replies. Do not put secrets or personal data in Copilot.</li>

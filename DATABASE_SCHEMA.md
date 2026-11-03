@@ -1,6 +1,6 @@
 # Database schema
 
-Source of truth: `db/migrations/*.sql`, applied in file order by `npm run db:migrate` to Neon Postgres. Tested in `tests/db-schema.test.ts` (the real migrations run in PGlite).
+Source of truth: `supabase/migrations/20261103000001_core_schema.sql`. Tested in `tests/rls.test.ts`.
 
 | Group | Tables |
 | --- | --- |
@@ -14,17 +14,14 @@ Source of truth: `db/migrations/*.sql`, applied in file order by `npm run db:mig
 
 ## Access model
 
-User ids are Privy DIDs stored as text. There is no auth schema.
+User ids are Privy DIDs stored as text. There is no `auth.users` dependency.
 
-The database has no roles beyond the single application role in `DATABASE_URL` and no row policies. The browser never connects to it. Access control is entirely in the server routes, which verify the Privy token, check staff roles from `user_roles` and bind each query to the verified user id.
-
-- Personal and commercial tables: read and written only by server routes after Privy token verification.
-- Catalog tables (packages, placements, boost packs, payment methods): public routes return active rows only, writes go through admin routes that check the role.
-- `token_submissions`: public routes return only `published` rows. Owners and reviewers act through routes that enforce who may see or change what.
-- `orders`, `payments`: owners read their own through `/api/me/overview` and `/api/payments/[id]`, which bind the query to the verified user.
-- Campaigns and boosts: public routes return live ones. Owners read their own through server routes.
-
-`campaign_creatives.storage_path` holds the full https URL of the image in Vercel Blob (the column name is kept from the first schema).
+- Personal and commercial tables: no client policy, server only (secret key) after Privy token verification.
+- Catalog tables (packages, placements, boost packs, payment methods): public read of active rows, writes go through admin routes that check the role.
+- `token_submissions`: public clients see only `published` rows. Owners and reviewers act through server routes that enforce who may see or change what.
+- `orders`, `payments`: server only. Owners read their own through `/api/me/overview` and `/api/payments/[id]`, which bind the query to the verified user.
+- Campaigns and boosts: public clients see live ones. Owners read their own through server routes.
+- `exclusive_reservations`: no policies. Server only.
 
 ## Integrity enforced by the database
 

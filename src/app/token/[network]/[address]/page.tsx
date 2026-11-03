@@ -6,7 +6,7 @@ import { AvailableSlot } from "@/components/home/AdSlots";
 import { Change } from "@/components/home/TokenRow";
 import { PriceChart } from "@/components/token/PriceChart";
 import { VoteButton } from "@/components/token/VoteButton";
-import { getDb, dbConfigured } from "@/lib/db";
+import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 import { WatchButton } from "@/components/dashboard/WatchButton";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { TokenLogo } from "@/components/ui/TokenLogo";
@@ -61,9 +61,9 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
 
   // A listed (published) project can be voted on. Unlisted tokens have no listing row, so no vote button.
   let listing: { id: string; votes: number } | null = null;
-  if (dbConfigured()) {
+  if (supabaseConfigured()) {
     try {
-      const db = getDb();
+      const db = supabaseAdmin();
       const { data: l } = await db.from("token_submissions").select("id").eq("network_id", net.id).eq("address", canonical).eq("status", "published").maybeSingle();
       if (l) {
         const { count } = await db.from("community_votes").select("*", { count: "exact", head: true }).eq("submission_id", l.id);

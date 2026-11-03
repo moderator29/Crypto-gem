@@ -9,9 +9,7 @@
 - Provider text (names, descriptions) is rendered as text by React. No `dangerouslySetInnerHTML` is used with provider or user data (the only use is a static theme script).
 - Security headers: nosniff, frame deny, referrer policy, permissions policy.
 - Sign-in is Privy. Every protected route verifies the Privy access token (ES256 signature, issuer, audience, expiry) before doing anything, and tests cover wrong audience, wrong issuer, expiry, foreign keys, non-DID subjects and alg=none.
-- The database is never reachable from the browser. Every query runs in a server route that verifies the Privy token first and binds the query to that user id. There are no row policies, so the route tests carry the authorisation checks.
-- The query builder validates every table and column name, binds every value as a parameter and refuses update or delete without a filter. Tests try injection through identifiers, `or()` expressions and values.
-- Uploads are checked from their real bytes (type, size, shape), stored with a content type derived from those bytes, and a logo URL on our blob host is accepted only from the caller's own folder.
+- RLS on every table, tested. Private tables have no client policy, so the browser cannot read or write orders, payments, campaigns, roles or notes. Server routes bind every query to the verified user id.
 - Campaign destinations must be `https://` (database constraint).
 - Payment webhook verification, constant-time compare, idempotency ledger.
 - Non-custodial: the app holds no keys and executes no trades.

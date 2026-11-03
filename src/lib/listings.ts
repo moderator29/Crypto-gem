@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { LISTING_PACKAGES } from "@/lib/ads/catalog";
 import { classifyAddress, normalizeAddress } from "@/lib/market-data/identifiers";
-import { LOGO_PREFIX } from "@/lib/logo";
+import { LOGO_BUCKET } from "@/lib/logo";
 import { getNetwork } from "@/lib/market-data/networks";
 
 const httpUrl = z.string().trim().max(300).refine((s) => {
@@ -13,12 +13,22 @@ const httpUrl = z.string().trim().max(300).refine((s) => {
 }, "Enter a valid http(s) URL");
 const optUrl = z.union([z.literal(""), httpUrl]);
 
-const BLOB_HOST_SUFFIX = ".public.blob.vercel-storage.com";
+/** Public URL prefix of our logo bucket, or null when Supabase is not configured. */
+export function ownLogoPrefix(): string | null {
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!base) return null;
+  try {
+    const u = new URL(base);
+    return `${u.origin}/storage/v1/object/public/${LOGO_BUCKET}/`;
+  } catch {
+    return null;
+  }
+}
 
 /**
- * Logo URL rules. Always https. A URL on our own blob storage host must sit under the caller's own
- * logos/<userId>/ folder, so nobody can reference another user's upload. Any other https URL is
- * accepted only as a provider-detected logo.
+ * Logo URL rules. Always https. A URL on our own storage host must sit under the
+ * caller's own folder, so nobody can reference another user's upload. Any other
+ * https URL is accepted only as a provider-detected logo.
  */
 export function logoUrlAllowed(url: string, userId: string): boolean {
   if (url === "") return true;
@@ -29,14 +39,10 @@ export function logoUrlAllowed(url: string, userId: string): boolean {
     return false;
   }
   if (u.protocol !== "https:" || url.length > 500) return false;
-  if (!u.hostname.endsWith(BLOB_HOST_SUFFIX)) return true;
-  let path: string;
-  try {
-    path = decodeURIComponent(u.pathname);
-  } catch {
-    return false;
-  }
-  return path.startsWith(`/${LOGO_PREFIX}/${userId}/`) && !path.includes("/../");
+  const own = ownLogoPrefix();
+  if (own && url.startsWith(own)) return url.slice(own.length).startsWith(`${userId}/`);
+  const ownHost = own ? new URL(own).host : null;
+  return u.host !== ownHost;
 }
 
 export const listingInput = z.object({

@@ -1,8 +1,9 @@
 -- Crypto Gems core schema.
 -- Identity comes from Privy: user ids are Privy DIDs stored as text (for example 'did:privy:abc123').
--- The database holds business data only. There are no database roles or row policies: access control lives
--- entirely in the server routes, which connect with the single DATABASE_URL role, verify the caller's Privy
--- access token and bind every query to that user id. Nothing in the browser ever talks to the database.
+-- The database holds business data only. Every private table has RLS enabled with NO policy for anon or
+-- authenticated roles, which denies direct access. The app reads and writes private data only from server
+-- routes using the secret key, after verifying the caller's Privy access token and binding every query to
+-- that user id. Public catalog data (packages, placements, published listings, live campaigns) has read-only policies.
 
 create extension if not exists pgcrypto;
 
@@ -208,7 +209,7 @@ create table public.campaign_creatives (
   id uuid primary key default gen_random_uuid(),
   campaign_id uuid not null references public.advertising_campaigns(id) on delete cascade,
   variant text not null check (variant in ('desktop', 'mobile')),
-  storage_path text not null, -- holds the full https URL of the stored image (Vercel Blob), name kept for history
+  storage_path text not null,
   width integer not null,
   height integer not null,
   review_status text not null default 'pending' check (review_status in ('pending', 'approved', 'rejected')),
@@ -304,3 +305,50 @@ create table public.admin_audit_logs (
   after jsonb,
   created_at timestamptz not null default now()
 );
+
+-- ── Row Level Security ───────────────────────────────────────────────────
+alter table public.profiles enable row level security;
+alter table public.user_roles enable row level security;
+alter table public.watchlists enable row level security;
+alter table public.watchlist_items enable row level security;
+alter table public.saved_searches enable row level security;
+alter table public.price_alerts enable row level security;
+alter table public.notifications enable row level security;
+alter table public.listing_packages enable row level security;
+alter table public.token_submissions enable row level security;
+alter table public.orders enable row level security;
+alter table public.payments enable row level security;
+alter table public.payment_events enable row level security;
+alter table public.payment_methods enable row level security;
+alter table public.advertising_placements enable row level security;
+alter table public.advertising_campaigns enable row level security;
+alter table public.campaign_creatives enable row level security;
+alter table public.exclusive_reservations enable row level security;
+alter table public.ad_events enable row level security;
+alter table public.boost_packs enable row level security;
+alter table public.boost_campaigns enable row level security;
+alter table public.community_votes enable row level security;
+alter table public.ai_conversations enable row level security;
+alter table public.ai_messages enable row level security;
+alter table public.platform_settings enable row level security;
+alter table public.admin_audit_logs enable row level security;
+
+
+-- Public catalog data is readable by everyone; only staff change it (and every change is audited by the server).
+create policy packages_public_read on public.listing_packages for select to anon, authenticated using (active);
+create policy placements_public_read on public.advertising_placements for select to anon, authenticated using (active);
+create policy boost_packs_public_read on public.boost_packs for select to anon, authenticated using (active);
+create policy payment_methods_public_read on public.payment_methods for select to anon, authenticated using (enabled);
+
+-- Submissions: public sees only published rows; owners see their own and may edit only while it is still a draft.
+create policy submissions_public_read on public.token_submissions for select to anon, authenticated using (status = 'published');
+
+-- Orders and payments are readable by their owner. Writes come only from the server with the secret key.
+
+-- Campaigns: owners read their own, public sees live ones; creation and status changes are server-side.
+create policy campaigns_public_live on public.advertising_campaigns for select to anon, authenticated using (status = 'active' and now() between starts_at and ends_at);
+create policy creatives_public_live on public.campaign_creatives for select to anon, authenticated
+  using (review_status = 'approved' and exists (select 1 from public.advertising_campaigns c where c.id = campaign_id and c.status = 'active' and now() between c.starts_at and c.ends_at));
+create policy boost_public_live on public.boost_campaigns for select to anon, authenticated using (status = 'active' and now() between starts_at and ends_at);
+
+-- exclusive_reservations has no policies: only the server's secret key can touch it.

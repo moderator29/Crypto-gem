@@ -1,7 +1,7 @@
 /**
  * Placement catalog and DEFAULT price book. These are the initial commercial
  * values from the product brief. At runtime the admin-managed rows in
- * `advertising_placements` override them; until the database is configured this
+ * `advertising_placements` override them; until Supabase is configured this
  * file is the source so the marketplace can still describe inventory honestly.
  */
 export type PlacementId = "hero" | "featured" | "side" | "trending" | "new-listings" | "hot-pairs" | "market" | "token-page" | "ecosystem";

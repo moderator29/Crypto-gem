@@ -1,13 +1,13 @@
-import { getDb, dbConfigured, userFromRequest } from "@/lib/db";
+import { supabaseAdmin, supabaseConfigured, userFromRequest } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
 /** Everything a project owner manages, in one call, scoped to the signed-in user. Stats are counted from stored events, never estimated. */
 export async function GET(req: Request) {
-  if (!dbConfigured()) return Response.json({ error: "Not configured" }, { status: 503 });
+  if (!supabaseConfigured()) return Response.json({ error: "Not configured" }, { status: 503 });
   const user = await userFromRequest(req);
   if (!user) return Response.json({ error: "Sign in to continue." }, { status: 401 });
-  const db = getDb();
+  const db = supabaseAdmin();
 
   const [subs, orders, boosts, camps] = await Promise.all([
     db.from("token_submissions").select("id,name,symbol,network_id,address,status,rejection_reason,created_at").eq("owner_id", user.id).order("created_at", { ascending: false }).limit(50),

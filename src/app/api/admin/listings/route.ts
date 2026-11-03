@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getDb } from "@/lib/db";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { ACCESS } from "@/lib/admin/roles";
 import { auditOrFail, guard, json, parseBody } from "@/lib/admin/route";
 import { checkTransition, LISTING_ACTIONS, LISTING_STATUSES } from "@/lib/admin/transitions";
@@ -25,7 +25,7 @@ export async function GET(req: Request) {
   const parsed = query.safeParse(Object.fromEntries(new URL(req.url).searchParams));
   if (!parsed.success) return json({ error: "Invalid query" }, 422);
   const { status, id, limit, offset } = parsed.data;
-  const db = getDb();
+  const db = supabaseAdmin();
 
   if (id) {
     const { data: submission, error } = await db.from("token_submissions").select("*").eq("id", id).maybeSingle();
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
   const body = await parseBody(req, action);
   if (!body.ok) return body.response;
   const { id, action: act, reason } = body.data;
-  const db = getDb();
+  const db = supabaseAdmin();
 
   const { data: before, error: readErr } = await db.from("token_submissions").select("id,status,rejection_reason,published_at").eq("id", id).maybeSingle();
   if (readErr) return json({ error: "Could not load the submission." }, 502);

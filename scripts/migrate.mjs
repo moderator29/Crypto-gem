@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// Applies db/migrations/*.sql, in file name order, to the database named by DATABASE_URL.
+// Applies supabase/migrations/*.sql, in file name order, to the Supabase Postgres database named by SUPABASE_DB_URL.
 // Each file runs inside its own transaction and is recorded in schema_migrations, so running the
 // script again only applies files that are new. A failed file rolls back and stops the run.
 //
-// Use the DIRECT (unpooled) Neon connection string for migrations if you have one. The pooled string
+// Use the direct Postgres connection string (not the transaction pooler) for migrations; the pooler can reject DDL.
 // also works for plain DDL, but a direct connection is the safer choice for schema changes.
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
@@ -11,11 +11,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import pg from "pg";
 
-const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../db/migrations");
-const url = process.env.MIGRATE_DATABASE_URL || process.env.DATABASE_URL;
+const dir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../supabase/migrations");
+const url = process.env.SUPABASE_DB_URL;
 
 if (!url) {
-  process.stderr.write("DATABASE_URL is not set. Add your Neon connection string, then run npm run db:migrate again.\n");
+  process.stderr.write("SUPABASE_DB_URL is not set. Add the Supabase Postgres connection string (Project Settings, Database), then run npm run db:migrate again.\n");
   process.exit(1);
 }
 

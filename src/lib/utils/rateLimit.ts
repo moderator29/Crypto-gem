@@ -7,7 +7,7 @@ const buckets = new Map<string, Bucket>();
 /**
  * Fixed-window limiter. In-memory, so it is per server instance: a coarse
  * guard that keeps one client from burning provider quota. Swap for a shared
- * store (for example Upstash) before running multiple instances.
+ * store (Upstash or Supabase) before running multiple instances.
  */
 export function rateLimit(key: string, limit: number, windowMs: number): { ok: boolean; retryAfterSec: number } {
   const now = Date.now();

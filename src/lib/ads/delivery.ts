@@ -1,5 +1,5 @@
 import "server-only";
-import { getDb, dbConfigured } from "@/lib/db";
+import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 import type { PlacementId } from "./catalog";
 
 export interface ActiveCampaign {
@@ -13,9 +13,8 @@ export interface ActiveCampaign {
 
 const ROTATION_MS = 12_000;
 
-/** `storage_path` holds the full https URL of the stored image, so it is served as is. */
-export function creativeUrl(stored: string): string {
-  return stored;
+export function creativeUrl(path: string): string {
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/creatives/${path}`;
 }
 
 /**
@@ -24,9 +23,9 @@ export function creativeUrl(stored: string): string {
  * turn. An empty list means the slot is genuinely available.
  */
 export async function getActiveCampaigns(placement: PlacementId, now = new Date()): Promise<ActiveCampaign[]> {
-  if (!dbConfigured()) return [];
+  if (!supabaseConfigured()) return [];
   try {
-    const db = getDb();
+    const db = supabaseAdmin();
     const iso = now.toISOString();
     const { data: camps } = await db.from("advertising_campaigns").select("id,headline,submission_id,created_at").eq("placement_id", placement).eq("status", "active").lte("starts_at", iso).gte("ends_at", iso).order("created_at");
     if (!camps?.length) return [];

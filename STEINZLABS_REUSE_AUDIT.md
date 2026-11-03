@@ -1,6 +1,6 @@
 # SteinzLabs Reuse Audit
 
-Scope: `moderator29/steinzlabs` (Next.js 16, React 18, Tailwind 3, a hosted Postgres client, Reown, Anthropic), read at commit `ad6a68d`. This was a structural read of configuration, design tokens, and the modules named below. It was not a line-by-line review of the whole codebase, which has several thousand files.
+Scope: `moderator29/steinzlabs` (Next.js 16, React 18, Tailwind 3, Supabase, Reown, Anthropic), read at commit `ad6a68d`. This was a structural read of configuration, design tokens, and the modules named below. It was not a line-by-line review of the whole codebase, which has several thousand files.
 
 No secrets, `.env` files or production credentials were read or copied.
 
@@ -19,7 +19,7 @@ No secrets, `.env` files or production credentials were read or copied.
 | Chains | `lib/chains/chainMeta.ts`, `evmRpc.ts`, `robinhoodData.ts` | Includes Robinhood Chain handling |
 | i18n | `i18n.ts`, `messages/*.json` (ar, en, es, fr, hi, ja, ko, pt, tr, zh), `lib/i18n/*` | next-intl |
 | Rate limiting and cache | `lib/rateLimit/*`, `lib/cache/upstash-rate-limit.ts` | Upstash backed |
-| Hosted Postgres client | its `migrations` folder and database client modules | Migrations exist but are dated and the owner's own rules say verify against the live DB |
+| Supabase | `supabase/migrations/*`, `lib/supabase.ts`, `lib/supabaseAdmin.ts` | Migrations exist but are dated and the owner's own rules say verify against the live DB |
 | Tests | `tests/lib`, `tests/security`, Playwright config | Small unit suite |
 
 ## Reuse directly (ideas and small utilities, re-implemented here)
@@ -48,10 +48,10 @@ No secrets, `.env` files or production credentials were read or copied.
 
 ## Missing infrastructure in Crypto Gems today
 
-A Neon database (DATABASE_URL), a Vercel Blob store, NOWPayments account, provider API keys, Reown project id, an AI key. See `SETUP.md` and `KNOWN_LIMITATIONS.md`.
+Supabase project and env vars, NOWPayments account, provider API keys, Reown project id, an AI key. See `SETUP.md` and `KNOWN_LIMITATIONS.md`.
 
 ## Dependency and security notes
 
-- SteinzLabs pins `lightweight-charts@5`, `framer-motion@11`, `zod@4`, `@tanstack/react-query@5`, and a Postgres SSR helper. Crypto Gems uses the same major versions where it uses them.
+- SteinzLabs pins `lightweight-charts@5`, `framer-motion@11`, `zod@4`, `@tanstack/react-query@5`, `@supabase/ssr`. Crypto Gems uses the same major versions where it uses them.
 - SteinzLabs ships Sentry, PostHog and Stripe. None are imported here.
 - SteinzLabs' own `CLAUDE.md` forbids AI attribution in commits and em-dashes in copy. This repository follows the same conventions.

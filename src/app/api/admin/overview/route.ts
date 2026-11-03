@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/db";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { ACCESS } from "@/lib/admin/roles";
 import { guard, json } from "@/lib/admin/route";
 
@@ -15,7 +15,7 @@ const MAX_PAGES = 20;
 export async function GET(req: Request) {
   const auth = await guard(req, ACCESS.overview);
   if (!auth.ok) return auth.response;
-  const db = getDb();
+  const db = supabaseAdmin();
   const nowIso = new Date().toISOString();
 
   const [pending, published, payments, paid, active] = await Promise.all([

@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/db";
+import { supabaseAdmin } from "@/lib/supabase/admin";
 import { ACCESS } from "@/lib/admin/roles";
 import { HAS_UPDATED_AT, priceUpdate } from "@/lib/admin/pricing";
 import { auditOrFail, guard, json, parseBody } from "@/lib/admin/route";
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   const auth = await guard(req, ACCESS.pricesRead);
   if (!auth.ok) return auth.response;
-  const db = getDb();
+  const db = supabaseAdmin();
   const [packages, boosts, placements] = await Promise.all([
     db.from("listing_packages").select("*").order("sort"),
     db.from("boost_packs").select("*").order("sort"),
@@ -29,7 +29,7 @@ export async function PUT(req: Request) {
   if (!auth.ok) return auth.response;
   if (!body.ok) return body.response;
   const { table, id, patch } = body.data;
-  const db = getDb();
+  const db = supabaseAdmin();
 
   const { data: before, error: readErr } = await db.from(table).select("*").eq("id", id).maybeSingle();
   if (readErr) return json({ error: "Could not load the row." }, 502);

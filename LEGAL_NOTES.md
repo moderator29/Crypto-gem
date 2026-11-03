@@ -19,7 +19,7 @@ Each page also carries an HTML comment (`OWNER PLACEHOLDERS`) in its markup poin
 ## Decisions
 
 - Content states what is collected today: Privy user id, email or wallet as given to Privy, listing and campaign data, payment records, salted-hash ad events (no raw IP), Copilot messages sent to Anthropic, theme and language in local storage.
-- Third parties named: Privy, Neon (database), Vercel (hosting and Vercel Blob file storage), NOWPayments, GeckoTerminal, CoinGecko, CoinMarketCap, Anthropic. Update the Privacy page whenever a provider is added.
-- Logo uploads are stored in public Vercel Blob storage under `logos/<user id>/<uuid>.<ext>`. Uploaded logos are therefore public by design, which the Privacy page states.
+- Third parties named: Privy, Supabase (database and logo storage), NOWPayments, GeckoTerminal, CoinGecko, CoinMarketCap, Anthropic. Update the Privacy page whenever a provider is added.
+- Logo uploads are stored in the public `logos` bucket under `<user id>/<uuid>.<ext>`. Uploaded logos are therefore public by design, which the Privacy page states.
 - No text was copied from other sites.
 - Footer got one added link line for the three pages because none existed.

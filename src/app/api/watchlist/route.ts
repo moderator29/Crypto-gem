@@ -2,7 +2,7 @@ import { z } from "zod";
 import { classifyAddress, normalizeAddress } from "@/lib/market-data/identifiers";
 import { getNetwork } from "@/lib/market-data/networks";
 import { geckoTerminal } from "@/lib/market-data/providers/geckoterminal";
-import { getDb, dbConfigured, userFromRequest } from "@/lib/db";
+import { supabaseAdmin, supabaseConfigured, userFromRequest } from "@/lib/supabase/admin";
 import { clientKey, rateLimit } from "@/lib/utils/rateLimit";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ const item = z.object({ network: z.string().min(2).max(30), address: z.string().
 const MAX_ITEMS = 100;
 
 async function defaultList(userId: string): Promise<string> {
-  const db = getDb();
+  const db = supabaseAdmin();
   const { data } = await db.from("watchlists").select("id").eq("user_id", userId).eq("name", "Favourites").maybeSingle();
   if (data) return data.id;
   const { data: created } = await db.from("watchlists").insert({ user_id: userId, name: "Favourites" }).select("id").single();
@@ -26,7 +26,7 @@ function valid(network: string, address: string): { network: string; address: st
 }
 
 async function guard(req: Request) {
-  if (!dbConfigured()) return { res: Response.json({ error: "Accounts are not connected yet." }, { status: 503 }) };
+  if (!supabaseConfigured()) return { res: Response.json({ error: "Accounts are not connected yet." }, { status: 503 }) };
   if (!rateLimit(`wl:${clientKey(req)}`, 60, 60_000).ok) return { res: Response.json({ error: "Too many requests" }, { status: 429 }) };
   const user = await userFromRequest(req);
   if (!user) return { res: Response.json({ error: "Sign in to use your watchlist." }, { status: 401 }) };
@@ -37,7 +37,7 @@ async function guard(req: Request) {
 export async function GET(req: Request) {
   const g = await guard(req);
   if (!g.user) return g.res;
-  const db = getDb();
+  const db = supabaseAdmin();
   const id = await defaultList(g.user.id);
   const { data } = await db.from("watchlist_items").select("network_id,address,added_at").eq("watchlist_id", id).order("added_at", { ascending: false }).limit(MAX_ITEMS);
   const items = data ?? [];
@@ -62,7 +62,7 @@ export async function POST(req: Request) {
   const parsed = item.safeParse(await req.json().catch(() => null));
   const v = parsed.success ? valid(parsed.data.network, parsed.data.address) : null;
   if (!v) return Response.json({ error: "Invalid token" }, { status: 422 });
-  const db = getDb();
+  const db = supabaseAdmin();
   const id = await defaultList(g.user.id);
   const { count } = await db.from("watchlist_items").select("*", { count: "exact", head: true }).eq("watchlist_id", id);
   if ((count ?? 0) >= MAX_ITEMS) return Response.json({ error: `Watchlist is full (${MAX_ITEMS})` }, { status: 409 });
@@ -77,6 +77,6 @@ export async function DELETE(req: Request) {
   const v = valid(u.searchParams.get("network") ?? "", u.searchParams.get("address") ?? "");
   if (!v) return Response.json({ error: "Invalid token" }, { status: 422 });
   const id = await defaultList(g.user.id);
-  await getDb().from("watchlist_items").delete().eq("watchlist_id", id).eq("network_id", v.network).eq("address", v.address);
+  await supabaseAdmin().from("watchlist_items").delete().eq("watchlist_id", id).eq("network_id", v.network).eq("address", v.address);
   return Response.json({ ok: true });
 }

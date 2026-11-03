@@ -1,7 +1,6 @@
 import type { ImageInfo } from "@/lib/ads/image";
 
-/** Folder prefix of uploaded logos in blob storage. Each upload lives under logos/<userId>/. */
-export const LOGO_PREFIX = "logos";
+export const LOGO_BUCKET = "logos";
 export const LOGO_MAX_BYTES = 1024 * 1024;
 export const LOGO_MIN_PX = 128;
 

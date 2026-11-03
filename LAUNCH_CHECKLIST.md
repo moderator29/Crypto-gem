@@ -1,6 +1,6 @@
 # Launch checklist
 
-Everything the owner has to supply or decide before Crypto Gems can take real traffic and real money. The code for every item below is written and tested with fakes. Nothing has run against live Privy, Neon, Vercel Blob, NOWPayments, CoinMarketCap or Anthropic because none of those credentials exist in the build environment.
+Everything the owner has to supply or decide before Crypto Gems can take real traffic and real money. The code for every item below is written and tested with fakes. Nothing has run against live Privy, Supabase, NOWPayments, CoinMarketCap or Anthropic because none of those credentials exist in the build environment.
 
 ## 1. Vercel environment variables
 
@@ -11,8 +11,8 @@ Set these in Vercel, Project Settings, Environment Variables. Mark every one wit
 | Name | Where to get it | Used for |
 | --- | --- | --- |
 | `NEXT_PUBLIC_PRIVY_APP_ID` | dashboard.privy.io, your app, App ID | Sign-in (email code, wallet, Google). Also used by the server to verify access tokens |
-| `DATABASE_URL` | Neon (Vercel Marketplace integration), pooled connection string | All business data: listings, orders, payments, campaigns, boosts, watchlists, votes |
-| `BLOB_READ_WRITE_TOKEN` | Vercel, Storage, Blob store | Ad creatives and uploaded logos |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase, Project Settings, API | All business data and file storage: listings, orders, payments, campaigns, boosts, watchlists, votes, ad creatives, logos |
+| `SUPABASE_SECRET_KEY` | Supabase, Project Settings, API keys (secret key) | Server-side access that bypasses RLS after the Privy token is verified. Server only |
 | `NOWPAYMENTS_API_KEY` | nowpayments.io dashboard, Store settings | Creating payments |
 | `NOWPAYMENTS_IPN_SECRET` | Same dashboard, Payments, IPN secret | Verifying payment webhooks |
 | `NOWPAYMENTS_SANDBOX` | You set it: `true` while testing, `false` in production | Selects the sandbox or live API |
@@ -38,13 +38,13 @@ Set these in Vercel, Project Settings, Environment Variables. Mark every one wit
 | --- | --- |
 | `GECKOTERMINAL_API_KEY` | Only if you hold a separate GeckoTerminal or CoinGecko onchain key |
 
-Not needed: any variables from the previous database provider, and `NEXT_PUBLIC_REOWN_PROJECT_ID`.
+Not needed: `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (no browser client talks to Supabase today) and `NEXT_PUBLIC_REOWN_PROJECT_ID`. `SUPABASE_DB_URL` is only for running migrations, keep it out of Vercel.
 
 ## 2. Accounts and APIs, in the order to set them up
 
 1. **Privy** (free to start). Enable Email, Wallet and Google. Add your domain and `http://localhost:3000` to allowed origins. Embedded wallets are switched off in code on purpose.
-2. **Neon** through the Vercel Marketplace. Then run the migrations (`npm run db:migrate` with `DATABASE_URL` set locally, or from CI).
-3. **Vercel Blob** store, then copy the token.
+2. **Supabase** project. Put the direct Postgres connection string in `SUPABASE_DB_URL` on your machine (not in Vercel) and run `npm run db:migrate`. It creates the schema, RLS, seed catalog and the two storage buckets.
+3. Nothing else to set up for storage: the buckets come from the migrations.
 4. **NOWPayments**. Create the account, set payout wallets there (Crypto Gems never holds funds), create an API key and IPN secret, set the IPN callback to `https://<your-domain>/api/webhooks/nowpayments`. Then in the admin area read the live currency list and enable only the payment methods you have verified.
 5. **CoinGecko**. A paid plan is the safe production choice. The free tier is rate limited and has commercial-use limits.
 6. **CoinMarketCap** (the info endpoint needs a plan that includes it).
