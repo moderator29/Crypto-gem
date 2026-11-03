@@ -4,7 +4,7 @@ import { AlertTriangle, ArrowLeft, BadgeCheck, CheckCircle2, Loader2, RefreshCw,
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { accessToken } from "@/lib/supabase/browser";
+import { accessToken } from "@/lib/auth/client";
 import { LISTING_PACKAGES } from "@/lib/ads/catalog";
 import type { DetectedToken, Sourced } from "@/lib/detect/types";
 import { getNetwork, NETWORKS } from "@/lib/market-data/networks";

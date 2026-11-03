@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 /** Creates a submission, its order and a provider payment. Price is decided here, never by the client. */
 export async function POST(req: Request) {
-  const missing = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SECRET_KEY", "NOWPAYMENTS_API_KEY", "NOWPAYMENTS_IPN_SECRET"].filter((k) => !process.env[k]);
+  const missing = ["NEXT_PUBLIC_PRIVY_APP_ID", "NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SECRET_KEY", "NOWPAYMENTS_API_KEY", "NOWPAYMENTS_IPN_SECRET"].filter((k) => !process.env[k]);
   if (missing.length > 0 || !supabaseConfigured() || !nowConfigured()) {
     return Response.json({ error: `Checkout is not live yet. Missing server configuration: ${missing.join(", ")}. See SETUP.md.` }, { status: 503 });
   }

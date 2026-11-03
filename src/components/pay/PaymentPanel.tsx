@@ -7,7 +7,7 @@ import Link from "next/link";
 import QRCode from "qrcode";
 import { useCallback, useEffect, useState } from "react";
 import { CopyButton } from "@/components/ui/CopyButton";
-import { accessToken } from "@/lib/supabase/browser";
+import { accessToken } from "@/lib/auth/client";
 
 interface Payment { id: string; provider_payment_id: string; pay_currency: string; pay_network: string | null; pay_amount: number; pay_address: string; actually_paid: number | null; status: string; expires_at: string | null }
 interface Method { id: string; label: string; provider_currency: string; network: string }

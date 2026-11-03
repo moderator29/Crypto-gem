@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { LoginForm } from "@/components/pay/LoginForm";
+import { LoginPanel } from "@/components/auth/LoginPanel";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -7,7 +7,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const { next } = await searchParams;
   return (
     <div className="mx-auto max-w-md pt-8">
-      <LoginForm next={next && next.startsWith("/") && !next.startsWith("//") ? next : "/"} />
+      <LoginPanel next={next && next.startsWith("/") && !next.startsWith("//") ? next : "/"} />
     </div>
   );
 }

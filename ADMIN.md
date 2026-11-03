@@ -14,17 +14,17 @@ Roles live in `public.user_roles` (enum `app_role`). The admin API reads them th
 | `admin` | Everything the roles above can do, plus listing package and boost pack prices, payment method switches and the audit log. |
 | `super_admin` | Passes every check. |
 
-The exact sets are in `src/lib/admin/roles.ts` (`ACCESS`). `requireRole(req, roles)` in `src/lib/admin/auth.ts` returns `401` (no valid session), `403` (signed in, wrong role) or `503` (Supabase not configured on the server).
+The exact sets are in `src/lib/admin/roles.ts` (`ACCESS`). `requireRole(req, roles)` in `src/lib/admin/auth.ts` returns `401` (no valid session), `403` (signed in, wrong role) or `503` (database not configured on the server).
 
 Decision: `admin` is allowed on every route, including placement prices and creatives, even though the database policy for placements names `advertising_manager`. The server uses the secret key, so policy parity is kept in the role table above instead.
 
 ## Grant the first super admin
 
-The user must have signed in once (magic link at `/login`) so a row exists in `auth.users`. Then run this in the Supabase SQL editor, which runs as a privileged role and bypasses RLS:
+Identity is Privy. Sign in at `/login`, open the account menu in the header and choose **Copy user ID** (it looks like `did:privy:abc123`). Then run this in the database SQL editor, which runs as a privileged role:
 
 ```sql
 insert into public.user_roles (user_id, role)
-select id, 'super_admin' from auth.users where email = 'you@example.com'
+values ('did:privy:PASTE_YOUR_ID_HERE', 'super_admin')
 on conflict do nothing;
 ```
 
@@ -76,7 +76,7 @@ Reviewer reasons are also stored in `moderation_notes` (RLS: staff read, reviewe
 
 ## UI
 
-`/admin` (overview), `/admin/listings` and `/admin/listings/[id]` (submitted versus detected comparison, action buttons with confirmation and reason), `/admin/prices`, `/admin/payment-methods`, `/admin/payments`, `/admin/creatives`, `/admin/audit`. Sign-in reuses the existing Supabase session: `accessToken()` is sent as a Bearer header. Anyone without a staff role sees a no-access state. Tables collapse to stacked cards on phones. When Supabase is not configured the shell says so instead of showing empty numbers.
+`/admin` (overview), `/admin/listings` and `/admin/listings/[id]` (submitted versus detected comparison, action buttons with confirmation and reason), `/admin/prices`, `/admin/payment-methods`, `/admin/payments`, `/admin/creatives`, `/admin/audit`. Sign-in uses Privy: `accessToken()` returns a fresh Privy access token that is sent as a Bearer header and verified on the server. Anyone without a staff role sees a no-access state. Tables collapse to stacked cards on phones. When sign-in or the database is not configured the shell says so instead of showing empty numbers.
 
 ## Decisions
 
@@ -95,5 +95,5 @@ Reviewer reasons are also stored in `moderation_notes` (RLS: staff read, reviewe
 - Boost campaign and advertising campaign moderation, user management, platform settings and coupons.
 - Rate limiting is in memory per server instance (see `src/lib/utils/rateLimit.ts`). Use a shared store before running several instances.
 - The audit insert is a second statement after the change, not part of one transaction. Wrap both in a database function if that gap matters.
-- Not exercised against a live Supabase project or a live NOWPayments account. Routes are covered with an in-memory Supabase fake and the SQL with PGlite.
+- Not exercised against a live Supabase project or a live NOWPayments account. Routes are covered with an in-memory database fake and the SQL with PGlite.
 - Layout was checked at 390px only for the unconfigured state. Data-backed screens are built as stacked cards on phones but were not browser-checked with live data.

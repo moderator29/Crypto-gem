@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { TokenLogo } from "@/components/ui/TokenLogo";
 import { getNetwork } from "@/lib/market-data/networks";
-import { accessToken, browserSupabase } from "@/lib/supabase/browser";
+import { accessToken, authConfigured } from "@/lib/auth/client";
 import { ageShort, priceUsd, usdCompact } from "@/lib/utils/format";
 
 interface Overview {
@@ -41,7 +41,7 @@ export function Dashboard() {
   const [watch, setWatch] = useState<Watch | null>(null);
 
   const load = useCallback(async () => {
-    if (!browserSupabase()) return setState("unavailable");
+    if (!authConfigured()) return setState("unavailable");
     const jwt = await accessToken();
     if (!jwt) return setState("signin");
     const h = { Authorization: `Bearer ${jwt}` };
@@ -59,7 +59,7 @@ export function Dashboard() {
   }, [load]);
 
   if (state === "loading") return <div className="space-y-3" aria-busy="true"><div className="skeleton h-24" /><div className="skeleton h-48" /></div>;
-  if (state === "unavailable") return <div className="glass p-6 text-sm text-soft">Accounts are not connected in this environment (Supabase keys missing), so there is no dashboard data to show.</div>;
+  if (state === "unavailable") return <div className="glass p-6 text-sm text-soft">Sign-in is not configured in this environment (Privy app id missing), so there is no dashboard data to show.</div>;
   if (state === "signin") return <div className="glass space-y-3 p-6"><p>Sign in to manage your listings, boosts and campaigns.</p><Link className="btn btn-primary inline-flex" href="/login?next=/dashboard">Sign in</Link></div>;
   if (state === "error" || !data) return <div className="glass p-6 text-down" role="alert">Could not load your dashboard. Try again shortly.</div>;
 

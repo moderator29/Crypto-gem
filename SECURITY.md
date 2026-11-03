@@ -8,7 +8,8 @@
 - Logos are accepted only from `https://` URLs. All outbound links use `rel="noopener noreferrer"`, paid ones add `sponsored`.
 - Provider text (names, descriptions) is rendered as text by React. No `dangerouslySetInnerHTML` is used with provider or user data (the only use is a static theme script).
 - Security headers: nosniff, frame deny, referrer policy, permissions policy.
-- RLS on every table, tested. No client path can write orders, payments, campaigns or reservations.
+- Sign-in is Privy. Every protected route verifies the Privy access token (ES256 signature, issuer, audience, expiry) before doing anything, and tests cover wrong audience, wrong issuer, expiry, foreign keys, non-DID subjects and alg=none.
+- RLS on every table, tested. Private tables have no client policy, so the browser cannot read or write orders, payments, campaigns, roles or notes. Server routes bind every query to the verified user id.
 - Campaign destinations must be `https://` (database constraint).
 - Payment webhook verification, constant-time compare, idempotency ledger.
 - Non-custodial: the app holds no keys and executes no trades.

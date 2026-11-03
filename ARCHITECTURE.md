@@ -10,7 +10,8 @@ Browser ──> Next route handlers / server components
                  ├─ market-data   (adapters → cache → http client → providers)
                  ├─ detect        (chain resolution + parallel enrichment, streamed)
                  ├─ payments      (NOWPayments client, IPN verification)
-                 └─ Supabase      (auth, data, RLS; secret key server side only)
+                 ├─ auth          (Privy access token verified against Privy's public keys)
+                 └─ database      (Supabase as Postgres only; secret key server side only)
 ```
 
 ## Market data
@@ -54,7 +55,7 @@ All products (listings, ad campaigns, boosts) share one `orders` and `payments` 
 
 ## Database
 
-`supabase/migrations`. RLS on every table. Owners can read their own rows. Orders, payments, campaigns and reservations are written only by server routes using the secret key. Exclusive ad placements cannot overlap because a GiST exclusion constraint rejects it. Verified by `tests/rls.test.ts` running the real migration in PGlite.
+`supabase/migrations`. RLS on every table. User ids are Privy DIDs (text). Private tables have no client policy, so the browser cannot touch them: every read and write goes through a server route that verifies the Privy token and binds the query to that user id. Only public catalog data (active packages and placements, published listings, live campaigns) has read policies. Exclusive ad placements cannot overlap because a GiST exclusion constraint rejects it. Verified by `tests/rls.test.ts` running the real migration in PGlite.
 
 ## Design system
 

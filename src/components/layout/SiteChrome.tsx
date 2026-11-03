@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/ui/Logo";
 import { SearchDialog } from "./SearchDialog";
+import { AuthButton } from "@/components/auth/AuthButton";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { useT } from "@/components/i18n/I18nProvider";
 import type { MessageKey } from "@/lib/i18n/messages";
@@ -70,6 +71,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
               <PlusCircle size={16} /> {t("nav.addCoin")}
             </Link>
             <LanguageSwitcher />
+            <AuthButton className="hidden sm:block" />
           </div>
         </div>
       </header>
@@ -93,6 +95,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
               <Link href="/add-coin" onClick={() => setDrawer(false)} className="btn btn-primary w-full">
                 <PlusCircle size={16} /> {t("nav.addCoin")}
               </Link>
+              <AuthButton className="w-full [&>button]:w-full" />
               <ThemePill />
               <LanguageSwitcher />
             </div>

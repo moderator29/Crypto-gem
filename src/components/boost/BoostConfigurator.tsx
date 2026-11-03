@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { TokenLogo } from "@/components/ui/TokenLogo";
 import type { BoostPack } from "@/lib/ads/catalog";
-import { accessToken } from "@/lib/supabase/browser";
+import { accessToken } from "@/lib/auth/client";
 
 interface Method { id: string; label: string; provider_currency: string; network: string }
 interface Project { name: string; symbol: string; logo: string | null; network: string | null }

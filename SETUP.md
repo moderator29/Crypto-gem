@@ -10,12 +10,23 @@ npm run dev        # http://localhost:3000
 
 Discovery, token pages, charts, search and detection run with no keys.
 
-## Supabase
+## Sign-in (Privy)
 
-1. Create a project. Copy the project URL and the publishable key into `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
-2. Copy the secret key into `SUPABASE_SECRET_KEY`. Server only. Never prefix it with `NEXT_PUBLIC_`.
-3. Apply `supabase/migrations/*.sql` (SQL editor, or `supabase db push` with the CLI linked to the project).
-4. Grant the first super admin by inserting a row into `public.user_roles` from the SQL editor.
+Identity is handled by Privy, so there is no sign-up form and no password. Users sign in with an email code, a wallet or Google.
+
+1. Create an app at dashboard.privy.io. Under Login methods enable Email, Wallet and Google.
+2. Copy the App ID into `NEXT_PUBLIC_PRIVY_APP_ID`. Add your site URL (and `http://localhost:3000`) to the allowed origins.
+3. Embedded wallets are switched off in code. Crypto Gems never creates or holds wallets.
+
+The server verifies each request's Privy access token against the app's public keys. No Privy secret is needed for that. User ids are Privy DIDs (`did:privy:...`) stored as text.
+
+## Database (Supabase, database only)
+
+Privy does not store business data, so orders, listings, payments, campaigns and watchlists live in Postgres. Supabase is used only as that managed Postgres. Supabase Auth is not used.
+
+1. Create a Supabase project. Copy the project URL into `NEXT_PUBLIC_SUPABASE_URL` and the secret key into `SUPABASE_SECRET_KEY` (server only, never prefix with `NEXT_PUBLIC_`).
+2. Apply `supabase/migrations/*.sql` in order (SQL editor, or `supabase db push`). Row Level Security is on for every table with no client policies for private data, so the browser cannot read it. Only server routes with the secret key can.
+3. Grant the first super admin, see `ADMIN.md`.
 
 ## Market data
 

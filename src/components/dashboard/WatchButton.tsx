@@ -3,7 +3,7 @@
 import { Star } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { accessToken } from "@/lib/supabase/browser";
+import { accessToken } from "@/lib/auth/client";
 
 /** Adds or removes a token from the signed-in user's watchlist. Signed-out users are sent to sign in, not shown a fake state. */
 export function WatchButton({ network, address }: { network: string; address: string }) {

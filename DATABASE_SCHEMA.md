@@ -14,11 +14,13 @@ Source of truth: `supabase/migrations/20261103000001_core_schema.sql`. Tested in
 
 ## Access model
 
-- Personal tables: owner only.
-- Catalog tables (packages, placements, boost packs, payment methods): public read of active rows, write by the matching staff role.
-- `token_submissions`: public sees `published`. Owners see their own, can insert only drafts with no verification, and can edit only while draft. Reviewers manage the rest.
-- `orders`, `payments`: owner read. No client write policy exists, so only the server secret key can write.
-- Campaigns and boosts: owner read, public read of live ones. Writes server-side.
+User ids are Privy DIDs stored as text. There is no `auth.users` dependency.
+
+- Personal and commercial tables: no client policy, server only (secret key) after Privy token verification.
+- Catalog tables (packages, placements, boost packs, payment methods): public read of active rows, writes go through admin routes that check the role.
+- `token_submissions`: public clients see only `published` rows. Owners and reviewers act through server routes that enforce who may see or change what.
+- `orders`, `payments`: server only. Owners read their own through `/api/me/overview` and `/api/payments/[id]`, which bind the query to the verified user.
+- Campaigns and boosts: public clients see live ones. Owners read their own through server routes.
 - `exclusive_reservations`: no policies. Server only.
 
 ## Integrity enforced by the database

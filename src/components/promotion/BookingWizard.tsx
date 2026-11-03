@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { discount, PLACEMENTS, type Placement, type PlacementId } from "@/lib/ads/catalog";
 import { checkCreative, inspectImage } from "@/lib/ads/image";
-import { accessToken } from "@/lib/supabase/browser";
+import { accessToken } from "@/lib/auth/client";
 import { PlacementPreview } from "./PlacementPreview";
 
 interface Method { id: string; label: string; provider_currency: string; network: string }

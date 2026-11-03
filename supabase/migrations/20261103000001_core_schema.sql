@@ -1,5 +1,9 @@
--- Crypto Gems core schema. Every table that holds user or commercial data has RLS enabled.
--- Privileged writes (orders, payments, campaigns) go through server routes using the secret key.
+-- Crypto Gems core schema.
+-- Identity comes from Privy: user ids are Privy DIDs stored as text (for example 'did:privy:abc123').
+-- The database holds business data only. Every private table has RLS enabled with NO policy for anon or
+-- authenticated roles, which denies direct access. The app reads and writes private data only from server
+-- routes using the secret key, after verifying the caller's Privy access token and binding every query to
+-- that user id. Public catalog data (packages, placements, published listings, live campaigns) has read-only policies.
 
 create extension if not exists pgcrypto;
 
@@ -7,7 +11,7 @@ create extension if not exists pgcrypto;
 create type public.app_role as enum ('user', 'project_owner', 'listing_reviewer', 'advertising_manager', 'support_agent', 'admin', 'super_admin');
 
 create table public.profiles (
-  id uuid primary key references auth.users(id) on delete cascade,
+  id text primary key,
   display_name text check (char_length(display_name) <= 60),
   locale text not null default 'en',
   theme text not null default 'system' check (theme in ('system', 'light', 'dark')),
@@ -15,27 +19,17 @@ create table public.profiles (
 );
 
 create table public.user_roles (
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id text not null,
   role public.app_role not null,
-  granted_by uuid references auth.users(id),
+  granted_by text,
   created_at timestamptz not null default now(),
   primary key (user_id, role)
 );
 
-create or replace function public.has_role(r public.app_role) returns boolean
-language sql stable security definer set search_path = public as $$
-  select exists (select 1 from public.user_roles where user_id = auth.uid() and role in (r, 'super_admin'));
-$$;
-
-create or replace function public.is_staff() returns boolean
-language sql stable security definer set search_path = public as $$
-  select exists (select 1 from public.user_roles where user_id = auth.uid() and role in ('listing_reviewer', 'advertising_manager', 'support_agent', 'admin', 'super_admin'));
-$$;
-
 -- ── Personal data ────────────────────────────────────────────────────────
 create table public.watchlists (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id text not null,
   name text not null check (char_length(name) between 1 and 60),
   created_at timestamptz not null default now(),
   unique (user_id, name)
@@ -52,7 +46,7 @@ create index watchlist_items_token_idx on public.watchlist_items (network_id, ad
 
 create table public.saved_searches (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id text not null,
   name text not null check (char_length(name) between 1 and 60),
   filters jsonb not null,
   created_at timestamptz not null default now()
@@ -60,7 +54,7 @@ create table public.saved_searches (
 
 create table public.price_alerts (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id text not null,
   network_id text not null,
   address text not null,
   direction text not null check (direction in ('above', 'below')),
@@ -71,7 +65,7 @@ create table public.price_alerts (
 
 create table public.notifications (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id text not null,
   kind text not null,
   title text not null,
   body text,
@@ -97,7 +91,7 @@ create type public.verification_level as enum ('none', 'contract_verified', 'pro
 
 create table public.token_submissions (
   id uuid primary key default gen_random_uuid(),
-  owner_id uuid not null references auth.users(id) on delete cascade,
+  owner_id text not null,
   mode text not null check (mode in ('express', 'standard')),
   network_id text,
   address text,
@@ -127,7 +121,7 @@ create type public.payment_status as enum ('created', 'waiting', 'confirming', '
 
 create table public.orders (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete restrict,
+  user_id text not null,
   kind public.product_kind not null,
   ref_id uuid not null,
   price_usd numeric not null check (price_usd >= 0),
@@ -198,7 +192,7 @@ create type public.campaign_status as enum ('draft', 'awaiting_payment', 'pendin
 
 create table public.advertising_campaigns (
   id uuid primary key default gen_random_uuid(),
-  owner_id uuid not null references auth.users(id) on delete cascade,
+  owner_id text not null,
   placement_id text not null references public.advertising_placements(id),
   submission_id uuid references public.token_submissions(id),
   headline text check (char_length(headline) <= 80),
@@ -260,7 +254,7 @@ create table public.boost_packs (
 
 create table public.boost_campaigns (
   id uuid primary key default gen_random_uuid(),
-  owner_id uuid not null references auth.users(id) on delete cascade,
+  owner_id text not null,
   submission_id uuid not null references public.token_submissions(id),
   pack_id text not null references public.boost_packs(id),
   status text not null default 'awaiting_payment' check (status in ('awaiting_payment', 'active', 'expired', 'cancelled', 'refunded')),
@@ -272,7 +266,7 @@ create index boost_active_idx on public.boost_campaigns (status, ends_at);
 
 -- ── Community, AI, admin ─────────────────────────────────────────────────
 create table public.community_votes (
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id text not null,
   submission_id uuid not null references public.token_submissions(id) on delete cascade,
   day date not null default current_date,
   primary key (user_id, submission_id, day)
@@ -280,7 +274,7 @@ create table public.community_votes (
 
 create table public.ai_conversations (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
+  user_id text not null,
   title text,
   context jsonb,
   created_at timestamptz not null default now()
@@ -298,13 +292,13 @@ create table public.ai_messages (
 create table public.platform_settings (
   key text primary key,
   value jsonb not null,
-  updated_by uuid references auth.users(id),
+  updated_by text,
   updated_at timestamptz not null default now()
 );
 
 create table public.admin_audit_logs (
   id bigint generated always as identity primary key,
-  actor_id uuid references auth.users(id),
+  actor_id text,
   action text not null,
   target text,
   before jsonb,
@@ -339,58 +333,22 @@ alter table public.ai_messages enable row level security;
 alter table public.platform_settings enable row level security;
 alter table public.admin_audit_logs enable row level security;
 
--- Own-row access for personal data.
-create policy profiles_self on public.profiles for all to authenticated using (id = auth.uid()) with check (id = auth.uid());
-create policy roles_read_self on public.user_roles for select to authenticated using (user_id = auth.uid() or public.has_role('admin'));
-create policy watchlists_own on public.watchlists for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
-create policy watchlist_items_own on public.watchlist_items for all to authenticated
-  using (exists (select 1 from public.watchlists w where w.id = watchlist_id and w.user_id = auth.uid()))
-  with check (exists (select 1 from public.watchlists w where w.id = watchlist_id and w.user_id = auth.uid()));
-create policy saved_searches_own on public.saved_searches for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
-create policy price_alerts_own on public.price_alerts for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
-create policy notifications_read_own on public.notifications for select to authenticated using (user_id = auth.uid());
-create policy notifications_update_own on public.notifications for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
-create policy ai_conversations_own on public.ai_conversations for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
-create policy ai_messages_own on public.ai_messages for all to authenticated
-  using (exists (select 1 from public.ai_conversations c where c.id = conversation_id and c.user_id = auth.uid()))
-  with check (exists (select 1 from public.ai_conversations c where c.id = conversation_id and c.user_id = auth.uid()));
-create policy votes_own on public.community_votes for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 -- Public catalog data is readable by everyone; only staff change it (and every change is audited by the server).
 create policy packages_public_read on public.listing_packages for select to anon, authenticated using (active);
-create policy packages_staff_write on public.listing_packages for all to authenticated using (public.has_role('admin')) with check (public.has_role('admin'));
 create policy placements_public_read on public.advertising_placements for select to anon, authenticated using (active);
-create policy placements_staff_write on public.advertising_placements for all to authenticated using (public.has_role('advertising_manager')) with check (public.has_role('advertising_manager'));
 create policy boost_packs_public_read on public.boost_packs for select to anon, authenticated using (active);
-create policy boost_packs_staff_write on public.boost_packs for all to authenticated using (public.has_role('admin')) with check (public.has_role('admin'));
 create policy payment_methods_public_read on public.payment_methods for select to anon, authenticated using (enabled);
-create policy payment_methods_staff_write on public.payment_methods for all to authenticated using (public.has_role('admin')) with check (public.has_role('admin'));
 
 -- Submissions: public sees only published rows; owners see their own and may edit only while it is still a draft.
 create policy submissions_public_read on public.token_submissions for select to anon, authenticated using (status = 'published');
-create policy submissions_owner_read on public.token_submissions for select to authenticated using (owner_id = auth.uid());
-create policy submissions_owner_insert on public.token_submissions for insert to authenticated with check (owner_id = auth.uid() and status = 'draft' and verification = 'none');
-create policy submissions_owner_update on public.token_submissions for update to authenticated using (owner_id = auth.uid() and status = 'draft') with check (owner_id = auth.uid() and status in ('draft', 'submitted') and verification = 'none');
-create policy submissions_staff_all on public.token_submissions for all to authenticated using (public.has_role('listing_reviewer')) with check (public.has_role('listing_reviewer'));
 
 -- Orders and payments are readable by their owner. Writes come only from the server with the secret key.
-create policy orders_read_own on public.orders for select to authenticated using (user_id = auth.uid() or public.has_role('admin'));
-create policy payments_read_own on public.payments for select to authenticated
-  using (exists (select 1 from public.orders o where o.id = order_id and (o.user_id = auth.uid() or public.has_role('admin'))));
-create policy payment_events_admin on public.payment_events for select to authenticated using (public.has_role('admin'));
 
 -- Campaigns: owners read their own, public sees live ones; creation and status changes are server-side.
-create policy campaigns_owner_read on public.advertising_campaigns for select to authenticated using (owner_id = auth.uid() or public.has_role('advertising_manager'));
 create policy campaigns_public_live on public.advertising_campaigns for select to anon, authenticated using (status = 'active' and now() between starts_at and ends_at);
-create policy creatives_owner_read on public.campaign_creatives for select to authenticated
-  using (exists (select 1 from public.advertising_campaigns c where c.id = campaign_id and (c.owner_id = auth.uid() or public.has_role('advertising_manager'))));
 create policy creatives_public_live on public.campaign_creatives for select to anon, authenticated
   using (review_status = 'approved' and exists (select 1 from public.advertising_campaigns c where c.id = campaign_id and c.status = 'active' and now() between c.starts_at and c.ends_at));
-create policy ad_events_owner_read on public.ad_events for select to authenticated
-  using (exists (select 1 from public.advertising_campaigns c where c.id = campaign_id and (c.owner_id = auth.uid() or public.has_role('advertising_manager'))));
-create policy boost_owner_read on public.boost_campaigns for select to authenticated using (owner_id = auth.uid() or public.has_role('admin'));
 create policy boost_public_live on public.boost_campaigns for select to anon, authenticated using (status = 'active' and now() between starts_at and ends_at);
 
-create policy settings_admin on public.platform_settings for all to authenticated using (public.has_role('admin')) with check (public.has_role('admin'));
-create policy audit_admin_read on public.admin_audit_logs for select to authenticated using (public.has_role('admin'));
 -- exclusive_reservations has no policies: only the server's secret key can touch it.

@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { AuthProvider } from "@/components/auth/AuthProvider";
 import { I18nProvider } from "@/components/i18n/I18nProvider";
 import { Footer } from "@/components/layout/Footer";
 import { SiteChrome } from "@/components/layout/SiteChrome";
@@ -33,7 +34,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <I18nProvider locale={locale} messages={messagesFor(locale)}>
-          <SiteChrome footer={<Footer />}>{children}</SiteChrome>
+          <AuthProvider>
+            <SiteChrome footer={<Footer />}>{children}</SiteChrome>
+          </AuthProvider>
         </I18nProvider>
       </body>
     </html>

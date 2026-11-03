@@ -10,7 +10,7 @@ This file is the honest ledger. Anything not marked **Working** should not be pr
 - Token page: header, real OHLCV chart (Lightweight Charts), stats, pools, derived market risk signals, validated external trade links.
 - Global search (name, symbol, address) with network shown for every result.
 - Real-time token detection (`/api/detect`, streamed): chain resolution from one cross-network pool search, then parallel GeckoTerminal, CoinGecko, CoinMarketCap and on-chain reads. Per-field provenance. Missing fields reported, never invented.
-- Checkout path (code complete, untested live): `/api/listings` creates submission, order and provider payment with a server-decided price; `/pay/[orderId]` shows address, QR, countdown and live status; `/api/webhooks/nowpayments` verifies signature, replay, order binding and amount before marking paid. Magic-link sign-in at `/login`. Webhook behaviour is covered by 7 tests.
+- Checkout path (code complete, untested live): `/api/listings` creates submission, order and provider payment with a server-decided price; `/pay/[orderId]` shows address, QR, countdown and live status; `/api/webhooks/nowpayments` verifies signature, replay, order binding and amount before marking paid. Privy sign-in (email code, wallet, Google) at `/login`. Webhook behaviour is covered by 7 tests.
 - Add Coin wizard UI: mode choice, live detection with real progress stages, multiple-chain picker, manual network fallback, provenance badges, form validation, package selection, order summary.
 - NOWPayments primitives: status mapping, HMAC-SHA512 IPN verification (constant time), order matching, underpayment detection. Unit tested.
 - Supabase schema with RLS, tested in-process against Postgres (PGlite): ownership, no self-publish, no self-verify, admin-only pricing, overlapping exclusive ad reservations rejected by the database, deduplicated ad events, idempotent webhook ledger.
@@ -24,7 +24,8 @@ This file is the honest ledger. Anything not marked **Working** should not be pr
 | CoinGecko | optional `COINGECKO_API_KEY` | Public tier works but is rate limited |
 | GeckoTerminal | optional pro key | Public tier is about 30 calls/min. Caching keeps normal use inside it, heavy traffic needs a paid plan |
 | EVM RPC | `RPC_<NETWORK>` per chain | On-chain metadata stage is skipped and labelled |
-| Supabase | URL, publishable key, secret key | No accounts, listings, campaigns |
+| Privy | `NEXT_PUBLIC_PRIVY_APP_ID` | No sign-in, so no listing, boost, booking, dashboard or admin |
+| Database (Supabase as Postgres) | URL and secret key | No listings, orders, campaigns |
 | NOWPayments | API key, IPN secret | `/api/listings` answers 503 with the missing variable names |
 | Reown | project id | No wallet connect |
 | Anthropic | API key | No AI Copilot |

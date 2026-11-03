@@ -1,11 +1,10 @@
 -- Admin area support: reviewer notes, read-path indexes and an append-only audit log.
--- Notes are written by the server (secret key) on behalf of a verified reviewer, and RLS
--- additionally restricts direct access to staff.
+-- Notes are written by the server (secret key) on behalf of a verified reviewer.
 
 create table public.moderation_notes (
   id uuid primary key default gen_random_uuid(),
   submission_id uuid not null references public.token_submissions(id) on delete cascade,
-  author uuid not null references auth.users(id),
+  author text not null,
   kind text not null default 'note' check (kind in ('note', 'approve', 'reject', 'request_changes', 'publish', 'suspend')),
   note text not null check (char_length(note) between 1 and 2000),
   created_at timestamptz not null default now()
@@ -14,11 +13,8 @@ create index moderation_notes_submission_idx on public.moderation_notes (submiss
 
 alter table public.moderation_notes enable row level security;
 
--- Any staff member can read the history. Only listing reviewers (and super admins, via has_role) can add to it directly.
--- No update or delete policy exists, so notes are immutable for every client role.
-create policy moderation_notes_staff_read on public.moderation_notes for select to authenticated using (public.is_staff());
-create policy moderation_notes_reviewer_insert on public.moderation_notes for insert to authenticated
-  with check (public.has_role('listing_reviewer') and author = auth.uid());
+-- No policies: only the server (secret key) can read or write notes, after checking the caller's role.
+-- Notes are append-only by convention in the routes; the audit log below is enforced by a trigger.
 
 -- Read-path indexes for the admin queues and tables.
 create index orders_kind_ref_idx on public.orders (kind, ref_id);

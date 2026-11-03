@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createContext, useContext, type ReactNode } from "react";
 import { ACCESS, hasAnyRole, type StaffRole } from "@/lib/admin/roles";
-import { browserSupabase } from "@/lib/supabase/browser";
+import { authConfigured } from "@/lib/auth/client";
 import { useAdminQuery } from "./api";
 import { Loading, Notice } from "./ui";
 
@@ -40,12 +40,12 @@ const NAV = [
  */
 export function AdminShell({ children }: { children: ReactNode }) {
   const path = usePathname();
-  const configured = browserSupabase() !== null;
+  const configured = authConfigured();
   const me = useAdminQuery<Me>(configured ? "/api/admin/me" : null);
 
   let body: ReactNode;
   if (!configured) {
-    body = <Notice>Accounts are not connected in this environment (Supabase keys missing), so the admin area cannot sign anyone in.</Notice>;
+    body = <Notice>Sign-in is not configured in this environment (Privy app id missing), so the admin area cannot sign anyone in.</Notice>;
   } else if (me.loading) {
     body = <Loading />;
   } else if (me.status === 401) {
@@ -55,7 +55,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
       </Gate>
     );
   } else if (me.status === 503) {
-    body = <Notice>The server is missing its Supabase configuration, so admin access cannot be checked.</Notice>;
+    body = <Notice>The server is missing its database configuration, so admin access cannot be checked.</Notice>;
   } else if (me.error || !me.data) {
     body = <Notice tone="error">{me.error ?? "Could not check your access."}</Notice>;
   } else if (me.data.roles.length === 0) {
