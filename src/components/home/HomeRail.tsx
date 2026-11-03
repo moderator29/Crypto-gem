@@ -32,11 +32,11 @@ export function HomeRail({ heating }: { heating: HeatingUp[] }) {
           )}
         </section>
         <Link href="/pulse" className="glass hover-lift flex items-center gap-3 p-4">
-          <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--border)] text-brand"><Activity size={18} /></span>
+          <span className="grid h-10 w-10 place-items-center rounded-xl icon-tile"><Activity size={18} /></span>
           <span><span className="block font-semibold">Market Pulse</span><span className="block text-xs text-muted">Chain heatmap and unusual volume</span></span>
         </Link>
         <Link href="/copilot" className="glass hover-lift flex items-center gap-3 p-4">
-          <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--border)] text-brand"><Bot size={18} /></span>
+          <span className="grid h-10 w-10 place-items-center rounded-xl icon-tile"><Bot size={18} /></span>
           <span><span className="block font-semibold">Ask the Copilot</span><span className="block text-xs text-muted">Research any token with live data</span></span>
         </Link>
       </div>

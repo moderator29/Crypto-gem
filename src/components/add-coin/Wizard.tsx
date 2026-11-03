@@ -173,8 +173,8 @@ export function Wizard() {
           ["standard", "Standard Listing", "Submit your project through the normal review process. Best when the token has no pool yet or sits on an unsupported chain.", ScanSearch],
         ] as const).map(([id, title, text, Icon]) => (
           <button key={id} type="button" onClick={() => { setMode(id); setStep(id === "express" ? "identify" : "review"); }} className="glass hover-lift flex flex-col items-start gap-3 p-6 text-left">
-            <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[var(--border)] text-brand"><Icon size={22} /></span>
-            <span className="font-display text-xl font-bold">{title}</span>
+            <span className="grid h-11 w-11 place-items-center rounded-2xl icon-tile"><Icon size={22} /></span>
+            <span className="flex items-center gap-2 font-display text-xl font-bold">{title}{id === "express" && <span className="chip !min-h-6 !cursor-default !px-2 text-[10px] text-warm">Fastest</span>}</span>
             <span className="text-sm text-soft">{text}</span>
           </button>
         ))}

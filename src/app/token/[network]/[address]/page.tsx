@@ -105,6 +105,11 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
           <span className="num rounded-full border border-line px-3 py-1.5 md:hidden">{shortAddress(canonical)}</span>
           <span className="num hidden break-all md:inline">{canonical}</span>
+          {trade[0] && (
+            <a href={trade[0].url} target="_blank" rel="noopener noreferrer nofollow" className="btn btn-primary !min-h-9 !px-4 text-xs">
+              Trade on {trade[0].label.replace("View pool on ", "")} <ArrowUpRight size={13} />
+            </a>
+          )}
           <CopyButton value={canonical} label="Copy" />
           <WatchButton network={net.id} address={canonical} />
           {explorer && (
