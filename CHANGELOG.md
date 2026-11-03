@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+- Privy sign-in replaces Supabase Auth. Database user ids are Privy DIDs. Private tables are server-only.
+- Desktop and tablet layouts, sortable market table, right rail.
+- Add Coin parity (extra links, logo upload), Privacy, Terms and About pages, community votes.
+
 ## 0.2.0
 
 - Boost flow, ad booking and delivery, AI Copilot, admin and moderation, reference-driven UI refresh.

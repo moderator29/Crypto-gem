@@ -11,7 +11,7 @@ Status key: done, partial, todo.
 | 4 | Market data layer | partial (GeckoTerminal full, CoinGecko and CMC adapters for detection and global; reconciliation table in place; provider health endpoint to add) |
 | 5 | Token page and charts | partial (overview, chart, pools, risk, trade; holders, transactions, community, AI tabs todo) |
 | 6 | Add Coin and detection | partial (detection and wizard done; persistence, payment page, moderation todo) |
-| 7 | Supabase accounts | partial (schema and RLS done; auth UI, dashboard todo) |
+| 7 | Accounts | partial (Privy sign-in, owner dashboard, watchlist, votes done; alerts, saved searches, portfolio UI todo) |
 | 8 | Promotion marketplace | partial (booking, previews, delivery, tracking done; crop tool and advertiser analytics dashboard todo) |
 | 9 | AI Copilot | partial (chat and tools done; history and per-user quotas todo) |
 | 10 | Admin | partial (moderation, prices, payments, creatives, audit done; analytics and feature flags todo) |

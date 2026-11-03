@@ -38,18 +38,26 @@ This file is the honest ledger. Anything not marked **Working** should not be pr
 - Admin (built by a second engineer, merged from `feat/admin`): role-guarded routes and UI for listing moderation, prices, payment methods, payments, creatives and an append-only audit log. See `ADMIN.md`.
 - Reference-driven UI: expandable market rows, Top Trending carousel, shortcut pills, full-screen mobile search, drawer theme pill, footer.
 
+- Sign-in with Privy (email code, wallet, Google). The server verifies Privy access tokens itself, with tests for wrong audience, wrong issuer, expiry, foreign keys, non-DID subjects and alg=none. Supabase is only the database.
+- Add Coin parity with the reference: Chinese Telegram, BTOK and Weibo links, logo upload with preview and remove (real-byte image checks, own-folder storage rule), step labels, Change button on the detection card.
+- Community voting on listed projects: one vote per project per day, 30 minutes between votes, the rule shown next to the button.
+- Privacy, Terms and About pages written for this product. They contain marked placeholders (company name, contact email, jurisdiction, refund terms) listed in `LEGAL_NOTES.md`. Counsel must review them before launch.
+- Desktop and tablet layouts: hero with side stack, sticky sortable market table (columns adapt at tablet width), right rail, denser Top Trending cards. Checked at 360, 390, 768, 1024 and 1280px with no horizontal overflow on 14 routes.
+
 ## Not built yet
 
 - User dashboard (watchlists, alerts, portfolio, saved searches UI) and the project-owner dashboard.
 - Reconciliation cron for webhooks that never arrive, and refund handling.
 - Crop and reposition tool in the creative studio (images are validated, not cropped). No role-management UI (roles are granted with SQL).
 - Conversation history persistence and per-user AI quotas (limits are per IP, in memory).
-- Community voting, Market Pulse heatmaps, token comparison page, Smart Money.
+- Community Favourites section on the homepage (votes are recorded and shown on token pages), token comparison page, Smart Money, sector heatmaps.
 - Internationalisation covers the app chrome (navigation, footer, shortcuts, discovery labels) in 14 languages with English fallback and RTL for Arabic. Page bodies (wizards, Boost, Promotion, dashboard, admin, Copilot answers) are still English. The translations were machine-drafted and need native review before launch.
 - Holders, transactions and community tabs on the token page.
 - Playwright end-to-end tests, accessibility audit, Lighthouse run.
+- Privy wallet sign-in does not replace a payment wallet: payments are crypto deposits through NOWPayments. The earlier Reown wallet-connect idea is not built and is not needed for sign-in.
+- Privy was configured but not exercised against a real Privy app (no app id here). Verification is tested with locally signed tokens.
 - Creative approval in admin does not itself schedule a campaign. The maintenance job promotes a paid campaign to scheduled or active once its desktop creative is approved, so the cron must be running (POST `/api/cron/maintenance` with `Authorization: Bearer $CRON_SECRET`, every few minutes).
-- Apply every migration in `supabase/migrations` in order. `20261103000004_storage.sql` creates the public `creatives` bucket and is not covered by the PGlite tests.
+- Apply every migration in `supabase/migrations` in order, including `20261103000020_logos_bucket.sql` and `20261103000030_votes.sql`. `20261103000004_storage.sql` creates the public `creatives` bucket and is not covered by the PGlite tests.
 
 ## Provider constraints to plan for
 
