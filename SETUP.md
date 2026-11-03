@@ -29,7 +29,11 @@ See `NOWPAYMENTS_SETUP.md`.
 
 ## Wallet connect and AI
 
-`NEXT_PUBLIC_REOWN_PROJECT_ID` from cloud.reown.com. `ANTHROPIC_API_KEY` for the Copilot once it is built.
+`NEXT_PUBLIC_REOWN_PROJECT_ID` from cloud.reown.com. `ANTHROPIC_API_KEY` for the Copilot. Optional `AI_MODEL` (defaults to claude-sonnet-5-5).
+
+## Scheduled job
+
+Call `POST /api/cron/maintenance` with `Authorization: Bearer $CRON_SECRET` every 5 minutes (Vercel Cron, GitHub Actions or any scheduler). It expires boosts and campaigns, schedules approved campaigns and expires stale orders. Safe to run twice.
 
 ## Tests and production
 

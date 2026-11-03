@@ -29,19 +29,26 @@ This file is the honest ledger. Anything not marked **Working** should not be pr
 | Reown | project id | No wallet connect |
 | Anthropic | API key | No AI Copilot |
 
+## Built since the first milestone (code complete, tested with fakes and PGlite, not run against live Supabase, NOWPayments or Anthropic)
+
+- Boost: listed-project picker with search, chain filter and pagination from Supabase, pack selection with sponsored allocations, sponsored preview (mobile and desktop), checkout through the shared payment flow, activation only after a verified `finished` payment with server-side windows (a repeat purchase queues behind a running boost), maintenance job for expiry, a labelled Sponsored strip on the homepage. Overlap is prevented by a database constraint.
+- Advertising: placement wireframe previews with the creative shown in place, booking wizard (placement, length, start date, creative upload, destination, review, pay), creative validation from file bytes (type, size, shape), availability and slot allocation (exclusive slots never double-sold), delivery with fair rotation and mobile creatives, impression tracking (visible for a second, one per visitor per hour, bots excluded) and click tracking with redirect.
+- AI Copilot: streaming chat with five read-only data tools, strict facts versus interpretation prompt, token-page context, per-minute and per-day limits. It cannot trade or move funds.
+- Admin (built by a second engineer, merged from `feat/admin`): role-guarded routes and UI for listing moderation, prices, payment methods, payments, creatives and an append-only audit log. See `ADMIN.md`.
+- Reference-driven UI: expandable market rows, Top Trending carousel, shortcut pills, full-screen mobile search, drawer theme pill, footer.
+
 ## Not built yet
 
-- User dashboard (watchlists, alerts, portfolio, saved searches UI).
-- Payment reconciliation cron (polling provider for orders whose webhook never arrived) and refund handling.
-- Order and payment code has been tested with an in-memory fake of Supabase and unit tests, NOT against a live Supabase project or a live NOWPayments sandbox, because no credentials exist in this environment. Run one sandbox payment end to end before launch.
-- Advertising: booking checkout, creative upload and crop studio, placement preview, delivery and rotation engine, impression and click routes (`/api/ads/click` is referenced by `CampaignSlot` but does not exist yet, and `CampaignSlot` is unreachable until campaigns exist), analytics dashboard.
-- Boost checkout and activation, sponsored placement engine, expiry cron.
-- AI Copilot.
-- Admin dashboard, moderation queue, audit log UI.
-- Market Pulse heatmaps, token comparison, Smart Money.
-- Internationalisation (strings are currently inline English).
-- Holders tab, transactions tab, community tab on the token page.
+- User dashboard (watchlists, alerts, portfolio, saved searches UI) and the project-owner dashboard.
+- Reconciliation cron for webhooks that never arrive, and refund handling.
+- Crop and reposition tool in the creative studio (images are validated, not cropped). No role-management UI (roles are granted with SQL).
+- Conversation history persistence and per-user AI quotas (limits are per IP, in memory).
+- Community voting, Market Pulse heatmaps, token comparison page, Smart Money.
+- Internationalisation (strings are inline English).
+- Holders, transactions and community tabs on the token page.
 - Playwright end-to-end tests, accessibility audit, Lighthouse run.
+- Creative approval in admin does not itself schedule a campaign. The maintenance job promotes a paid campaign to scheduled or active once its desktop creative is approved, so the cron must be running (POST `/api/cron/maintenance` with `Authorization: Bearer $CRON_SECRET`, every few minutes).
+- Apply every migration in `supabase/migrations` in order. `20261103000004_storage.sql` creates the public `creatives` bucket and is not covered by the PGlite tests.
 
 ## Provider constraints to plan for
 

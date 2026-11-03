@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.0
+
+- Boost flow, ad booking and delivery, AI Copilot, admin and moderation, reference-driven UI refresh.
+
 ## 0.1.0
 
 - Foundation: Next.js 16, React 19, Tailwind 4, strict TypeScript, light and dark themes.

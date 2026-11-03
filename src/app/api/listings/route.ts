@@ -1,6 +1,8 @@
 import { supabaseAdmin, supabaseConfigured, userFromRequest } from "@/lib/supabase/admin";
 import { CheckoutError, createPaymentForOrder } from "@/lib/payments/checkout";
 import { isConfigured as nowConfigured } from "@/lib/payments/nowpayments";
+import { detectToken } from "@/lib/detect/engine";
+import type { DetectedToken } from "@/lib/detect/types";
 import { checkContract, listingInput, packagePriceUsd } from "@/lib/listings";
 import { clientKey, rateLimit } from "@/lib/utils/rateLimit";
 
@@ -30,11 +32,22 @@ export async function POST(req: Request) {
   const price = packagePriceUsd(input.package, pkg ? Number(pkg.price_usd) : null);
   if (price === null) return Response.json({ error: "Unknown package" }, { status: 400 });
 
+  // Snapshot what providers say about this contract at submission time, taken by the server so it cannot be forged.
+  let detected: DetectedToken | null = null;
+  if (contract.address && input.network) {
+    try {
+      for await (const ev of detectToken(contract.address, input.network)) if (ev.type === "result" && ev.token) detected = ev.token;
+    } catch {
+      detected = null;
+    }
+  }
+
   const f = input.form;
   const { data: sub, error: subErr } = await db.from("token_submissions").insert({
     owner_id: user.id, mode: input.mode, network_id: input.network, address: contract.address,
     name: f.name, symbol: f.symbol, logo_url: f.logoUrl || null, description: f.description, description_zh: f.descriptionZh || null,
     links: { website: f.website, twitter: f.twitter, telegram: f.telegram, discord: f.discord, medium: f.medium, coingecko: f.coingecko, coinmarketcap: f.coinmarketcap, contactEmail: f.email },
+    detected, detected_at: detected ? detected.observedAt : null,
     status: "awaiting_payment",
   }).select("id").single();
   if (subErr) {
