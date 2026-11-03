@@ -7,10 +7,9 @@ import { TokenLogo } from "@/components/ui/TokenLogo";
 import { getNetwork } from "@/lib/market-data/networks";
 import type { PoolSummary } from "@/lib/market-data/types";
 import { ageShort, pct, priceUsd, usdCompact } from "@/lib/utils/format";
+import { ROW_COLS } from "./rowCols";
 
-/** Shared by the row and the table header so columns always line up. */
-export const ROW_COLS =
-  "grid-cols-[minmax(0,1fr)_auto_20px] md:grid-cols-[28px_minmax(0,2fr)_minmax(104px,1.3fr)_minmax(72px,1fr)_minmax(72px,1fr)_20px] lg:grid-cols-[32px_minmax(0,2.2fr)_minmax(104px,1.3fr)_repeat(4,minmax(72px,1fr))_56px_20px]";
+export { ROW_COLS };
 
 export function Change({ v }: { v: number | null }) {
   return <span className={`num font-semibold ${v === null ? "text-muted" : v >= 0 ? "text-up" : "text-down"}`}>{pct(v)}</span>;

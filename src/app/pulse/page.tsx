@@ -11,13 +11,13 @@ export const metadata: Metadata = { title: "Market Pulse" };
 export const revalidate = 60;
 
 const HEAT = [
-  "bg-[color-mix(in_srgb,var(--down)_38%,transparent)]",
-  "bg-[color-mix(in_srgb,var(--down)_24%,transparent)]",
-  "bg-[color-mix(in_srgb,var(--down)_12%,transparent)]",
+  "bg-[color-mix(in_srgb,var(--down)_26%,transparent)]",
+  "bg-[color-mix(in_srgb,var(--down)_17%,transparent)]",
+  "bg-[color-mix(in_srgb,var(--down)_9%,transparent)]",
   "bg-[var(--surface)]",
-  "bg-[color-mix(in_srgb,var(--up)_12%,transparent)]",
-  "bg-[color-mix(in_srgb,var(--up)_24%,transparent)]",
-  "bg-[color-mix(in_srgb,var(--up)_38%,transparent)]",
+  "bg-[color-mix(in_srgb,var(--up)_9%,transparent)]",
+  "bg-[color-mix(in_srgb,var(--up)_17%,transparent)]",
+  "bg-[color-mix(in_srgb,var(--up)_26%,transparent)]",
 ];
 
 export default async function PulsePage() {
@@ -47,13 +47,13 @@ export default async function PulsePage() {
             <h2 className="font-display text-xl font-bold">Chain heatmap</h2>
             <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
               {chains.map((c) => (
-                <Link key={c.networkId} href={`/?network=${c.networkId}#market`} className={`card-flat hover-lift space-y-1 p-4 ${HEAT[heatBucket(c.medianChange24h) + 3]}`}>
+                <Link key={c.networkId} href={`/markets?network=${c.networkId}`} className={`card-flat hover-lift space-y-1 p-4 ${HEAT[heatBucket(c.medianChange24h) + 3]}`}>
                   <div className="flex items-center justify-between gap-2"><span className="truncate font-semibold">{c.name}</span><Change v={c.medianChange24h} /></div>
                   <dl className="num grid grid-cols-2 gap-x-2 text-xs text-soft">
-                    <dt className="text-muted">Volume</dt><dd className="text-right">{usdCompact(c.volume24hUsd)}</dd>
-                    <dt className="text-muted">Liquidity</dt><dd className="text-right">{usdCompact(c.liquidityUsd)}</dd>
-                    <dt className="text-muted">Pools</dt><dd className="text-right">{c.pools} ({c.newPools} new)</dd>
-                    <dt className="text-muted">Buys/sells</dt><dd className="text-right">{c.buySellRatio === null ? "—" : c.buySellRatio.toFixed(2)}</dd>
+                    <dt className="text-soft">Volume</dt><dd className="text-right">{usdCompact(c.volume24hUsd)}</dd>
+                    <dt className="text-soft">Liquidity</dt><dd className="text-right">{usdCompact(c.liquidityUsd)}</dd>
+                    <dt className="text-soft">Pools</dt><dd className="text-right">{c.pools} ({c.newPools} new)</dd>
+                    <dt className="text-soft">Buys/sells</dt><dd className="text-right">{c.buySellRatio === null ? "—" : c.buySellRatio.toFixed(2)}</dd>
                   </dl>
                 </Link>
               ))}

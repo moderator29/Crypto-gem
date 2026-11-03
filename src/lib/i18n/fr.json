@@ -31,5 +31,7 @@
  "slot.promoteHere": "Promouvez ici",
  "slot.available": "Emplacement disponible",
  "market.organicNote": "Classement organique selon volume, liquidité, activité, élan et nouveauté. Les emplacements payants ne modifient jamais cet ordre.",
- "nav.pulse": "Pouls"
+ "nav.pulse": "Pouls",
+ "nav.markets": "Marchés",
+ "nav.settings": "Paramètres"
 }

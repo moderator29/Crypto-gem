@@ -31,5 +31,7 @@
  "slot.promoteHere": "在此推廣",
  "slot.available": "可用廣告位",
  "market.organicNote": "自然排名依成交量、流動性、活躍度、動能與新鮮度計算。付費展示不會改變此排序。",
- "nav.pulse": "脈搏"
+ "nav.pulse": "脈搏",
+ "nav.markets": "市場",
+ "nav.settings": "設定"
 }

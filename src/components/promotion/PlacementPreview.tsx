@@ -11,7 +11,7 @@ function Zone({ on, label, creative, className }: { on: boolean; label: string; 
         // eslint-disable-next-line @next/next/no-img-element
         <img src={creative} alt="Your creative" className="absolute inset-0 h-full w-full object-cover" />
       ) : (
-        <span className="absolute inset-0 grid place-items-center bg-[color-mix(in_srgb,var(--brand)_18%,transparent)] text-[10px] font-bold uppercase tracking-widest text-brand">{label}</span>
+        <span className="absolute inset-0 grid place-items-center bg-[color-mix(in_srgb,var(--brand)_18%,transparent)] text-[10px] font-bold uppercase tracking-widest text-text">{label}</span>
       )}
       <span className="absolute left-1 top-1 rounded-full bg-black/60 px-1.5 py-0.5 text-[7px] font-bold uppercase text-white">Sponsored</span>
     </div>

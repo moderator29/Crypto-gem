@@ -31,5 +31,7 @@
  "slot.promoteHere": "Promociona aquí",
  "slot.available": "Espacio disponible",
  "market.organicNote": "Ranking orgánico según volumen, liquidez, actividad, impulso y novedad. Los espacios de pago nunca cambian este orden.",
- "nav.pulse": "Pulso"
+ "nav.pulse": "Pulso",
+ "nav.markets": "Mercados",
+ "nav.settings": "Ajustes"
 }

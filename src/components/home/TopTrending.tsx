@@ -19,10 +19,11 @@ export function TopTrending({ items }: { items: RankedPool[] }) {
   return (
     <section aria-label="Top trending" className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="flex items-center gap-2 font-display text-xl font-bold">
-          <Flame size={20} className="text-warm" /> {t("home.topTrending")}
+        <h2 className="h2 flex items-center gap-2">
+          <Flame size={20} className="text-warm" aria-hidden="true" /> {t("home.topTrending")}
         </h2>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-3">
+          <Link href="/markets" className="hidden text-sm font-semibold text-brand transition hover:text-text sm:inline">View all</Link>
           <button type="button" className="btn btn-icon btn-sm" aria-label="Scroll left" onClick={() => by(-1)}>
             <ChevronLeft size={18} />
           </button>

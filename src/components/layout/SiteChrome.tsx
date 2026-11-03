@@ -1,33 +1,37 @@
 "use client";
 
-import { Activity, Bot, Compass, LayoutDashboard, Megaphone, Menu, PlusCircle, Rocket, Search, X } from "lucide-react";
+import { LayoutGroup, motion } from "framer-motion";
+import { Activity, BarChart3, Bot, Compass, LayoutDashboard, Megaphone, Menu, PlusCircle, Rocket, Search, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { Logo } from "@/components/ui/Logo";
-import { SearchDialog } from "./SearchDialog";
+import { useEffect, useId, useRef, useState } from "react";
 import { AuthButton } from "@/components/auth/AuthButton";
-import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { useT } from "@/components/i18n/I18nProvider";
+import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
+import { Logo } from "@/components/ui/Logo";
 import type { MessageKey } from "@/lib/i18n/messages";
+import { SearchDialog } from "./SearchDialog";
 import { ThemePill, ThemeToggle } from "./ThemeToggle";
 
 const NAV = [
-  { href: "/", key: "nav.discover", icon: Compass },
+  { href: "/markets", key: "nav.markets", icon: BarChart3 },
   { href: "/pulse", key: "nav.pulse", icon: Activity },
   { href: "/promotion", key: "nav.promotion", icon: Megaphone },
   { href: "/boost", key: "nav.boost", icon: Rocket },
   { href: "/copilot", key: "nav.copilot", icon: Bot },
-  { href: "/dashboard", key: "nav.dashboard", icon: LayoutDashboard },
 ] as const satisfies ReadonlyArray<{ href: string; key: MessageKey; icon: unknown }>;
 
 const isActive = (path: string, href: string) => (href === "/" ? path === "/" : path.startsWith(href));
+const SPRING = { type: "spring", stiffness: 420, damping: 38 } as const;
 
 export function SiteChrome({ children, footer }: { children: React.ReactNode; footer: React.ReactNode }) {
   const path = usePathname();
   const { t } = useT();
+  const navGroup = useId();
+  const dockGroup = useId();
   const [searchOpen, setSearchOpen] = useState(false);
   const [drawer, setDrawer] = useState(false);
+  const drawerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -48,28 +52,58 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Drawer: Escape closes, focus moves in and returns to the menu button, and navigation closes it.
+  useEffect(() => {
+    if (!drawer) return;
+    const prev = document.activeElement as HTMLElement | null;
+    drawerRef.current?.querySelector<HTMLElement>("a, button")?.focus();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setDrawer(false);
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+      prev?.focus?.();
+    };
+  }, [drawer]);
+  useEffect(() => {
+    const id = setTimeout(() => setDrawer(false), 0);
+    return () => clearTimeout(id);
+  }, [path]);
+
   return (
     <>
       <div className="aurora" aria-hidden="true" />
+      <a href="#content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-lg focus:bg-[var(--surface-3)] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold">Skip to content</a>
+
       <header className="site-header sticky top-0 z-50">
         <div className="mx-auto flex h-[var(--header-h)] max-w-[1360px] items-center gap-3 px-4">
-          <button type="button" className="btn btn-icon xl:hidden" aria-label={t("menu.open")} onClick={() => setDrawer(true)}>
+          <button type="button" className="btn btn-icon xl:hidden" aria-label={t("menu.open")} aria-expanded={drawer} onClick={() => setDrawer(true)}>
             <Menu size={20} />
           </button>
-          <Link href="/" aria-label="Crypto Gems home" className="mr-2">
+          <Link href="/" aria-label="Crypto Gems home" className="mr-3">
             <Logo />
           </Link>
-          <nav className="hidden items-center gap-1 xl:flex" aria-label="Primary">
-            {NAV.map((n) => (
-              <Link key={n.href} href={n.href} aria-current={isActive(path, n.href) ? "page" : undefined} className="rounded-full px-3 py-2 text-sm font-semibold text-soft transition xl:px-4 hover:text-text aria-[current=page]:bg-[color-mix(in_srgb,var(--neon)_20%,transparent)] aria-[current=page]:text-white aria-[current=page]:shadow-[inset_0_0_0_1px_rgba(90,160,255,0.45),0_0_20px_var(--neon-glow)]">
-                {t(n.key)}
-              </Link>
-            ))}
-          </nav>
+
+          <LayoutGroup id={navGroup}>
+            <nav className="hidden items-center gap-0.5 xl:flex" aria-label="Primary">
+              {NAV.map((n) => {
+                const active = isActive(path, n.href);
+                return (
+                  <Link key={n.href} href={n.href} aria-current={active ? "page" : undefined} className={`relative rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors ${active ? "text-text" : "text-soft hover:text-text"}`}>
+                    {active && <motion.span layoutId="nav-active" transition={SPRING} className="absolute inset-0 rounded-lg bg-[var(--surface-3)] shadow-[inset_0_0_0_1px_var(--line-2)]" />}
+                    {active && <motion.span layoutId="nav-underline" transition={SPRING} className="absolute inset-x-3 -bottom-[13px] h-[2px] rounded-full bg-[var(--brand)] shadow-[0_0_12px_var(--neon-glow)]" />}
+                    <span className="relative z-10">{t(n.key)}</span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </LayoutGroup>
+
           <div className="ml-auto flex items-center gap-2">
-            <button type="button" onClick={() => setSearchOpen(true)} className="btn hidden !justify-start gap-3 !px-4 text-muted sm:inline-flex sm:w-44 xl:w-64" aria-label="Search">
-              <Search size={16} /> <span className="text-sm font-medium">{t("search.tokens")}</span>
-              <kbd className="ml-auto rounded-md border border-line px-1.5 text-[11px]">⌘K</kbd>
+            <button type="button" onClick={() => setSearchOpen(true)} className="btn hidden !justify-start gap-3 text-muted sm:inline-flex sm:w-44 xl:w-64" aria-label="Search">
+              <Search size={16} aria-hidden="true" /> <span className="text-sm font-medium">{t("search.tokens")}</span>
+              <kbd className="ml-auto rounded-md border border-line px-1.5 text-[11px]">/</kbd>
             </button>
             <button type="button" onClick={() => setSearchOpen(true)} className="btn btn-icon sm:hidden" aria-label="Search">
               <Search size={18} />
@@ -78,7 +112,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
             <Link href="/add-coin" className="btn btn-primary hidden sm:inline-flex">
               <PlusCircle size={16} /> {t("nav.addCoin")}
             </Link>
-            <LanguageSwitcher />
+            <LanguageSwitcher className="hidden sm:inline-flex" />
             <AuthButton className="hidden sm:block" />
           </div>
         </div>
@@ -86,55 +120,63 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
 
       {drawer && (
         <div className="fixed inset-0 z-[70] xl:hidden" role="dialog" aria-modal="true" aria-label="Menu">
-          <div className="absolute inset-0 bg-black/55 backdrop-blur-sm" onClick={() => setDrawer(false)} />
-          <aside className="glass-float absolute inset-y-0 left-0 flex w-[84%] max-w-xs flex-col gap-2 !rounded-l-none !bg-[var(--surface-1)] p-4">
-            <div className="mb-2 flex items-center justify-between">
+          <div className="absolute inset-0 animate-[fade_var(--dur-3)_ease-out_both] bg-black/60 backdrop-blur-sm" onClick={() => setDrawer(false)} />
+          <aside ref={drawerRef} className="glass-float absolute inset-y-0 left-0 flex w-[86%] max-w-xs animate-[slide-in_var(--dur-3)_var(--ease-out)_both] flex-col gap-1 !rounded-l-none !bg-[var(--surface-1)] p-4">
+            <div className="mb-3 flex items-center justify-between">
               <Logo />
               <button type="button" className="btn btn-icon" aria-label="Close menu" onClick={() => setDrawer(false)}>
                 <X size={18} />
               </button>
             </div>
-            {[...NAV, { href: "/add-coin", key: "nav.applyListing" as const, icon: PlusCircle }].map((n) => (
-              <Link key={n.href} href={n.href} onClick={() => setDrawer(false)} aria-current={isActive(path, n.href) ? "page" : undefined} className="flex min-h-12 items-center gap-3 rounded-xl px-3 font-semibold text-soft aria-[current=page]:bg-[color-mix(in_srgb,var(--neon)_20%,transparent)] aria-[current=page]:text-white aria-[current=page]:shadow-[inset_0_0_0_1px_rgba(90,160,255,0.45),0_0_20px_var(--neon-glow)]">
-                <n.icon size={19} /> {t(n.key)}
-              </Link>
-            ))}
-            <div className="mt-auto flex flex-col items-center gap-4 border-t border-line pt-4">
-              <Link href="/add-coin" onClick={() => setDrawer(false)} className="btn btn-primary w-full">
+            {[{ href: "/", key: "nav.discover" as const, icon: Compass }, ...NAV, { href: "/dashboard", key: "nav.dashboard" as const, icon: LayoutDashboard }, { href: "/settings", key: "nav.settings" as const, icon: Settings }].map((n) => {
+              const active = isActive(path, n.href);
+              return (
+                <Link key={n.href} href={n.href} aria-current={active ? "page" : undefined} className={`flex min-h-12 items-center gap-3 rounded-xl px-3 font-semibold transition-colors ${active ? "bg-[var(--surface-3)] text-text shadow-[inset_0_0_0_1px_var(--line-2)]" : "text-soft hover:bg-[var(--surface-2)] hover:text-text"}`}>
+                  <n.icon size={19} aria-hidden="true" className={active ? "text-brand" : ""} /> {t(n.key)}
+                </Link>
+              );
+            })}
+            <div className="mt-auto flex flex-col gap-3 border-t border-line pt-4">
+              <Link href="/add-coin" className="btn btn-primary w-full">
                 <PlusCircle size={16} /> {t("nav.addCoin")}
               </Link>
               <AuthButton className="w-full [&>button]:w-full" />
-              <ThemePill />
-              <LanguageSwitcher />
+              <div className="flex items-center justify-between gap-3">
+                <ThemePill />
+                <LanguageSwitcher />
+              </div>
             </div>
           </aside>
         </div>
       )}
 
-      <main className="mx-auto w-full max-w-[1360px] px-4 pt-4">{children}</main>
+      <main id="content" className="mx-auto w-full max-w-[1360px] px-4 pt-6 md:pt-8">{children}</main>
       {footer}
 
       <nav className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[max(env(safe-area-inset-bottom),10px)] xl:hidden" aria-label="Mobile">
-        <div className="glass-float mx-auto flex h-[58px] max-w-md items-center justify-around !rounded-full px-2">
-          <BottomLink href="/" label={t("nav.home")} icon={Compass} active={isActive(path, "/")} />
-          <BottomLink href="/copilot" label={t("nav.ai")} icon={Bot} active={isActive(path, "/copilot")} />
-          <Link href="/add-coin" aria-label="Add Coin" className="btn btn-primary -mt-6 !h-14 !min-h-14 w-14 !rounded-full !px-0 shadow-lg">
-            <PlusCircle size={26} />
-          </Link>
-          <BottomLink href="/promotion" label={t("nav.promote")} icon={Megaphone} active={isActive(path, "/promotion")} />
-          <BottomLink href="/boost" label={t("nav.boost")} icon={Rocket} active={isActive(path, "/boost")} />
-        </div>
+        <LayoutGroup id={dockGroup}>
+          <div className="glass-float mx-auto grid h-[60px] max-w-md grid-cols-5 items-center !rounded-full px-1.5">
+            <DockLink href="/" label={t("nav.home")} icon={Compass} active={isActive(path, "/")} />
+            <DockLink href="/markets" label={t("nav.markets")} icon={BarChart3} active={isActive(path, "/markets")} />
+            <Link href="/add-coin" aria-label={t("nav.addCoin")} className="btn btn-primary btn-icon mx-auto -mt-7 !h-[52px] !w-[52px] !rounded-full shadow-[0_8px_24px_rgba(10,90,255,0.5)]">
+              <PlusCircle size={24} />
+            </Link>
+            <DockLink href="/copilot" label={t("nav.ai")} icon={Bot} active={isActive(path, "/copilot")} />
+            <DockLink href="/boost" label={t("nav.boost")} icon={Rocket} active={isActive(path, "/boost")} />
+          </div>
+        </LayoutGroup>
       </nav>
       <SearchDialog open={searchOpen} onClose={() => setSearchOpen(false)} />
     </>
   );
 }
 
-function BottomLink({ href, label, icon: Icon, active }: { href: string; label: string; icon: typeof Compass; active: boolean }) {
+function DockLink({ href, label, icon: Icon, active }: { href: string; label: string; icon: typeof Compass; active: boolean }) {
   return (
-    <Link href={href} aria-current={active ? "page" : undefined} className={`flex h-11 w-14 flex-col items-center justify-center text-[10px] font-semibold transition ${active ? "text-brand [filter:drop-shadow(0_0_8px_var(--neon-glow))]" : "text-muted"}`}>
-      <Icon size={20} />
-      {label}
+    <Link href={href} aria-current={active ? "page" : undefined} className={`relative mx-auto flex h-12 w-14 flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${active ? "text-brand" : "text-muted"}`}>
+      {active && <motion.span layoutId="dock-active" transition={SPRING} className="absolute inset-0 rounded-2xl bg-[color-mix(in_srgb,var(--brand)_14%,transparent)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--brand)_30%,transparent)]" />}
+      <Icon size={20} aria-hidden="true" className="relative z-10" />
+      <span className="relative z-10">{label}</span>
     </Link>
   );
 }

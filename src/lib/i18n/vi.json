@@ -31,5 +31,7 @@
  "slot.promoteHere": "Quảng bá tại đây",
  "slot.available": "Vị trí còn trống",
  "market.organicNote": "Xếp hạng tự nhiên dựa trên khối lượng, thanh khoản, hoạt động, động lượng và độ mới. Vị trí trả phí không bao giờ thay đổi thứ tự này.",
- "nav.pulse": "Nhịp thị trường"
+ "nav.pulse": "Nhịp thị trường",
+ "nav.markets": "Thị trường",
+ "nav.settings": "Cài đặt"
 }
