@@ -11,8 +11,9 @@ export function Ticker({ items }: { items: RankedPool[] }) {
   const row = items.slice(0, 15);
   const loop = [...row, ...row];
   return (
-    <div className="glass-flat relative overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_5%,#000_95%,transparent)] [-webkit-mask-image:linear-gradient(90deg,transparent,#000_5%,#000_95%,transparent)]" aria-label="Trending ticker" role="region">
-      <div className="marquee py-2.5" style={{ ["--marquee-dur" as string]: `${row.length * 5}s` }}>
+    <div className="glass-flat relative flex items-center overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_5%,#000_95%,transparent)] [-webkit-mask-image:linear-gradient(90deg,transparent,#000_5%,#000_95%,transparent)]" aria-label="Trending ticker" role="region">
+      <span className="relative z-10 ml-3 mr-1 inline-flex shrink-0 items-center gap-1.5 rounded-full border border-line bg-[var(--surface-solid)] px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-up"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[var(--up)] shadow-[0_0_8px_var(--up)]" /> Live</span>
+      <div className="marquee min-w-0 py-2.5" style={{ ["--marquee-dur" as string]: `${row.length * 5}s` }}>
         {loop.map((p, i) => {
           const c = p.change.h24;
           return (
