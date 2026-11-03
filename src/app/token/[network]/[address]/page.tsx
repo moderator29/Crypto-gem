@@ -87,7 +87,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
     <div className="space-y-4">
       <header className="card space-y-3 p-4 md:p-5">
         <div className="flex items-center gap-3 md:gap-4">
-          <TokenLogo src={identity?.imageUrl} symbol={identity?.symbol ?? "?"} size={48} />
+          <TokenLogo src={identity?.imageUrl} symbol={identity?.symbol ?? "?"} size={48} networkId={networkId} address={address} />
           <div className="min-w-0 flex-1">
             <h1 className="font-display truncate text-xl font-bold leading-tight md:text-2xl">{identity?.name || "Unnamed token"}</h1>
             <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted">

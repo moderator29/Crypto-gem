@@ -7,10 +7,10 @@ import { ageShort, usdCompact } from "@/lib/utils/format";
 
 function Stat({ label, value, note }: { label: string; value: string; note: string }) {
   return (
-    <div className="card-flat p-4">
+    <div className="card-flat p-3.5 md:p-4">
       <p className="eyebrow">{label}</p>
-      <p className="num mt-2.5 text-2xl font-bold tracking-tight">{value}</p>
-      <p className="mt-1 text-xs text-muted">{note}</p>
+      <p className="num mt-1.5 text-xl font-bold tracking-tight md:mt-2.5 md:text-2xl">{value}</p>
+      <p className="mt-1 hidden text-xs text-muted md:block">{note}</p>
     </div>
   );
 }
@@ -26,7 +26,7 @@ export function OverviewCard({ data, chains }: { data: HomeData | null; chains: 
   return (
     <div className="card card-lit p-5 md:p-6">
 
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-3 flex items-center justify-between md:mb-4">
             <h2 className="h3">Market overview</h2>
             <Link href="/pulse" className="text-xs font-semibold text-brand hover:text-text">Market Pulse</Link>
           </div>

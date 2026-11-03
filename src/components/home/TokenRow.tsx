@@ -1,5 +1,7 @@
 "use client";
 
+import { ChainBadge } from "@/components/ui/ChainBadge";
+
 import { ChevronDown, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -60,10 +62,8 @@ export function TokenRow({ pool, rank, note }: { pool: PoolSummary; rank?: numbe
         {rank !== undefined && <span className="num hidden text-sm font-bold text-muted md:block">{rank}</span>}
         <span className="flex min-w-0 items-center gap-3">
           <span className="relative shrink-0">
-            <TokenLogo src={t.imageUrl} symbol={t.symbol} size={44} />
-            <span className="absolute -bottom-1 -right-1 grid h-[18px] min-w-[18px] place-items-center rounded-full border border-line bg-[var(--surface-solid)] px-1 text-[8px] font-bold uppercase text-soft" title={net?.name}>
-              {(net?.name ?? pool.networkId).slice(0, 3)}
-            </span>
+            <TokenLogo src={t.imageUrl} symbol={t.symbol} size={44} networkId={pool.networkId} address={t.address} />
+            <span className="absolute -bottom-1 -right-1 rounded-full ring-2 ring-[var(--canvas)]"><ChainBadge networkId={pool.networkId} size={18} /></span>
           </span>
           <span className="min-w-0">
             <span className="block truncate font-semibold leading-tight">{t.name || t.symbol}</span>

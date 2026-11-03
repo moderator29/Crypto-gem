@@ -112,7 +112,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
           {state !== "error" &&
             shown.map((r) => (
               <Link key={`${r.networkId}:${r.address}`} href={`/token/${r.networkId}/${r.address}`} onClick={onClose} className="flex items-center gap-3 rounded-xl p-3 hover:bg-[var(--border)]">
-                <TokenLogo src={r.imageUrl} symbol={r.symbol} size={36} />
+                <TokenLogo src={r.imageUrl} symbol={r.symbol} size={36} networkId={r.networkId} address={r.address} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-semibold">
                     {r.name} <span className="font-medium text-muted">{r.symbol}</span>

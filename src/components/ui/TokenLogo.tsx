@@ -1,12 +1,20 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
-/** Real logo when a provider supplied one, otherwise a neutral monogram. Never an invented logo. */
-export function TokenLogo({ src, symbol, size = 40 }: { src: string | null | undefined; symbol: string; size?: number }) {
+import { useState } from "react";
+import { trustTokenLogo } from "@/lib/trustwallet";
+
+/** Real logo: provider image first, then the Trust Wallet asset pack, then a neutral monogram. Never an invented logo. */
+export function TokenLogo({ src, symbol, size = 40, networkId, address }: { src: string | null | undefined; symbol: string; size?: number; networkId?: string; address?: string | null }) {
+  const trust = networkId ? trustTokenLogo(networkId, address) : null;
+  const chain = [src, trust].filter((u, i, a): u is string => !!u && a.indexOf(u) === i);
+  const [failed, setFailed] = useState(0);
   const style = { width: size, height: size };
-  if (src) {
-    return <img src={src} alt="" width={size} height={size} loading="lazy" referrerPolicy="no-referrer" style={style} className="shrink-0 rounded-full bg-[var(--border)] object-cover" />;
+  const current = chain[failed];
+  if (current) {
+    return <img key={current} src={current} alt="" width={size} height={size} loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed((n) => n + 1)} style={style} className="shrink-0 rounded-full bg-[var(--surface-3)] object-cover" />;
   }
   return (
-    <span style={{ ...style, fontSize: size * 0.38 }} className="grid shrink-0 place-items-center rounded-full bg-[var(--border-strong)] font-bold text-soft" aria-hidden="true">
+    <span style={{ ...style, fontSize: size * 0.38 }} className="grid shrink-0 place-items-center rounded-full bg-[var(--surface-3)] font-bold text-soft shadow-[inset_0_0_0_1px_var(--line-2)]" aria-hidden="true">
       {symbol.slice(0, 2).toUpperCase()}
     </span>
   );

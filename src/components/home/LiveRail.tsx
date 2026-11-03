@@ -31,7 +31,7 @@ function MarketCard({ item, tab }: { item: RailItem; tab: number }) {
       </div>
       <div className="flex items-end justify-between gap-3">
         <span className="flex min-w-0 items-center gap-2.5">
-          {item.tokenLogo !== undefined ? <TokenLogo src={item.tokenLogo} symbol={item.title} size={32} /> : <span className="icon-tile h-8 w-8 shrink-0 rounded-full"><Icon name={item.icon} size={15} /></span>}
+          {item.tokenLogo !== undefined ? <TokenLogo src={item.tokenLogo} symbol={item.title} size={32} networkId={item.tokenNetwork} address={item.tokenAddress} /> : <span className="icon-tile h-8 w-8 shrink-0 rounded-full"><Icon name={item.icon} size={15} /></span>}
           <span className="truncate font-semibold tracking-tight">{item.title}</span>
         </span>
         {item.value && <span className={`num shrink-0 text-xl font-bold tracking-tight ${TONE_TEXT[item.tone]}`}>{item.value}</span>}

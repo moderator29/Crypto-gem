@@ -2,6 +2,7 @@ import { dedupeByToken, heatingUp, rankOrganic, type HeatingUp } from "./ranking
 import { geckoTerminal } from "./providers/geckoterminal";
 import { providerHealth, type ProviderHealth } from "./http";
 import { getNetwork } from "./networks";
+import { presentable } from "./quality";
 import type { PoolSummary } from "./types";
 
 export type RankedPool = PoolSummary & { score: number };
@@ -20,13 +21,15 @@ export interface HomeData {
 export async function getHomeData(networkId?: string | null): Promise<HomeData> {
   const slug = networkId ? getNetwork(networkId)?.geckoterminal : undefined;
   const [trending, fresh] = await Promise.all([geckoTerminal.trendingPools(slug), geckoTerminal.newPools(slug)]);
-  const pools = dedupeByToken([...trending.pools, ...fresh.pools]);
+  const trendingPools = presentable(trending.pools);
+  const freshPools = presentable(fresh.pools);
+  const pools = dedupeByToken([...trendingPools, ...freshPools]);
   const withData = pools.filter((p) => p.priceUsd !== null);
   const movers = withData.filter((p) => p.change.h24 !== null && (p.liquidityUsd ?? 0) >= 5_000);
   return {
-    organic: rankOrganic(trending.pools, 20).map((s) => ({ ...s.pool, score: Math.round(s.score) })),
+    organic: rankOrganic(trendingPools, 20).map((s) => ({ ...s.pool, score: Math.round(s.score) })),
     heating: heatingUp(pools).slice(0, 12),
-    fresh: fresh.pools.slice(0, 20),
+    fresh: freshPools.slice(0, 20),
     gainers: [...movers].sort((a, b) => (b.change.h24 ?? 0) - (a.change.h24 ?? 0)).slice(0, 12),
     losers: [...movers].sort((a, b) => (a.change.h24 ?? 0) - (b.change.h24 ?? 0)).slice(0, 12),
     volume: [...withData].sort((a, b) => (b.volumeUsd.h24 ?? 0) - (a.volumeUsd.h24 ?? 0)).slice(0, 12),

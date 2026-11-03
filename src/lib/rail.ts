@@ -23,6 +23,8 @@ export interface RailItem {
   href: string;
   imageUrl?: string | null;
   tokenLogo?: string | null;
+  tokenNetwork?: string;
+  tokenAddress?: string;
   cta?: string;
   /** An unsold placement. Rendered as an invitation, never as an advertiser. */
   available?: boolean;
@@ -36,7 +38,7 @@ const chainName = (p: PoolSummary) => getNetwork(p.networkId)?.name ?? p.network
 
 function marketItems(data: HomeData, chains: ChainPulse[], now: number): RailItem[] {
   const out: RailItem[] = [];
-  const pool = (p: PoolSummary, id: string, eyebrow: string, tone: RailTone, icon: RailIcon, value: string, sub: string): RailItem => ({ id, kind: "market", tone, icon, eyebrow, title: p.baseToken.symbol || p.baseToken.name, value, sub, href: tokenHref(p), tokenLogo: p.baseToken.imageUrl });
+  const pool = (p: PoolSummary, id: string, eyebrow: string, tone: RailTone, icon: RailIcon, value: string, sub: string): RailItem => ({ id, kind: "market", tone, icon, eyebrow, title: p.baseToken.symbol || p.baseToken.name, value, sub, href: tokenHref(p), tokenLogo: p.baseToken.imageUrl, tokenNetwork: p.networkId, tokenAddress: p.baseToken.address });
 
   const liquid = [...data.organic, ...data.fresh, ...data.gainers, ...data.losers, ...data.volume].filter((p) => (p.liquidityUsd ?? 0) >= MIN_LIQ && (p.volumeUsd.h24 ?? 0) >= MIN_VOL && p.change.h24 !== null);
   const uniq = [...new Map(liquid.map((p) => [p.id, p])).values()];
