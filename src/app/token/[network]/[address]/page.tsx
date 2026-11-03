@@ -170,7 +170,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
               <ul className="grid gap-2">
                 {risks.map((r) => (
                   <li key={r.code} className="glass-flat flex gap-3 p-3 text-sm">
-                    <span className={`mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full ${r.level === "high" ? "bg-down" : r.level === "medium" ? "bg-warm" : "bg-brand"}`} aria-label={`${r.level} risk`} />
+                    <span className={`mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full ${r.level === "high" ? "bg-down" : r.level === "medium" ? "bg-warm" : "bg-brand"}`} role="img" aria-label={`${r.level} risk`} />
                     {r.message}
                   </li>
                 ))}

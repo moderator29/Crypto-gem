@@ -160,7 +160,7 @@ export function MarketBoard({ initial, initialNetwork = null }: { initial: HomeD
             </div>
           ) : (
             <div className="grid gap-2">
-              <div className={`sticky top-[calc(var(--header-h)+4px)] z-10 hidden items-center gap-x-3 rounded-xl border border-line bg-[var(--surface-solid)] px-3.5 py-2 text-xs font-bold uppercase tracking-wider text-muted md:grid ${ROW_COLS}`} role="row">
+              <div className={`sticky top-[calc(var(--header-h)+4px)] z-10 hidden items-center gap-x-3 rounded-xl border border-line bg-[var(--surface-solid)] px-3.5 py-2 text-xs font-bold uppercase tracking-wider text-muted md:grid ${ROW_COLS}`}>
                 <span>#</span>
                 <span>Token</span>
                 {COLUMNS.map((c) => (
