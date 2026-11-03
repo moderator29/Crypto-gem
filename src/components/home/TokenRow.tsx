@@ -8,6 +8,10 @@ import { getNetwork } from "@/lib/market-data/networks";
 import type { PoolSummary } from "@/lib/market-data/types";
 import { ageShort, pct, priceUsd, usdCompact } from "@/lib/utils/format";
 
+/** Shared by the row and the table header so columns always line up. */
+export const ROW_COLS =
+  "grid-cols-[minmax(0,1fr)_auto_20px] md:grid-cols-[28px_minmax(0,2fr)_minmax(104px,1.3fr)_minmax(72px,1fr)_minmax(72px,1fr)_20px] lg:grid-cols-[32px_minmax(0,2.2fr)_minmax(104px,1.3fr)_repeat(4,minmax(72px,1fr))_56px_20px]";
+
 export function Change({ v }: { v: number | null }) {
   return <span className={`num font-semibold ${v === null ? "text-muted" : v >= 0 ? "text-up" : "text-down"}`}>{pct(v)}</span>;
 }
@@ -37,20 +41,22 @@ export function TokenRow({ pool, rank, note }: { pool: PoolSummary; rank?: numbe
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((o) => !o)}
-        className="grid w-full grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-x-3 px-3.5 py-3 text-left transition hover:bg-[var(--border)] md:grid-cols-[32px_minmax(0,2fr)_1fr_1fr_1fr_1fr_56px_20px]"
+        className={`grid w-full items-center gap-x-3 px-3.5 py-3 text-left transition hover:bg-[var(--border)] ${ROW_COLS}`}
       >
         {rank !== undefined && <span className="num hidden text-sm font-bold text-muted md:block">{rank}</span>}
-        <span className="relative">
-          <TokenLogo src={t.imageUrl} symbol={t.symbol} size={44} />
-          <span className="absolute -bottom-1 -right-1 grid h-[18px] min-w-[18px] place-items-center rounded-full border border-line bg-[var(--surface-solid)] px-1 text-[8px] font-bold uppercase text-soft" title={net?.name}>
-            {(net?.name ?? pool.networkId).slice(0, 3)}
+        <span className="flex min-w-0 items-center gap-3">
+          <span className="relative shrink-0">
+            <TokenLogo src={t.imageUrl} symbol={t.symbol} size={44} />
+            <span className="absolute -bottom-1 -right-1 grid h-[18px] min-w-[18px] place-items-center rounded-full border border-line bg-[var(--surface-solid)] px-1 text-[8px] font-bold uppercase text-soft" title={net?.name}>
+              {(net?.name ?? pool.networkId).slice(0, 3)}
+            </span>
           </span>
-        </span>
-        <span className="min-w-0">
-          <span className="block truncate font-semibold leading-tight">{t.name || t.symbol}</span>
-          <span className="block truncate text-xs text-muted">
-            {t.symbol}
-            {note ? ` · ${note}` : ""}
+          <span className="min-w-0">
+            <span className="block truncate font-semibold leading-tight">{t.name || t.symbol}</span>
+            <span className="block truncate text-xs text-muted">
+              {t.symbol}
+              {note ? ` · ${note}` : ""}
+            </span>
           </span>
         </span>
         <span className="num text-right md:text-left">
@@ -59,15 +65,11 @@ export function TokenRow({ pool, rank, note }: { pool: PoolSummary; rank?: numbe
             <Change v={pool.change.h24} />
           </span>
         </span>
-        <span className="num hidden text-sm md:block">
-          <Change v={pool.change.h1} /> <span className="text-xs text-muted">1h</span>
-        </span>
-        <span className="num hidden text-sm md:block">
-          <Change v={pool.change.h24} /> <span className="text-xs text-muted">24h</span>
-        </span>
+        <span className="num hidden text-sm lg:block"><Change v={pool.change.h1} /></span>
+        <span className="num hidden text-sm md:block"><Change v={pool.change.h24} /></span>
         <span className="num hidden text-sm md:block">{usdCompact(pool.volumeUsd.h24)}</span>
-        <span className="num hidden text-sm md:block">{usdCompact(pool.liquidityUsd)}</span>
-        <span className="num hidden text-right text-xs text-muted md:block">{ageShort(pool.createdAt)}</span>
+        <span className="num hidden text-sm lg:block">{usdCompact(pool.liquidityUsd)}</span>
+        <span className="num hidden text-right text-xs text-muted lg:block">{ageShort(pool.createdAt)}</span>
         <ChevronDown size={18} className={`text-muted transition ${open ? "rotate-180" : ""}`} aria-hidden="true" />
       </button>
       {open && (

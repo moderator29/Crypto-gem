@@ -82,6 +82,8 @@ describe("format", () => {
     expect(usdCompact(null)).toBe("—");
     expect(pct(5)).toBe("+5.0%");
     expect(pct(undefined)).toBe("—");
+    expect(pct(185373.1)).toBe("+185K%");
+    expect(pct(-12000)).toBe("-12K%");
     expect(priceUsd(0.000383354)).toBe("$0.000383");
     expect(ageShort(new Date(Date.now() - 7_200_000).toISOString())).toBe("2h");
   });

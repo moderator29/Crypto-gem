@@ -15,7 +15,7 @@ export function TopTrending({ items }: { items: RankedPool[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const { t } = useT();
   if (items.length === 0) return null;
-  const by = (dir: number) => ref.current?.scrollBy({ left: dir * 220, behavior: "smooth" });
+  const by = (dir: number) => ref.current?.scrollBy({ left: dir * 320, behavior: "smooth" });
   return (
     <section aria-label="Top trending" className="space-y-3">
       <div className="flex items-center justify-between">
@@ -33,24 +33,22 @@ export function TopTrending({ items }: { items: RankedPool[] }) {
       </div>
       <div ref={ref} className="scroll-x pb-1">
         {items.slice(0, 12).map((p, i) => (
-          <Link key={p.id} href={`/token/${p.networkId}/${p.baseToken.address}`} className="glass hover-lift w-[172px] shrink-0 snap-start space-y-2 !rounded-2xl p-2.5">
-            <div className="aspect-square w-full overflow-hidden rounded-xl bg-[var(--border)]">
-              <TokenLogo src={p.baseToken.imageUrl} symbol={p.baseToken.symbol} size={172} />
+          <Link key={p.id} href={`/token/${p.networkId}/${p.baseToken.address}`} className="glass hover-lift w-[158px] shrink-0 snap-start overflow-hidden !rounded-2xl sm:w-[188px]">
+            <div className="relative grid h-[88px] place-items-center bg-[radial-gradient(circle_at_50%_30%,var(--aurora-a),transparent_75%)] sm:h-[104px]">
+              <TokenLogo src={p.baseToken.imageUrl} symbol={p.baseToken.symbol} size={64} />
+              <span className="num absolute left-2.5 top-2 rounded-full bg-black/40 px-2 py-0.5 text-[11px] font-bold text-warm backdrop-blur">#{i + 1}</span>
+              <span className="num absolute right-2.5 top-2 text-xs"><Change v={p.change.h24} /></span>
             </div>
-            <div className="flex items-center justify-between gap-2">
-              <span className="truncate font-semibold">{p.baseToken.name || p.baseToken.symbol}</span>
-              <span className="num shrink-0 text-xs font-bold text-warm">#{i + 1}</span>
-            </div>
-            <div className="flex items-center justify-between text-xs text-muted">
-              <span className="truncate">${p.baseToken.symbol}</span>
-              <Change v={p.change.h24} />
-            </div>
-            <div className="num text-sm font-bold">
-              {usdCompact(p.marketCapUsd ?? p.fdvUsd)} <span className="text-[10px] font-medium text-muted">{p.marketCapUsd ? "MC" : "FDV"}</span>
-            </div>
-            <div className="flex items-center justify-between text-[11px] text-muted">
-              <span className="truncate">{getNetwork(p.networkId)?.name ?? p.networkId}</span>
-              <span className="num">{ageShort(p.createdAt)}</span>
+            <div className="space-y-1 p-3">
+              <div className="truncate text-sm font-semibold">{p.baseToken.name || p.baseToken.symbol}</div>
+              <div className="flex items-center justify-between text-xs text-muted">
+                <span className="truncate">${p.baseToken.symbol}</span>
+                <span className="num font-semibold text-text">{usdCompact(p.marketCapUsd ?? p.fdvUsd)} <span className="text-[10px] font-medium text-muted">{p.marketCapUsd ? "MC" : "FDV"}</span></span>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-muted">
+                <span className="truncate">{getNetwork(p.networkId)?.name ?? p.networkId}</span>
+                <span className="num">{ageShort(p.createdAt)}</span>
+              </div>
             </div>
           </Link>
         ))}

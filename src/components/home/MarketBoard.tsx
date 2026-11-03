@@ -8,7 +8,9 @@ import type { HomeData } from "@/lib/market-data/home";
 import { NETWORKS } from "@/lib/market-data/networks";
 import { ageShort } from "@/lib/utils/format";
 import { AvailableSlot } from "./AdSlots";
-import { TokenRow } from "./TokenRow";
+import { ArrowDown, ArrowUp } from "lucide-react";
+import type { PoolSummary } from "@/lib/market-data/types";
+import { ROW_COLS, TokenRow } from "./TokenRow";
 
 const TABS = [
   { id: "organic", key: "tab.trending", icon: Zap },
@@ -23,6 +25,24 @@ type TabId = (typeof TABS)[number]["id"];
 const CHAINS = NETWORKS.filter((n) => n.geckoterminal && ["ethereum", "solana", "bsc", "base", "arbitrum", "polygon", "avalanche", "optimism", "ton", "tron", "sui", "robinhood"].includes(n.id));
 const POLL_MS = 45_000;
 
+type SortKey = "price" | "h1" | "h24" | "volume" | "liquidity" | "age";
+const SORTERS: Record<SortKey, (p: PoolSummary) => number | null> = {
+  price: (p) => p.priceUsd,
+  h1: (p) => p.change.h1,
+  h24: (p) => p.change.h24,
+  volume: (p) => p.volumeUsd.h24,
+  liquidity: (p) => p.liquidityUsd,
+  age: (p) => (p.createdAt ? Date.parse(p.createdAt) : null),
+};
+const COLUMNS: Array<{ key: SortKey; label: string; lgOnly?: boolean }> = [
+  { key: "price", label: "Price" },
+  { key: "h1", label: "1h", lgOnly: true },
+  { key: "h24", label: "24h" },
+  { key: "volume", label: "Volume" },
+  { key: "liquidity", label: "Liquidity", lgOnly: true },
+  { key: "age", label: "Age", lgOnly: true },
+];
+
 export function MarketBoard({ initial, initialNetwork = null }: { initial: HomeData | null; initialNetwork?: string | null }) {
   const { t: tr } = useT();
   const [data, setData] = useState<HomeData | null>(initial);
@@ -30,6 +50,7 @@ export function MarketBoard({ initial, initialNetwork = null }: { initial: HomeD
   const [network, setNetwork] = useState<string | null>(initialNetwork);
   const [state, setState] = useState<"ok" | "loading" | "error">(initial ? "ok" : "error");
   const [err, setErr] = useState<string | null>(initial ? null : "Market data is temporarily unavailable.");
+  const [sort, setSort] = useState<{ key: SortKey; dir: "asc" | "desc" } | null>(null);
   const reqId = useRef(0);
 
   const load = useCallback(async (net: string | null, silent: boolean) => {
@@ -71,9 +92,22 @@ export function MarketBoard({ initial, initialNetwork = null }: { initial: HomeD
 
   const rows = (() => {
     if (!data) return [];
-    if (tab === "heating") return data.heating.map((h) => ({ pool: h.pool, note: h.reason }));
-    return data[tab].map((pool) => ({ pool, note: undefined as string | undefined }));
+    const base = tab === "heating" ? data.heating.map((h) => ({ pool: h.pool, note: h.reason })) : data[tab].map((pool) => ({ pool, note: undefined as string | undefined }));
+    if (!sort) return base;
+    const f = SORTERS[sort.key];
+    // Missing values always sink to the bottom, whichever direction is chosen.
+    return [...base].sort((a, b) => {
+      const x = f(a.pool);
+      const y = f(b.pool);
+      if (x === null && y === null) return 0;
+      if (x === null) return 1;
+      if (y === null) return -1;
+      return sort.dir === "desc" ? y - x : x - y;
+    });
   })();
+
+  const toggleSort = (key: SortKey) =>
+    setSort((s) => (s?.key !== key ? { key, dir: "desc" } : s.dir === "desc" ? { key, dir: "asc" } : null));
 
   return (
     <section aria-label="Market discovery" className="space-y-4">
@@ -126,6 +160,17 @@ export function MarketBoard({ initial, initialNetwork = null }: { initial: HomeD
             </div>
           ) : (
             <div className="grid gap-2">
+              <div className={`sticky top-[calc(var(--header-h)+4px)] z-10 hidden items-center gap-x-3 rounded-xl border border-line bg-[var(--surface-solid)] px-3.5 py-2 text-xs font-bold uppercase tracking-wider text-muted md:grid ${ROW_COLS}`} role="row">
+                <span>#</span>
+                <span>Token</span>
+                {COLUMNS.map((c) => (
+                  <button key={c.key} type="button" onClick={() => toggleSort(c.key)} className={`items-center gap-1 text-left uppercase transition hover:text-text ${c.lgOnly ? "hidden lg:flex" : "flex"} ${c.key === "age" ? "justify-end" : ""} ${sort?.key === c.key ? "text-text" : ""}`} aria-label={`Sort by ${c.label}`}>
+                    {c.label}
+                    {sort?.key === c.key && (sort.dir === "desc" ? <ArrowDown size={12} /> : <ArrowUp size={12} />)}
+                  </button>
+                ))}
+                <span />
+              </div>
               {rows.map((r, i) => (
                 <div key={r.pool.id} className="contents">
                   <TokenRow pool={r.pool} rank={i + 1} note={r.note} />

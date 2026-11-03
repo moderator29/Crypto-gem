@@ -29,7 +29,9 @@ export function priceUsd(n: number | null | undefined): string {
 
 export function pct(n: number | null | undefined, digits = 1): string {
   if (n === null || n === undefined || !Number.isFinite(n)) return "—";
-  return `${n > 0 ? "+" : ""}${n.toFixed(digits)}%`;
+  const sign = n > 0 ? "+" : "";
+  if (Math.abs(n) >= 10_000) return `${sign}${usdCompact(n).replace("$", "")}%`;
+  return `${sign}${n.toFixed(digits)}%`;
 }
 
 export function ageShort(iso: string | null | undefined, now = Date.now()): string {

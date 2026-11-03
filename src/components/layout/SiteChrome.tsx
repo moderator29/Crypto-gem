@@ -44,7 +44,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
     <>
       <div className="aurora" aria-hidden="true" />
       <header className="sticky top-0 z-50 border-b border-line bg-[var(--surface)] backdrop-blur-xl">
-        <div className="mx-auto flex h-[var(--header-h)] max-w-7xl items-center gap-3 px-4">
+        <div className="mx-auto flex h-[var(--header-h)] max-w-[1360px] items-center gap-3 px-4">
           <button type="button" className="btn !px-0 w-11 xl:hidden" aria-label={t("menu.open")} onClick={() => setDrawer(true)}>
             <Menu size={20} />
           </button>
@@ -103,7 +103,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
         </div>
       )}
 
-      <main className="mx-auto w-full max-w-7xl px-4 pt-4">{children}</main>
+      <main className="mx-auto w-full max-w-[1360px] px-4 pt-4">{children}</main>
       {footer}
 
       <nav className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[max(env(safe-area-inset-bottom),10px)] xl:hidden" aria-label="Mobile">

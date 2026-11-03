@@ -62,7 +62,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
     ["FDV", usdCompact(info?.fdvUsd ?? top?.fdvUsd)],
     ["Liquidity", usdCompact(info?.liquidityUsd ?? top?.liquidityUsd)],
     ["24h volume", usdCompact(info?.volume24hUsd ?? top?.volumeUsd.h24)],
-    ["24h txns", top?.txns24h ? `${top.txns24h.buys + top.txns24h.sells}` : "—"],
+    ["24h txns", top?.txns24h ? (top.txns24h.buys + top.txns24h.sells).toLocaleString("en-US") : "—"],
     ["Pool age", ageShort(top?.createdAt)],
   ];
 
