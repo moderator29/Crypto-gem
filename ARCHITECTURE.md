@@ -11,7 +11,8 @@ Browser ──> Next route handlers / server components
                  ├─ detect        (chain resolution + parallel enrichment, streamed)
                  ├─ payments      (NOWPayments client, IPN verification)
                  ├─ auth          (Privy access token verified against Privy's public keys)
-                 └─ database      (Supabase as Postgres only; secret key server side only)
+                 ├─ database      (Neon Postgres over HTTP; DATABASE_URL server side only)
+                 └─ storage       (Vercel Blob for logos and ad creatives; token server side only)
 ```
 
 ## Market data
@@ -55,7 +56,13 @@ All products (listings, ad campaigns, boosts) share one `orders` and `payments` 
 
 ## Database
 
-`supabase/migrations`. RLS on every table. User ids are Privy DIDs (text). Private tables have no client policy, so the browser cannot touch them: every read and write goes through a server route that verifies the Privy token and binds the query to that user id. Only public catalog data (active packages and placements, published listings, live campaigns) has read policies. Exclusive ad placements cannot overlap because a GiST exclusion constraint rejects it. Verified by `tests/rls.test.ts` running the real migration in PGlite.
+Neon Postgres, schema in `db/migrations` (applied with `npm run db:migrate`). User ids are Privy DIDs (text). The browser never talks to the database. Every read and write goes through a server route that verifies the Privy token and binds the query to that user id, using one application role from `DATABASE_URL`. There are no row policies, so authorisation lives in the routes and is covered by route tests.
+
+`src/lib/db` holds a small query builder (`from`, `select`, `insert`, `update`, `upsert`, `delete`, filters, `or`, `order`, `limit`, `range`, `single`, `maybeSingle`) that compiles each chain into one parameterised statement for Neon's HTTP driver. Identifiers are validated against `^[a-z_][a-z0-9_]*$`, every value is a bound parameter and jsonb values are serialised and cast. Errors come back as `{ code, message }` with the PostgreSQL SQLSTATE. The one read that needs a join (admin payments) uses static SQL through `getDb().sql()`. Exclusive ad placements cannot overlap because a GiST exclusion constraint rejects it. Verified by `tests/db-schema.test.ts` and `tests/db-builder.test.ts`, which run the real migrations in PGlite.
+
+## Storage
+
+`src/lib/storage.ts` writes validated images to Vercel Blob (public, no random suffix, content type taken from the checked bytes). Logos live under `logos/<userId>/` and creatives under `creatives/<userId>/`. The full https URL is stored in `token_submissions.logo_url` and in `campaign_creatives.storage_path` (the column name is historical, it holds a URL). A logo URL on `*.public.blob.vercel-storage.com` is accepted only from the caller's own `logos/<userId>/` folder.
 
 ## Design system
 

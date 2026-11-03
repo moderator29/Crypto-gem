@@ -16,7 +16,7 @@ Roles live in `public.user_roles` (enum `app_role`). The admin API reads them th
 
 The exact sets are in `src/lib/admin/roles.ts` (`ACCESS`). `requireRole(req, roles)` in `src/lib/admin/auth.ts` returns `401` (no valid session), `403` (signed in, wrong role) or `503` (database not configured on the server).
 
-Decision: `admin` is allowed on every route, including placement prices and creatives, even though the database policy for placements names `advertising_manager`. The server uses the secret key, so policy parity is kept in the role table above instead.
+Decision: `admin` is allowed on every route, including placement prices and creatives, even though the intended owner of placements is `advertising_manager`. The database has no row policies, so the role table above is the only place access is decided.
 
 ## Grant the first super admin
 
@@ -66,13 +66,13 @@ Everything else is refused with `409`. Staff cannot move `awaiting_payment`, `pa
 
 ## Audit
 
-`writeAudit(actor, action, target, before, after)` in `src/lib/admin/audit.ts` appends to `admin_audit_logs`. Every mutating route calls it after the change succeeds, and a test asserts one entry per mutation and none for refused or invalid requests. If the audit insert itself fails the route answers `500` with `applied: true` so the operator knows the change landed and must be checked. The migration adds a trigger that makes `admin_audit_logs` append-only: updates and deletes raise, even for the secret key.
+`writeAudit(actor, action, target, before, after)` in `src/lib/admin/audit.ts` appends to `admin_audit_logs`. Every mutating route calls it after the change succeeds, and a test asserts one entry per mutation and none for refused or invalid requests. If the audit insert itself fails the route answers `500` with `applied: true` so the operator knows the change landed and must be checked. The migration adds a trigger that makes `admin_audit_logs` append-only: updates and deletes raise, even for the application role.
 
-Reviewer reasons are also stored in `moderation_notes` (RLS: staff read, reviewer insert, no update or delete).
+Reviewer reasons are also stored in `moderation_notes` (only the server touches it, after a role check).
 
 ## Migration
 
-`supabase/migrations/20261103000010_admin_moderation.sql` adds `moderation_notes`, read-path indexes and the append-only trigger. Apply it before using listing detail (`/api/admin/listings?id=`) and review actions that carry a reason. It is covered by `tests/admin-rls.test.ts` (PGlite).
+`db/migrations/20261103000010_admin_moderation.sql` adds `moderation_notes`, read-path indexes and the append-only trigger. Apply it (`npm run db:migrate`) before using listing detail (`/api/admin/listings?id=`) and review actions that carry a reason. It is covered by `tests/db-schema.test.ts` (PGlite).
 
 ## UI
 
@@ -82,7 +82,7 @@ Reviewer reasons are also stored in `moderation_notes` (RLS: staff read, reviewe
 
 - Revenue is the sum of `orders.price_usd` where `status = 'paid'`, read in pages of 1,000 up to 20,000 orders. Past that the overview flags the figure as partial.
 - "Pending payments" counts `payments` in an in-flight status (created, waiting, confirming, confirmed, sending, partially_paid).
-- `request_changes` returns the listing to `draft`, the only state where the owner can edit under RLS, and copies the reason to `rejection_reason`.
+- `request_changes` returns the listing to `draft`, the only state where the owner can edit, and copies the reason to `rejection_reason`.
 - Placement price editing changes the amount for existing durations only. Adding or removing durations is not offered.
 - Filters on payments and audit are exact matches, so no user text is ever interpolated into a query.
 
@@ -95,5 +95,5 @@ Reviewer reasons are also stored in `moderation_notes` (RLS: staff read, reviewe
 - Boost campaign and advertising campaign moderation, user management, platform settings and coupons.
 - Rate limiting is in memory per server instance (see `src/lib/utils/rateLimit.ts`). Use a shared store before running several instances.
 - The audit insert is a second statement after the change, not part of one transaction. Wrap both in a database function if that gap matters.
-- Not exercised against a live Supabase project or a live NOWPayments account. Routes are covered with an in-memory database fake and the SQL with PGlite.
+- Not exercised against a live Neon database or a live NOWPayments account. Routes are covered with an in-memory database fake and the SQL with PGlite.
 - Layout was checked at 390px only for the unconfigured state. Data-backed screens are built as stacked cards on phones but were not browser-checked with live data.

@@ -1,6 +1,6 @@
 # Crypto Gems
 
-Multi-chain token discovery, market intelligence, listings and a promotion marketplace. Next.js 16, React 19, Tailwind 4, Supabase, Lightweight Charts.
+Multi-chain token discovery, market intelligence, listings and a promotion marketplace. Next.js 16, React 19, Tailwind 4, Neon Postgres, Vercel Blob, Lightweight Charts.
 
 See `KNOWN_LIMITATIONS.md` for exactly what is working today and what is waiting on credentials or still to build.
 
@@ -14,12 +14,14 @@ npm run dev
 
 Discovery, the token page, charts, search and token detection work with no keys, using the public GeckoTerminal and CoinGecko tiers (rate limited, cached).
 
+Accounts, listings, payments and campaigns need `DATABASE_URL` (Neon) and, for uploads, `BLOB_READ_WRITE_TOKEN` (Vercel Blob). Identity is Privy. Apply the schema with `npm run db:migrate`. See `SETUP.md`.
+
 ## Checks
 
 ```bash
 npm run typecheck
 npm run lint
-npm test          # unit tests plus Postgres RLS tests (in-process, no database needed)
+npm test          # unit tests plus Postgres schema and query builder tests (in-process, no database needed)
 npm run build
 ```
 
@@ -31,7 +33,9 @@ src/lib/detect        real-time contract and chain detection engine
 src/lib/payments      NOWPayments client, IPN verification
 src/lib/ads           placement catalog and delivery
 src/app/api           detect (streamed), market/home, search, ohlcv, listings
-supabase/migrations   schema and row level security
+src/lib/db            Neon client and query builder
+src/lib/storage.ts    Vercel Blob uploads
+db/migrations         schema (apply with npm run db:migrate)
 docs                  architecture and integration notes
 ```
 
