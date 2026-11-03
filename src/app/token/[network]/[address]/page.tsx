@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import { AvailableSlot } from "@/components/home/AdSlots";
 import { Change } from "@/components/home/TokenRow";
 import { PriceChart } from "@/components/token/PriceChart";
+import { VoteButton } from "@/components/token/VoteButton";
+import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 import { WatchButton } from "@/components/dashboard/WatchButton";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { TokenLogo } from "@/components/ui/TokenLogo";
@@ -56,6 +58,21 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
   const risks = marketRiskSignals(sorted);
   const trade = tradeLinks(net.id, canonical, top?.address);
   const explorer = explorerTokenUrl(net.id, canonical);
+
+  // A listed (published) project can be voted on. Unlisted tokens have no listing row, so no vote button.
+  let listing: { id: string; votes: number } | null = null;
+  if (supabaseConfigured()) {
+    try {
+      const db = supabaseAdmin();
+      const { data: l } = await db.from("token_submissions").select("id").eq("network_id", net.id).eq("address", canonical).eq("status", "published").maybeSingle();
+      if (l) {
+        const { count } = await db.from("community_votes").select("*", { count: "exact", head: true }).eq("submission_id", l.id);
+        listing = { id: l.id, votes: count ?? 0 };
+      }
+    } catch {
+      listing = null;
+    }
+  }
 
   const stats: Array<[string, string]> = [
     ["Market cap", usdCompact(info?.marketCapUsd ?? top?.marketCapUsd)],
@@ -176,6 +193,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
               <CopyButton value={canonical} label="Copy contract" />
             </div>
           </section>
+          {listing && <section className="glass p-4" aria-label="Community vote"><h2 className="mb-2 font-display text-lg font-bold">Community favourite</h2><VoteButton submissionId={listing.id} initialVotes={listing.votes} /></section>}
           <Link href={`/copilot?network=${net.id}&address=${encodeURIComponent(canonical)}`} className="btn w-full"><Bot size={16} /> Ask the Copilot about this token</Link>
           <AvailableSlot placement="token-page" variant="card" />
         </aside>
