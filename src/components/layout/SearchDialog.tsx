@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, X } from "lucide-react";
+import { ArrowLeft, Search, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { getNetwork } from "@/lib/market-data/networks";
@@ -59,16 +59,19 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
   if (!open) return null;
   const shown = q.trim().length < 2 ? [] : results;
   return (
-    <div className="fixed inset-0 z-[80] flex items-start justify-center bg-black/55 p-3 pt-[10vh] backdrop-blur-sm" onMouseDown={onClose} role="dialog" aria-modal="true" aria-label="Search">
-      <div className="glass w-full max-w-xl overflow-hidden !bg-[var(--surface-solid)]" onMouseDown={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[80] flex items-stretch justify-center bg-[var(--bg)] sm:items-start sm:bg-black/55 sm:p-3 sm:pt-[10vh] sm:backdrop-blur-sm" onMouseDown={onClose} role="dialog" aria-modal="true" aria-label="Search">
+      <div className="glass flex w-full max-w-xl flex-col overflow-hidden !rounded-none !border-0 !bg-[var(--bg)] sm:!rounded-[var(--r-lg)] sm:!border sm:!bg-[var(--surface-solid)]" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-3 border-b border-line px-4">
-          <Search size={18} className="text-muted" />
+          <button type="button" onClick={onClose} aria-label="Back" className="grid h-9 w-9 place-items-center rounded-full text-soft sm:hidden">
+            <ArrowLeft size={20} />
+          </button>
+          <Search size={18} className="hidden text-muted sm:block" />
           <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, symbol or paste a contract address" className="h-14 w-full bg-transparent text-base outline-none placeholder:text-muted" />
-          <button type="button" onClick={onClose} aria-label="Close search" className="grid h-9 w-9 place-items-center rounded-full text-muted hover:text-text">
+          <button type="button" onClick={onClose} aria-label="Close search" className="hidden h-9 w-9 place-items-center rounded-full text-muted hover:text-text sm:grid">
             <X size={18} />
           </button>
         </div>
-        <div className="max-h-[60vh] overflow-y-auto p-2">
+        <div className="flex-1 overflow-y-auto p-2 sm:max-h-[60vh] sm:flex-none">
           {state === "loading" && <div className="skeleton m-2 h-12" />}
           {state === "error" && <p className="p-4 text-sm text-down">Search is temporarily unavailable. Try again shortly.</p>}
           {state === "idle" && q.trim().length >= 2 && shown.length === 0 && (
@@ -92,6 +95,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
                 </span>
               </Link>
             ))}
+          {shown.length > 0 && <p className="px-3 pb-1 pt-2 text-[11px] font-bold uppercase tracking-widest text-muted">Suggestions · {shown.length}</p>}
           {q.trim().length < 2 && <p className="p-4 text-sm text-muted">Same symbol can exist on many networks. Results show the network and address so you pick the right one.</p>}
         </div>
       </div>

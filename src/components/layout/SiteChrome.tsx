@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/ui/Logo";
 import { SearchDialog } from "./SearchDialog";
-import { ThemeToggle } from "./ThemeToggle";
+import { ThemePill, ThemeToggle } from "./ThemeToggle";
+import { Footer } from "./Footer";
 
 const NAV = [
   { href: "/", label: "Discover", icon: Compass },
@@ -76,20 +77,23 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
                 <X size={18} />
               </button>
             </div>
-            {[...NAV, { href: "/add-coin", label: "Add Coin", icon: PlusCircle }].map((n) => (
+            {[...NAV, { href: "/add-coin", label: "Apply Listing", icon: PlusCircle }].map((n) => (
               <Link key={n.href} href={n.href} onClick={() => setDrawer(false)} aria-current={isActive(path, n.href) ? "page" : undefined} className="flex min-h-12 items-center gap-3 rounded-xl px-3 font-semibold text-soft aria-[current=page]:bg-[var(--border)] aria-[current=page]:text-text">
                 <n.icon size={19} /> {n.label}
               </Link>
             ))}
-            <div className="mt-auto flex items-center justify-between border-t border-line pt-4">
-              <span className="text-sm text-muted">Theme</span>
-              <ThemeToggle />
+            <div className="mt-auto flex flex-col items-center gap-4 border-t border-line pt-4">
+              <Link href="/add-coin" onClick={() => setDrawer(false)} className="btn btn-primary w-full">
+                <PlusCircle size={16} /> Add Coin
+              </Link>
+              <ThemePill />
             </div>
           </aside>
         </div>
       )}
 
-      <main className="pad-nav mx-auto w-full max-w-7xl px-4 pt-4">{children}</main>
+      <main className="mx-auto w-full max-w-7xl px-4 pt-4">{children}</main>
+      <Footer />
 
       <nav className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[max(env(safe-area-inset-bottom),10px)] lg:hidden" aria-label="Mobile">
         <div className="glass mx-auto flex h-[56px] max-w-md items-center justify-around !rounded-full px-2 !bg-[var(--surface-solid)]">

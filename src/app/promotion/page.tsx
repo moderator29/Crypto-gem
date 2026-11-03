@@ -1,5 +1,7 @@
 import { Info, Layers } from "lucide-react";
 import type { Metadata } from "next";
+import Link from "next/link";
+import { PlacementPreview } from "@/components/promotion/PlacementPreview";
 import { discount, PLACEMENTS } from "@/lib/ads/catalog";
 
 export const metadata: Metadata = { title: "Promotion" };
@@ -32,6 +34,7 @@ export default async function PromotionPage({ searchParams }: { searchParams: Pr
                 <Layers size={12} /> {p.exclusive ? "Exclusive" : "Shared"}
               </span>
             </div>
+            <PlacementPreview placement={p.id} device="desktop" />
             <dl className="grid grid-cols-2 gap-2 text-xs text-muted">
               <div>
                 <dt>Where</dt>
@@ -69,13 +72,14 @@ export default async function PromotionPage({ searchParams }: { searchParams: Pr
                 );
               })}
             </div>
+            <Link href={`/promotion/book?placement=${p.id}`} className="btn btn-primary w-full">Book {p.name}</Link>
           </article>
         ))}
       </section>
 
-      <section className="glass p-5 text-sm text-soft" aria-label="Campaign checkout status">
-        <h2 className="mb-1 font-display text-lg font-bold text-text">Campaign checkout</h2>
-        Online booking opens once payments and the campaign database are connected. Prices above are the current default price book and are managed from the admin dashboard, not hardcoded in campaigns. Until checkout is live, nothing here can be purchased and no inventory is shown as sold.
+      <section className="glass p-5 text-sm text-soft" aria-label="How booking works">
+        <h2 className="mb-1 font-display text-lg font-bold text-text">How it works</h2>
+        Pick a placement and dates, upload your creative and see it in place, then pay in crypto. Your campaign goes live only after payment is verified by our server and the creative is approved. Prices are the current price book and are managed by administrators. We report only measured impressions (visible for at least a second, one per visitor per hour, bots excluded) and clicks.
       </section>
     </div>
   );

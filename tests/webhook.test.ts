@@ -8,13 +8,18 @@ const tables: Record<string, Row[]> = {};
 function fakeDb() {
   const from = (name: string) => {
     const filters: Array<[string, unknown]> = [];
+    const preds: Array<(r: Row) => boolean> = [];
     let op: "select" | "update" = "select";
     let patch: Row = {};
-    const match = () => (tables[name] ?? []).filter((r) => filters.every(([k, v]) => r[k] === v));
+    const match = () => (tables[name] ?? []).filter((r) => filters.every(([k, v]) => r[k] === v) && preds.every((p) => p(r)));
     const q = {
       select: () => q,
       eq: (k: string, v: unknown) => {
         filters.push([k, v]);
+        return q;
+      },
+      gte: (k: string, v: string) => {
+        preds.push((r) => String(r[k]) >= v);
         return q;
       },
       update: (p: Row) => {
@@ -31,7 +36,7 @@ function fakeDb() {
       },
       then: (resolve: (v: unknown) => void) => {
         if (op === "update") match().forEach((r) => Object.assign(r, patch));
-        resolve({ data: null, error: null });
+        resolve({ data: op === "select" ? match() : null, error: null });
       },
     };
     return q;
@@ -56,6 +61,35 @@ beforeEach(() => {
   tables.orders = [{ id: "ord-1", price_usd: 300, status: "pending", kind: "listing", ref_id: "sub-1" }];
   tables.token_submissions = [{ id: "sub-1", status: "awaiting_payment" }];
   tables.payment_events = [];
+});
+
+describe("boost activation through the webhook", () => {
+  beforeEach(() => {
+    tables.orders = [{ id: "ord-1", price_usd: 300, status: "pending", kind: "boost", ref_id: "boost-1" }];
+    tables.boost_campaigns = [{ id: "boost-1", submission_id: "sub-9", pack_id: "spark", status: "awaiting_payment", starts_at: null, ends_at: null }];
+    tables.boost_packs = [{ id: "spark", duration_hours: 6 }];
+  });
+
+  it("activates the boost with a server-computed window only after verified payment", async () => {
+    await post({ ...base, payment_status: "confirming" });
+    expect(tables.boost_campaigns?.[0]?.status).toBe("awaiting_payment");
+    await post(base);
+    const b = tables.boost_campaigns![0]!;
+    expect(b.status).toBe("active");
+    expect(Date.parse(String(b.ends_at)) - Date.parse(String(b.starts_at))).toBe(6 * 3_600_000);
+  });
+
+  it("queues behind a running boost for the same project", async () => {
+    const end = new Date(Date.now() + 2 * 3_600_000).toISOString();
+    tables.boost_campaigns!.push({ id: "boost-0", submission_id: "sub-9", pack_id: "spark", status: "active", starts_at: new Date().toISOString(), ends_at: end });
+    await post(base);
+    expect(tables.boost_campaigns?.[0]?.starts_at).toBe(end);
+  });
+
+  it("never activates on a replayed or underpaid payment", async () => {
+    await post({ ...base, actually_paid: 5 });
+    expect(tables.boost_campaigns?.[0]?.status).toBe("awaiting_payment");
+  });
 });
 
 describe("NOWPayments webhook", () => {

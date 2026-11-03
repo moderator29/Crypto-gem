@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
+import { fulfilOrder } from "@/lib/payments/fulfil";
 import { checkIpnAgainstOrder, mapStatus, verifyIpn, type IpnPayload } from "@/lib/payments/nowpayments";
 
 export const dynamic = "force-dynamic";
@@ -44,7 +45,7 @@ export async function POST(req: Request) {
   }
   if (check.status === "finished" && order.status === "pending") {
     await db.from("orders").update({ status: "paid", paid_at: new Date().toISOString() }).eq("id", order.id).eq("status", "pending");
-    if (order.kind === "listing") await db.from("token_submissions").update({ status: "pending_review", updated_at: new Date().toISOString() }).eq("id", order.ref_id).eq("status", "awaiting_payment");
+    await fulfilOrder(db, { id: order.id, kind: order.kind, ref_id: order.ref_id });
   }
   return new Response("ok");
 }

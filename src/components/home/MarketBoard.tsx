@@ -48,6 +48,15 @@ export function MarketBoard({ initial }: { initial: HomeData | null }) {
   }, []);
 
   useEffect(() => {
+    const onTab = (e: Event) => {
+      const id = (e as CustomEvent<string>).detail;
+      if (TABS.some((t) => t.id === id)) setTab(id as TabId);
+    };
+    window.addEventListener("cg:tab", onTab);
+    return () => window.removeEventListener("cg:tab", onTab);
+  }, []);
+
+  useEffect(() => {
     const t = setInterval(() => !document.hidden && load(network, true), POLL_MS);
     return () => clearInterval(t);
   }, [load, network]);

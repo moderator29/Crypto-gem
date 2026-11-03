@@ -43,13 +43,30 @@ export function discount(p: Placement, days: 1 | 3 | 7 | 14 | 30): { original: n
   return { original, final, pct: original > 0 ? Math.round((1 - final / original) * 100) : 0 };
 }
 
-export const BOOST_PACKS = [
-  { id: "spark", name: "Spark", credits: 50, hours: 6, priceUsd: 30, label: null },
-  { id: "ignite", name: "Ignite", credits: 100, hours: 12, priceUsd: 50, label: null },
-  { id: "surge", name: "Surge", credits: 200, hours: 24, priceUsd: 100, label: "Popular" },
-  { id: "momentum", name: "Momentum", credits: 350, hours: 48, priceUsd: 175, label: "Best Value" },
-  { id: "dominance", name: "Dominance", credits: 500, hours: 72, priceUsd: 250, label: "Premium" },
-] as const;
+export interface BoostPack {
+  id: string;
+  name: string;
+  credits: number;
+  hours: number;
+  priceUsd: number;
+  label: string | null;
+  /** Higher priority is shown first among active boosts. Not an organic rank. */
+  priority: number;
+  /** What the buyer actually receives: sponsored visibility, never an organic rank. */
+  allocations: string[];
+}
+
+export const BOOST_PACKS: BoostPack[] = [
+  { id: "spark", name: "Spark", credits: 50, hours: 6, priceUsd: 30, label: null, priority: 1, allocations: ["Sponsored slot in your chain's discovery list", "Boosted badge on your token page"] },
+  { id: "ignite", name: "Ignite", credits: 100, hours: 12, priceUsd: 50, label: null, priority: 2, allocations: ["Everything in Spark", "Sponsored slot in the trending list"] },
+  { id: "surge", name: "Surge", credits: 200, hours: 24, priceUsd: 100, label: "Popular", priority: 3, allocations: ["Everything in Ignite", "Featured discovery card", "Eligible ecosystem placements"] },
+  { id: "momentum", name: "Momentum", credits: 350, hours: 48, priceUsd: 175, label: "Best Value", priority: 4, allocations: ["Everything in Surge", "Higher priority in sponsored rotation", "New Listings and Hot Pairs sponsorship"] },
+  { id: "dominance", name: "Dominance", credits: 500, hours: 72, priceUsd: 250, label: "Premium", priority: 5, allocations: ["Everything in Momentum", "Top priority in sponsored rotation", "Premium sponsored visibility across selected destinations"] },
+];
+
+export function getBoostPack(id: string): BoostPack | undefined {
+  return BOOST_PACKS.find((p) => p.id === id);
+}
 
 export const LISTING_PACKAGES = [
   { id: "starter", name: "Starter", priceUsd: 300, perks: ["Express listing review", "Contract info verified where independently confirmed", "Published project page after approval", "Discoverable through search", "Standard listing placement"] },

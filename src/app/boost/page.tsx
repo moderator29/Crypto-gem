@@ -1,12 +1,10 @@
-import { Rocket } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
+import { BoostProjects } from "@/components/boost/BoostProjects";
 import { BOOST_PACKS } from "@/lib/ads/catalog";
 
 export const metadata: Metadata = { title: "Boost" };
 
 export default function BoostPage() {
-  const dbReady = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SECRET_KEY);
   return (
     <div className="space-y-6">
       <header className="glass p-6 md:p-10">
@@ -16,19 +14,7 @@ export default function BoostPage() {
         </p>
       </header>
 
-      <section aria-label="Eligible projects" className="glass p-6">
-        <h2 className="font-display text-lg font-bold">Select a listed project</h2>
-        {dbReady ? (
-          <p className="mt-2 text-sm text-soft">No listed projects yet. Boost is available to projects already listed on Crypto Gems.</p>
-        ) : (
-          <p className="mt-2 text-sm text-soft">
-            Listed projects load from the Crypto Gems database, which is not connected in this environment. Only listed projects can be boosted, so none are shown rather than inventing examples.
-          </p>
-        )}
-        <Link href="/add-coin" className="btn btn-primary mt-4 inline-flex">
-          <Rocket size={16} /> List your token first
-        </Link>
-      </section>
+      <BoostProjects />
 
       <section aria-label="Boost packs" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {BOOST_PACKS.map((b) => (

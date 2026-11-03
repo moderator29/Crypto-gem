@@ -33,6 +33,7 @@ beforeAll(async () => {
   `);
   await db.exec(readFileSync(path.resolve(__dirname, "../supabase/migrations/20261103000001_core_schema.sql"), "utf8"));
   await db.exec(readFileSync(path.resolve(__dirname, "../supabase/migrations/20261103000002_seed_catalog.sql"), "utf8"));
+  await db.exec(readFileSync(path.resolve(__dirname, "../supabase/migrations/20261103000003_boost_allocations.sql"), "utf8"));
   await db.exec(`
     grant usage on schema public to anon, authenticated;
     grant select, insert, update, delete on all tables in schema public to anon, authenticated;
@@ -99,6 +100,15 @@ describe("row level security", () => {
     expect((await db.query<{ price_usd: string }>("select price_usd from public.listing_packages where id = 'starter'")).rows[0]?.price_usd).toBe("300");
     await as("authenticated", ADMIN, "update public.listing_packages set price_usd = 350 where id = 'starter'");
     expect((await db.query<{ price_usd: string }>("select price_usd from public.listing_packages where id = 'starter'")).rows[0]?.price_usd).toBe("350");
+  });
+});
+
+describe("boost integrity", () => {
+  it("lets one project queue boosts back to back but never overlap", async () => {
+    const sub = (await db.query<{ id: string }>("select id from public.token_submissions where status = 'published' limit 1")).rows[0]!.id;
+    await db.exec(`insert into public.boost_campaigns (owner_id, submission_id, pack_id, status, starts_at, ends_at) values ('${A}', '${sub}', 'spark', 'active', '2026-12-01T00:00Z', '2026-12-01T06:00Z')`);
+    await db.exec(`insert into public.boost_campaigns (owner_id, submission_id, pack_id, status, starts_at, ends_at) values ('${A}', '${sub}', 'spark', 'active', '2026-12-01T06:00Z', '2026-12-01T12:00Z')`);
+    await expect(db.exec(`insert into public.boost_campaigns (owner_id, submission_id, pack_id, status, starts_at, ends_at) values ('${A}', '${sub}', 'ignite', 'active', '2026-12-01T05:00Z', '2026-12-01T17:00Z')`)).rejects.toThrow();
   });
 });
 
