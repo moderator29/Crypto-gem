@@ -38,7 +38,7 @@ Set these in Vercel, Project Settings, Environment Variables. Mark every one wit
 | --- | --- |
 | `GECKOTERMINAL_API_KEY` | Only if you hold a separate GeckoTerminal or CoinGecko onchain key |
 
-Not needed any more: all Supabase variables and `NEXT_PUBLIC_REOWN_PROJECT_ID`.
+Not needed: any variables from the previous database provider, and `NEXT_PUBLIC_REOWN_PROJECT_ID`.
 
 ## 2. Accounts and APIs, in the order to set them up
 

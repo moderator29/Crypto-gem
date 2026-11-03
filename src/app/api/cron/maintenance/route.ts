@@ -17,7 +17,7 @@ function authorised(req: Request): boolean {
  * Public visibility already depends on time windows, so this keeps stored
  * statuses honest for dashboards and reports; it is not what hides expired ads.
  */
-export async function POST(req: Request) {
+async function run(req: Request) {
   if (!authorised(req)) return new Response("unauthorised", { status: 401 });
   if (!dbConfigured()) return Response.json({ error: "Not configured" }, { status: 503 });
   const db = getDb();
@@ -41,3 +41,7 @@ export async function POST(req: Request) {
   }
   return Response.json({ campaignsApproved: promoted, boostsExpired: boosts.data?.length ?? 0, adsCompleted: ads.data?.length ?? 0, ordersExpired: orders.data?.length ?? 0, adsActivated: scheduled.data?.length ?? 0 });
 }
+
+/** Vercel Cron calls with GET and a Bearer CRON_SECRET; external schedulers may use POST. Same handler, same auth. */
+export const GET = run;
+export const POST = run;
