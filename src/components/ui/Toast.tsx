@@ -43,7 +43,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {items.map((t) => {
           const Icon = ICON[t.tone];
           return (
-            <div key={t.id} role={t.tone === "error" ? "alert" : "status"} className="glass-float pop-in pointer-events-auto flex w-full max-w-sm items-start gap-3 !rounded-lg p-3.5">
+            <div key={t.id} role={t.tone === "error" ? "alert" : "status"} className="glass-float pop-in pointer-events-auto flex w-full max-w-sm items-start gap-3 !rounded-2xl p-3.5">
               <Icon size={18} className={`mt-0.5 shrink-0 ${COLOR[t.tone]}`} aria-hidden="true" />
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold">{t.title}</p>

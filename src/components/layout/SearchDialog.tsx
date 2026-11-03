@@ -92,14 +92,14 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
     <div className="fixed inset-0 z-[80] flex items-stretch justify-center bg-[var(--bg)] sm:items-start sm:bg-black/55 sm:p-3 sm:pt-[10vh] sm:backdrop-blur-sm" onMouseDown={onClose} role="dialog" aria-modal="true" aria-label="Search">
       <div ref={panelRef} className="flex w-full max-w-xl flex-col overflow-hidden bg-[var(--canvas)] sm:glass-float sm:!bg-[var(--surface-1)]" onMouseDown={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-3 border-b border-line px-4">
-          <button type="button" onClick={onClose} aria-label="Back" className="grid h-9 w-9 place-items-center rounded text-soft sm:hidden">
+          <button type="button" onClick={onClose} aria-label="Back" className="grid h-9 w-9 place-items-center rounded-full text-soft sm:hidden">
             <ArrowLeft size={20} />
           </button>
           <Search size={18} className="hidden text-muted sm:block" />
           <form className="flex-1" role="search" onSubmit={(e) => { e.preventDefault(); const v = q.trim(); if (v.length >= 2) { onClose(); router.push(`/search?q=${encodeURIComponent(v)}`); } }}>
             <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search tokens" placeholder="Search name, symbol or paste a contract address" className="h-14 w-full bg-transparent text-base outline-none placeholder:text-muted" />
           </form>
-          <button type="button" onClick={onClose} aria-label="Close search" className="hidden h-9 w-9 place-items-center rounded text-muted hover:text-text sm:grid">
+          <button type="button" onClick={onClose} aria-label="Close search" className="hidden h-9 w-9 place-items-center rounded-full text-muted hover:text-text sm:grid">
             <X size={18} />
           </button>
         </div>

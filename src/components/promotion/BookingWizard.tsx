@@ -154,8 +154,8 @@ export function BookingWizard({ initial }: { initial: PlacementId }) {
         <div className="card space-y-3 p-4">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-bold">Live preview</h2>
-            <div className="inline-flex rounded border border-line p-1" role="group" aria-label="Preview device">
-              {(["desktop", "mobile"] as const).map((d) => <button key={d} type="button" aria-pressed={device === d} onClick={() => setDevice(d)} className={`rounded px-3 py-1 text-xs font-semibold capitalize ${device === d ? "bg-[var(--bg-elev)] text-text" : "text-muted"}`}>{d}</button>)}
+            <div className="inline-flex rounded-full border border-line p-1" role="group" aria-label="Preview device">
+              {(["desktop", "mobile"] as const).map((d) => <button key={d} type="button" aria-pressed={device === d} onClick={() => setDevice(d)} className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${device === d ? "bg-[var(--bg-elev)] text-text" : "text-muted"}`}>{d}</button>)}
             </div>
           </div>
           <PlacementPreview placement={placement.id} device={device} creative={device === "mobile" ? (mobile ?? desktop)?.url : desktop?.url} />

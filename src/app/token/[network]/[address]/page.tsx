@@ -92,7 +92,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
             <h1 className="font-display truncate text-xl font-bold leading-tight md:text-2xl">{identity?.name || "Unnamed token"}</h1>
             <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted">
               <span className="font-semibold text-soft">{identity?.symbol}</span>
-              <span className="rounded border border-line px-2 py-0.5 font-semibold text-soft">{net.name}</span>
+              <span className="rounded-full border border-line px-2 py-0.5 font-semibold text-soft">{net.name}</span>
             </p>
           </div>
           <div className="num shrink-0 text-right">
@@ -103,7 +103,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
-          <span className="num rounded border border-line px-3 py-1.5 md:hidden">{shortAddress(canonical)}</span>
+          <span className="num rounded-full border border-line px-3 py-1.5 md:hidden">{shortAddress(canonical)}</span>
           <span className="num hidden break-all md:inline">{canonical}</span>
           {trade[0] && (
             <a href={trade[0].url} target="_blank" rel="noopener noreferrer nofollow" className="btn btn-primary btn-sm">

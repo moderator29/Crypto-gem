@@ -58,12 +58,12 @@
   --aurora-c: rgba(120, 80, 255, 0.1);
 
   /* Radius scale */
-  --r-xs: 2px;
-  --r-sm: 4px;
-  --r-md: 4px;
-  --r-lg: 6px;
-  --r-xl: 8px;
-  --r-pill: 4px;
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 24px;
+  --r-pill: 999px;
 
   /* Control heights */
   --h-sm: 36px;
@@ -313,45 +313,6 @@ h3 {
      Variants: btn (secondary), btn-primary, btn-ghost, btn-danger
      Sizes:    btn-sm 36, default 44, btn-lg 52
      Shape:    btn-icon makes a square control of the same height     */
-  /* Panel: a sectioned container with a header bar and divided rows. */
-  .panel {
-    border: 1px solid var(--line-1);
-    border-radius: var(--r-lg);
-    background: var(--surface-1);
-    overflow: hidden;
-  }
-  .panel-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    min-height: 52px;
-    padding: 0 16px;
-    background: color-mix(in srgb, var(--surface-2) 70%, var(--surface-1));
-    border-bottom: 1px solid var(--line-1);
-  }
-  .panel-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    font-weight: 750;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  .panel-link {
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--brand);
-    text-decoration: underline;
-    text-underline-offset: 4px;
-  }
-  .panel-link:hover { color: var(--text); }
-  .rows > * + * { border-top: 1px solid var(--line-1); }
-  .rows > *:hover { background: var(--surface-2); }
-
   .btn {
     position: relative;
     display: inline-flex;
@@ -361,10 +322,8 @@ h3 {
     min-height: var(--h-md);
     padding: 0 18px;
     border-radius: var(--r-md);
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+    font-size: 14px;
+    font-weight: 600;
     line-height: 1;
     white-space: nowrap;
     color: var(--text);
@@ -457,10 +416,8 @@ h3 {
     min-height: var(--h-sm);
     padding: 0 14px;
     border-radius: var(--r-pill);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    font-size: 13px;
+    font-weight: 600;
     white-space: nowrap;
     color: var(--text-soft);
     cursor: pointer;

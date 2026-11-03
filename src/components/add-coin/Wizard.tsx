@@ -173,7 +173,7 @@ export function Wizard() {
           ["standard", "Standard Listing", "Submit your project through the normal review process. Best when the token has no pool yet or sits on an unsupported chain.", ScanSearch],
         ] as const).map(([id, title, text, Icon]) => (
           <button key={id} type="button" onClick={() => { setMode(id); setStep(id === "express" ? "identify" : "review"); }} className="card hover-lift flex flex-col items-start gap-3 p-6 text-left">
-            <span className="grid h-11 w-11 place-items-center rounded-lg icon-tile"><Icon size={22} /></span>
+            <span className="grid h-11 w-11 place-items-center rounded-2xl icon-tile"><Icon size={22} /></span>
             <span className="flex items-center gap-2 font-display text-xl font-bold">{title}{id === "express" && <span className="badge badge-warn">Fastest</span>}</span>
             <span className="text-sm text-soft">{text}</span>
           </button>
@@ -309,7 +309,7 @@ export function Wizard() {
               <div className="relative">
                 <TokenLogo src={form.logoUrl || null} symbol={form.symbol || "?"} size={72} />
                 {form.logoUrl && (
-                  <button type="button" onClick={() => set("logoUrl", "")} className="absolute -right-2 -top-2 grid h-7 w-7 place-items-center rounded bg-[var(--border-strong)]" aria-label="Remove logo"><X size={14} /></button>
+                  <button type="button" onClick={() => set("logoUrl", "")} className="absolute -right-2 -top-2 grid h-7 w-7 place-items-center rounded-full bg-[var(--border-strong)]" aria-label="Remove logo"><X size={14} /></button>
                 )}
               </div>
               <div className="min-w-0 flex-1 space-y-1">

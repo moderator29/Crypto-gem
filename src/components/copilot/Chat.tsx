@@ -81,7 +81,7 @@ export function Chat({ context }: { context: Ctx | null }) {
       <div className="flex-1 space-y-4 overflow-y-auto p-4" aria-live="polite">
         {messages.length === 0 && (
           <div className="space-y-4 py-6 text-center">
-            <span className="mx-auto grid h-12 w-12 place-items-center rounded-lg icon-tile"><Sparkles size={22} /></span>
+            <span className="mx-auto grid h-12 w-12 place-items-center rounded-2xl icon-tile"><Sparkles size={22} /></span>
             <p className="text-sm text-soft">{context ? "Ask about this token. I read live market data before answering." : "Ask about tokens, pools and market activity. I read live market data before answering."}</p>
             <div className="mx-auto flex max-w-md flex-col gap-2">
               {suggestions.map((s) => <button key={s} type="button" className="card-flat hover-lift px-4 py-3 text-left text-sm" onClick={() => ask(s)}>{s}</button>)}
@@ -90,7 +90,7 @@ export function Chat({ context }: { context: Ctx | null }) {
         )}
         {messages.map((m, i) => (
           <div key={i} className={m.role === "user" ? "flex justify-end" : "flex"}>
-            <div className={`max-w-[92%] whitespace-pre-wrap break-words rounded-lg px-4 py-3 text-sm leading-relaxed ${m.role === "user" ? "bg-gradient-to-br from-[var(--brand)] to-[var(--brand-2)] text-white" : "card-flat"}`}>
+            <div className={`max-w-[92%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm leading-relaxed ${m.role === "user" ? "bg-gradient-to-br from-[var(--brand)] to-[var(--brand-2)] text-white" : "card-flat"}`}>
               {m.content || (busy && i === messages.length - 1 ? <Loader2 size={16} className="animate-spin text-brand" /> : null)}
             </div>
           </div>

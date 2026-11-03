@@ -2,7 +2,7 @@ import { AlertTriangle, ChevronLeft, ChevronRight, SearchX } from "lucide-react"
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MarketTable } from "@/components/markets/MarketTable";
+import { PriceTable } from "@/components/markets/PriceTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LinkTabs } from "@/components/ui/LinkTabs";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -54,7 +54,7 @@ export default async function MarketsPage({ params, searchParams }: Props) {
     const str = q.toString();
     return str ? `?${str}` : "";
   };
-  const tabs = VIEWS.map((v) => ({ href: `${v.path}${network ? `?network=${network}` : ""}`, label: v.label }));
+  const tabs = [...VIEWS.map((v) => ({ href: `${v.path}${network ? `?network=${network}` : ""}`, label: v.label })), { href: "/markets/map", label: "Map" }];
   const activeHref = `${def.path}${network ? `?network=${network}` : ""}`;
   const rows = list ? sortPools(list.pools, sort, dir) : [];
 
@@ -64,20 +64,13 @@ export default async function MarketsPage({ params, searchParams }: Props) {
 
       <div className="space-y-5">
         <LinkTabs tabs={tabs} activeHref={activeHref} label="Market views" />
-        <nav aria-label="Filter by chain" className="scroll-x">
-          <Link href={`${def.path}${qs({ network: null, page: 1 })}`} className="chip" aria-current={!network ? "page" : undefined}>All chains</Link>
-          {CHAINS.map((c) => (
-            <Link key={c.id} href={`${def.path}${qs({ network: c.id, page: 1 })}`} className="chip" aria-current={network === c.id ? "page" : undefined}>{c.name}</Link>
-          ))}
-        </nav>
-
         {!list ? (
           <EmptyState tone="error" icon={AlertTriangle} title="Market data is unavailable" description="The data provider is not responding or is rate limited. Try again in a moment." action={<Link href={`${def.path}${qs({})}`} className="btn btn-sm">Retry</Link>} />
         ) : rows.length === 0 ? (
           <EmptyState icon={SearchX} title="Nothing matches this view" description={view === "heating" ? "No pool is running well above its own hourly pace with meaningful liquidity right now." : "No pools were returned for this chain and view."} action={network ? <Link href={def.path} className="btn btn-sm">Clear chain filter</Link> : undefined} />
         ) : (
           <>
-            <MarketTable pools={rows} sort={sort} dir={dir} startRank={list.paged ? (page - 1) * 20 + 1 : 1} sortHref={(key, nextDir) => `${def.path}${qs({ sort: nextDir ? key : null, dir: nextDir, page: 1 })}`} />
+            <PriceTable pools={rows} startRank={list.paged ? (page - 1) * 20 + 1 : 1} />
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs text-muted">
                 Source GeckoTerminal · {list.sampled} pools {list.paged ? `on page ${page}` : "sampled"}{list.stale ? " · cached, provider slow" : ""}. Prices are DEX pool prices and can differ from other venues. {!list.paged && "Ranked within the pools we sample, not the whole market."}

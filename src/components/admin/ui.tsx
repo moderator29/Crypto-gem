@@ -66,7 +66,7 @@ const PILL: Record<string, string> = {
 };
 
 export function StatusPill({ value }: { value: string }) {
-  return <span className={`inline-flex items-center rounded border border-[var(--border)] px-2.5 py-0.5 text-xs font-semibold ${PILL[value] ?? "text-soft"}`}>{value.replaceAll("_", " ")}</span>;
+  return <span className={`inline-flex items-center rounded-full border border-[var(--border)] px-2.5 py-0.5 text-xs font-semibold ${PILL[value] ?? "text-soft"}`}>{value.replaceAll("_", " ")}</span>;
 }
 
 export interface Column<T> {

@@ -51,19 +51,19 @@ export function TokenRow({ pool, rank, note }: { pool: PoolSummary; rank?: numbe
   const net = getNetwork(pool.networkId);
   const panelId = `row-${pool.id.replace(/[^a-z0-9]/gi, "")}`;
   return (
-    <div className="overflow-hidden">
+    <div className="card-flat overflow-hidden hover:border-[var(--border-strong)] has-[[aria-expanded=true]]:border-[var(--border-strong)] has-[[aria-expanded=true]]:shadow-[0_0_30px_color-mix(in_srgb,var(--neon-glow)_55%,transparent)]">
       <button
         type="button"
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => setOpen((o) => !o)}
-        className={`grid w-full items-center gap-x-3 px-3.5 py-3 text-left transition  ${ROW_COLS}`}
+        className={`grid w-full items-center gap-x-3 px-3.5 py-3 text-left transition hover:bg-[var(--border)] ${ROW_COLS}`}
       >
         {rank !== undefined && <span className="num hidden text-sm font-bold text-muted md:block">{rank}</span>}
         <span className="flex min-w-0 items-center gap-3">
           <span className="relative shrink-0">
             <TokenLogo src={t.imageUrl} symbol={t.symbol} size={44} networkId={pool.networkId} address={t.address} />
-            <span className="absolute -bottom-1 -right-1 rounded ring-2 ring-[var(--surface-1)]"><ChainBadge networkId={pool.networkId} size={18} /></span>
+            <span className="absolute -bottom-1 -right-1 rounded-full ring-2 ring-[var(--canvas)]"><ChainBadge networkId={pool.networkId} size={18} /></span>
           </span>
           <span className="min-w-0">
             <span className="block truncate font-semibold leading-tight">{t.name || t.symbol}</span>
