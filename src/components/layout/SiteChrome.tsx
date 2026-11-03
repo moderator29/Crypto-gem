@@ -165,7 +165,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
           <div className="glass-float mx-auto grid h-[60px] max-w-md grid-cols-5 items-center !rounded-full px-1.5">
             <DockLink href="/" label={t("nav.home")} icon={Compass} active={isActive(path, "/")} />
             <DockLink href="/markets" label={t("nav.markets")} icon={ChartCandlestick} active={isActive(path, "/markets")} />
-            <Link href="/add-coin" aria-label={t("nav.addCoin")} className="btn btn-primary btn-icon mx-auto -mt-7 !h-[52px] !w-[52px] !rounded-full shadow-[0_8px_24px_rgba(10,90,255,0.5)]">
+            <Link href="/add-coin" aria-label={t("nav.addCoin")} className="btn btn-primary btn-icon mx-auto -mt-7 !h-[52px] !w-[52px] !rounded-full shadow-[0_8px_24px_rgba(232,67,42,0.5)]">
               <PlusCircle size={24} />
             </Link>
             <DockLink href="/copilot" label={t("nav.ai")} icon={Sparkles} active={isActive(path, "/copilot")} />

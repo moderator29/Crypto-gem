@@ -17,34 +17,35 @@
    scale. Glow is reserved for primary actions, focus and live states.
    ═══════════════════════════════════════════════════════════════════════ */
 
+/* Colour system: warm near-black with one ember red. Neutrals carry no hue so red stays the only signal. */
 :root {
   /* Canvas and surfaces */
-  --canvas: #05070f;
-  --surface-1: #0a0f1f;
-  --surface-2: #0f162b;
-  --surface-3: #151e3a;
-  --float: rgba(8, 12, 26, 0.78);
+  --canvas: #08080a;
+  --surface-1: #101013;
+  --surface-2: #17171b;
+  --surface-3: #1f1f25;
+  --float: rgba(14, 14, 17, 0.8);
 
   /* Lines */
   --line-1: rgba(255, 255, 255, 0.07);
-  --line-2: rgba(130, 170, 255, 0.18);
-  --line-3: rgba(90, 150, 255, 0.45);
+  --line-2: rgba(255, 255, 255, 0.14);
+  --line-3: rgba(255, 92, 62, 0.5);
 
   /* Text */
-  --text: #eef2ff;
-  --text-soft: #bcc6e6;
-  --text-muted: #8493b9;
+  --text: #f6f6f8;
+  --text-soft: #c6c6ce;
+  --text-muted: #8d8d98;
 
   /* Brand and semantic */
-  --brand: #3b8cff;
-  --brand-strong: #1a6bff;
-  --brand-2: #22d3ee;
-  --accent: #8b7bff;
-  --warm: #ffd86b;
+  --brand: #ff5a3c;
+  --brand-strong: #e8432a;
+  --brand-2: #ff9a5c;
+  --accent: #ff9a5c;
+  --warm: #ffc46b;
   --up: #2fe0a1;
-  --down: #ff5d7a;
-  --neon: #0a66ff;
-  --neon-glow: rgba(10, 102, 255, 0.5);
+  --down: #ff4d6d;
+  --neon: #e8432a;
+  --neon-glow: rgba(232, 67, 42, 0.5);
 
   /* Elevation */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -53,9 +54,9 @@
   --highlight: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 
   /* Ambient light */
-  --aurora-a: rgba(20, 100, 255, 0.22);
-  --aurora-b: rgba(34, 211, 238, 0.09);
-  --aurora-c: rgba(120, 80, 255, 0.1);
+  --aurora-a: rgba(232, 67, 42, 0.2);
+  --aurora-b: rgba(255, 154, 92, 0.08);
+  --aurora-c: rgba(180, 40, 20, 0.1);
 
   /* Radius scale */
   --r-xs: 6px;
@@ -94,38 +95,38 @@
 }
 
 [data-theme="light"] {
-  --canvas: #f2f5fc;
+  --canvas: #faf7f4;
   --surface-1: #ffffff;
-  --surface-2: #f7f9fe;
-  --surface-3: #edf1fb;
-  --float: rgba(255, 255, 255, 0.82);
+  --surface-2: #faf6f2;
+  --surface-3: #f1ebe5;
+  --float: rgba(255, 255, 255, 0.86);
 
-  --line-1: rgba(15, 30, 80, 0.09);
-  --line-2: rgba(15, 30, 80, 0.18);
-  --line-3: rgba(10, 92, 255, 0.5);
+  --line-1: rgba(40, 20, 10, 0.09);
+  --line-2: rgba(40, 20, 10, 0.18);
+  --line-3: rgba(214, 58, 34, 0.5);
 
-  --text: #0a1126;
-  --text-soft: #36425f;
-  --text-muted: #5d6a88;
+  --text: #17110f;
+  --text-soft: #43372f;
+  --text-muted: #6f625a;
 
-  --brand: #0a5cff;
-  --brand-strong: #0a4fe0;
-  --brand-2: #0b8aa6;
-  --accent: #6d4aff;
+  --brand: #d63a22;
+  --brand-strong: #bf2f19;
+  --brand-2: #d9682a;
+  --accent: #d9682a;
   --warm: #a86b00;
   --up: #058a5e;
   --down: #d3243e;
-  --neon: #0a5cff;
-  --neon-glow: rgba(10, 92, 255, 0.28);
+  --neon: #d63a22;
+  --neon-glow: rgba(214, 58, 34, 0.28);
 
-  --shadow-sm: 0 1px 2px rgba(15, 30, 80, 0.06);
-  --shadow-md: 0 8px 24px rgba(15, 30, 80, 0.08);
-  --shadow-lg: 0 24px 60px rgba(15, 30, 80, 0.14);
+  --shadow-sm: 0 1px 2px rgba(40, 20, 10, 0.06);
+  --shadow-md: 0 8px 24px rgba(40, 20, 10, 0.08);
+  --shadow-lg: 0 24px 60px rgba(40, 20, 10, 0.14);
   --highlight: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 
-  --aurora-a: rgba(10, 92, 255, 0.11);
-  --aurora-b: rgba(11, 138, 166, 0.07);
-  --aurora-c: rgba(109, 74, 255, 0.06);
+  --aurora-a: rgba(214, 58, 34, 0.1);
+  --aurora-b: rgba(217, 104, 42, 0.06);
+  --aurora-c: rgba(214, 58, 34, 0.05);
   color-scheme: light;
 }
 
@@ -165,7 +166,7 @@ body {
   text-rendering: optimizeLegibility;
 }
 ::selection {
-  background: rgba(20, 100, 255, 0.45);
+  background: rgba(232, 67, 42, 0.45);
   color: #fff;
 }
 * {
@@ -207,7 +208,8 @@ body {
   font-weight: 650;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  font-family: var(--font-mono);
+  color: var(--brand);
 }
 h1,
 h2,
@@ -266,7 +268,7 @@ h3 {
     border-radius: inherit;
     padding: 1px;
     pointer-events: none;
-    background: linear-gradient(135deg, rgba(110, 175, 255, 0.7), rgba(10, 102, 255, 0.08) 40%, transparent 62%, rgba(10, 102, 255, 0.22));
+    background: linear-gradient(135deg, rgba(255, 140, 110, 0.6), rgba(232, 67, 42, 0.08) 40%, transparent 62%, rgba(232, 67, 42, 0.2));
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
@@ -357,14 +359,14 @@ h3 {
   }
   .btn-primary {
     color: #fff;
-    border-color: rgba(140, 195, 255, 0.35);
-    background: linear-gradient(180deg, #3f95ff 0%, #1a6bff 100%);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 1px 2px rgba(0, 20, 90, 0.5), 0 6px 18px rgba(10, 80, 240, 0.32);
+    border-color: rgba(255, 150, 120, 0.4);
+    background: linear-gradient(180deg, #ff5a3c 0%, #e8432a 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 1px 2px rgba(60, 10, 0, 0.5), 0 6px 18px rgba(232, 67, 42, 0.32);
   }
   .btn-primary:hover {
     background: linear-gradient(180deg, #55a2ff 0%, #2674ff 100%);
     border-color: rgba(170, 215, 255, 0.55);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34), 0 1px 2px rgba(0, 20, 90, 0.5), 0 8px 26px rgba(10, 90, 255, 0.5);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34), 0 1px 2px rgba(60, 10, 0, 0.5), 0 8px 26px rgba(232, 67, 42, 0.5);
   }
   .btn-ghost {
     background: transparent;
@@ -435,9 +437,9 @@ h3 {
   .chip[aria-current="step"],
   .chip[aria-current="page"] {
     color: #fff;
-    border-color: rgba(140, 195, 255, 0.4);
-    background: linear-gradient(180deg, #3f95ff, #1a6bff);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 14px rgba(10, 90, 255, 0.3);
+    border-color: rgba(255, 150, 120, 0.45);
+    background: linear-gradient(180deg, #ff5a3c, #e8432a);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 4px 14px rgba(232, 67, 42, 0.3);
   }
 
   /* Badges are informational and never look clickable. */
@@ -537,16 +539,16 @@ h3 {
     border-bottom: 1px solid var(--line-1);
   }
   .gem-glow {
-    filter: drop-shadow(0 0 6px rgba(0, 140, 255, 0.55));
+    filter: drop-shadow(0 0 6px rgba(255, 90, 60, 0.55));
   }
   .neon-text {
-    background: linear-gradient(90deg, #6fb8ff, #22d3ee);
+    background: linear-gradient(90deg, #ff7a52, #ffb27a);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
   [data-theme="light"] .neon-text {
-    background: linear-gradient(90deg, #0a5cff, #0b8aa6);
+    background: linear-gradient(90deg, #d63a22, #d9682a);
     -webkit-background-clip: text;
     background-clip: text;
   }

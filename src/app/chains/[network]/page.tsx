@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Change } from "@/components/home/TokenRow";
-import { MarketTable } from "@/components/markets/MarketTable";
+import { PriceTable } from "@/components/markets/PriceTable";
 import { ChainBadge } from "@/components/ui/ChainBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LinkTabs } from "@/components/ui/LinkTabs";
@@ -68,7 +68,7 @@ export default async function ChainPage({ params, searchParams }: Props) {
         <EmptyState title={`No pools returned for ${net.name}`} description="The provider has no recent pools for this view." />
       ) : (
         <>
-          <MarketTable pools={list.pools} sort={null} dir="desc" />
+          <PriceTable pools={list.pools} />
           <p className="text-xs text-muted">Source GeckoTerminal{list.stale ? " · cached, provider slow" : ""}. For the full filterable list open <Link className="font-semibold text-brand" href={`/markets${tab === "new" ? "/new" : ""}?network=${net.id}`}>Markets</Link>.</p>
         </>
       )}

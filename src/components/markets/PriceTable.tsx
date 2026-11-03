@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowUp } from "lucide-react";
 import Link from "next/link";
+import type { SortDir, SortKey } from "@/lib/market-data/lists";
 import { TokenLogo } from "@/components/ui/TokenLogo";
 import type { PoolSummary } from "@/lib/market-data/types";
 import { priceUsd, usdCompact } from "@/lib/utils/format";
@@ -19,17 +20,44 @@ function Delta({ v }: { v: number | null }) {
   );
 }
 
+export interface SortProps {
+  sort: SortKey | null;
+  dir: SortDir;
+  /** Link mode (server pages): every header is a real URL. */
+  sortHref?: (key: SortKey, next: SortDir | null) => string;
+  /** Button mode (client boards). */
+  onSort?: (key: SortKey, next: SortDir | null) => void;
+}
+
+function Head({ k, label, className = "", sp }: { k: SortKey; label: string; className?: string; sp?: SortProps }) {
+  if (!sp || (!sp.sortHref && !sp.onSort)) return <span className={className}>{label}</span>;
+  const active = sp.sort === k;
+  const next: SortDir | null = !active ? "desc" : sp.dir === "desc" ? "asc" : null;
+  const inner = (
+    <>
+      {label}
+      {active && (sp.dir === "desc" ? <ArrowDown size={11} aria-hidden="true" /> : <ArrowUp size={11} aria-hidden="true" />)}
+    </>
+  );
+  const cls = `inline-flex items-center gap-1 uppercase transition hover:text-text ${active ? "text-text" : ""} ${className}`;
+  return sp.sortHref ? (
+    <Link href={sp.sortHref(k, next)} scroll={false} className={cls} aria-label={`Sort by ${label}`}>{inner}</Link>
+  ) : (
+    <button type="button" onClick={() => sp.onSort?.(k, next)} className={cls} aria-label={`Sort by ${label}`}>{inner}</button>
+  );
+}
+
 /** Price board: watch star, rank, token, price with 24h change beneath, cap, volume and a real 7 day trend. */
-export function PriceTable({ pools, startRank = 1 }: { pools: PoolSummary[]; startRank?: number }) {
+export function PriceTable({ pools, startRank = 1, sorting }: { pools: PoolSummary[]; startRank?: number; sorting?: SortProps }) {
   return (
     <div className="card overflow-hidden">
       <div className={`grid items-center gap-x-2 border-b border-line px-2.5 py-2.5 text-[11px] md:gap-x-3 md:px-3 font-semibold uppercase tracking-wider text-muted ${COLS}`}>
         <span />
         <span className="hidden md:block">#</span>
         <span>Name</span>
-        <span className="text-right md:text-left">Price 24h</span>
-        <span className="hidden md:block">Cap / FDV</span>
-        <span className="hidden md:block">24h volume</span>
+        <span className="flex items-center justify-end gap-2 md:justify-start"><Head k="price" label="Price" sp={sorting} /><Head k="h24" label="24h" sp={sorting} /></span>
+        <span className="hidden md:block"><Head k="cap" label="Cap / FDV" sp={sorting} /></span>
+        <span className="hidden md:block"><Head k="volume" label="24h volume" sp={sorting} /></span>
         <span className="text-right md:text-left">7d trend</span>
       </div>
       <ul>

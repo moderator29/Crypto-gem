@@ -4,7 +4,7 @@ import { getNetwork } from "./networks";
 import type { PoolSummary } from "./types";
 
 export type MarketView = "trending" | "new" | "heating" | "gainers" | "losers" | "volume";
-export type SortKey = "price" | "h1" | "h24" | "volume" | "liquidity" | "age";
+export type SortKey = "price" | "h1" | "h24" | "cap" | "volume" | "liquidity" | "age";
 export type SortDir = "asc" | "desc";
 
 export const VIEWS: Array<{ id: MarketView; label: string; path: string; blurb: string }> = [
@@ -23,7 +23,7 @@ export function parseView(seg: string | undefined): MarketView | null {
   return VIEWS.some((v) => v.id === seg) ? (seg as MarketView) : null;
 }
 
-const SORT_KEYS: SortKey[] = ["price", "h1", "h24", "volume", "liquidity", "age"];
+const SORT_KEYS: SortKey[] = ["price", "h1", "h24", "cap", "volume", "liquidity", "age"];
 export const parseSort = (v: string | undefined): SortKey | null => (SORT_KEYS.includes(v as SortKey) ? (v as SortKey) : null);
 export const parseDir = (v: string | undefined): SortDir => (v === "asc" ? "asc" : "desc");
 export const parsePage = (v: string | undefined): number => Math.min(MAX_PAGE, Math.max(1, Math.floor(Number(v)) || 1));
@@ -32,6 +32,7 @@ const VALUE: Record<SortKey, (p: PoolSummary) => number | null> = {
   price: (p) => p.priceUsd,
   h1: (p) => p.change.h1,
   h24: (p) => p.change.h24,
+  cap: (p) => (p.marketCapUsd && p.marketCapUsd > 0 ? p.marketCapUsd : p.fdvUsd),
   volume: (p) => p.volumeUsd.h24,
   liquidity: (p) => p.liquidityUsd,
   age: (p) => (p.createdAt ? Date.parse(p.createdAt) : null),
