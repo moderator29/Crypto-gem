@@ -44,9 +44,9 @@ export function ThemePill() {
     }
   };
   return (
-    <div className="inline-flex rounded-full border border-line bg-[var(--surface)] p-1" role="group" aria-label="Theme">
+    <div className="inline-flex rounded border border-line bg-[var(--surface)] p-1" role="group" aria-label="Theme">
       {(["light", "dark"] as const).map((t) => (
-        <button key={t} type="button" aria-pressed={theme === t} aria-label={`${t} theme`} onClick={() => set(t)} className={`grid h-10 w-14 place-items-center rounded-full transition ${theme === t ? "bg-[var(--bg-elev)] text-text shadow" : "text-muted"}`}>
+        <button key={t} type="button" aria-pressed={theme === t} aria-label={`${t} theme`} onClick={() => set(t)} className={`grid h-10 w-14 place-items-center rounded transition ${theme === t ? "bg-[var(--bg-elev)] text-text shadow" : "text-muted"}`}>
           {t === "light" ? <Sun size={18} /> : <Moon size={18} />}
         </button>
       ))}

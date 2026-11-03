@@ -17,7 +17,7 @@ export function Ticker({ items }: { items: RankedPool[] }) {
         {loop.map((p, i) => {
           const c = p.change.h24;
           return (
-            <Link key={`${p.id}-${i}`} href={`/token/${p.networkId}/${p.baseToken.address}`} aria-hidden={i >= row.length ? true : undefined} tabIndex={i >= row.length ? -1 : 0} className="mx-1 flex shrink-0 items-center gap-2 rounded-full px-3 py-1 text-sm hover:bg-[var(--border)]">
+            <Link key={`${p.id}-${i}`} href={`/token/${p.networkId}/${p.baseToken.address}`} aria-hidden={i >= row.length ? true : undefined} tabIndex={i >= row.length ? -1 : 0} className="mx-1 flex shrink-0 items-center gap-2 rounded px-3 py-1 text-sm hover:bg-[var(--border)]">
               <span className="num text-xs font-bold text-muted">#{(i % row.length) + 1}</span>
               <TokenLogo src={p.baseToken.imageUrl} symbol={p.baseToken.symbol} size={20} />
               <span className="font-semibold">{p.baseToken.symbol}</span>

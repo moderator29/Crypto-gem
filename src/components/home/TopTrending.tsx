@@ -19,7 +19,7 @@ export function TopTrending({ items }: { items: RankedPool[] }) {
   return (
     <section aria-label="Top trending" className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="h2 flex items-center gap-2">
+        <h2 className="panel-title !text-[15px]">
           <Flame size={20} className="text-warm" aria-hidden="true" /> {t("home.topTrending")}
         </h2>
         <div className="flex items-center gap-3">
@@ -34,10 +34,10 @@ export function TopTrending({ items }: { items: RankedPool[] }) {
       </div>
       <div ref={ref} className="scroll-x pb-1">
         {items.slice(0, 12).map((p, i) => (
-          <Link key={p.id} href={`/token/${p.networkId}/${p.baseToken.address}`} className="card hover-lift w-[158px] shrink-0 snap-start overflow-hidden !rounded-2xl sm:w-[188px]">
+          <Link key={p.id} href={`/token/${p.networkId}/${p.baseToken.address}`} className="card hover-lift w-[158px] shrink-0 snap-start overflow-hidden !rounded-lg sm:w-[188px]">
             <div className="relative grid h-[88px] place-items-center bg-[radial-gradient(circle_at_50%_30%,var(--aurora-a),transparent_75%)] sm:h-[104px]">
               <TokenLogo src={p.baseToken.imageUrl} symbol={p.baseToken.symbol} size={64} networkId={p.networkId} address={p.baseToken.address} />
-              <span className="num absolute left-2.5 top-2 rounded-full bg-black/40 px-2 py-0.5 text-[11px] font-bold text-warm backdrop-blur">#{i + 1}</span>
+              <span className="num absolute left-2.5 top-2 rounded bg-black/40 px-2 py-0.5 text-[11px] font-bold text-warm backdrop-blur">#{i + 1}</span>
               <span className="num absolute right-2.5 top-2 text-xs"><Change v={p.change.h24} /></span>
             </div>
             <div className="space-y-1 p-3">

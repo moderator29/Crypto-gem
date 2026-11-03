@@ -1,7 +1,7 @@
 "use client";
 
 import { LayoutGroup, motion } from "framer-motion";
-import { Activity, BarChart3, Bot, Compass, LayoutDashboard, Megaphone, Menu, PlusCircle, Rocket, Search, Settings, X } from "lucide-react";
+import { Activity, BarChart3, Bot, Compass, Flame, Link2, Sparkles, LayoutDashboard, Megaphone, Menu, PlusCircle, Rocket, Search, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
@@ -92,7 +92,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
                 return (
                   <Link key={n.href} href={n.href} aria-current={active ? "page" : undefined} className={`relative rounded-lg px-3.5 py-2 text-sm font-semibold transition-colors ${active ? "text-text" : "text-soft hover:text-text"}`}>
                     {active && <motion.span layoutId="nav-active" transition={SPRING} className="absolute inset-0 rounded-lg bg-[var(--surface-3)] shadow-[inset_0_0_0_1px_var(--line-2)]" />}
-                    {active && <motion.span layoutId="nav-underline" transition={SPRING} className="absolute inset-x-3 -bottom-[13px] h-[2px] rounded-full bg-[var(--brand)] shadow-[0_0_12px_var(--neon-glow)]" />}
+                    {active && <motion.span layoutId="nav-underline" transition={SPRING} className="absolute inset-x-3 -bottom-[13px] h-[2px] rounded bg-[var(--brand)] shadow-[0_0_12px_var(--neon-glow)]" />}
                     <span className="relative z-10">{t(n.key)}</span>
                   </Link>
                 );
@@ -121,21 +121,26 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
       {drawer && (
         <div className="fixed inset-0 z-[70] xl:hidden" role="dialog" aria-modal="true" aria-label="Menu">
           <div className="absolute inset-0 animate-[fade_var(--dur-3)_ease-out_both] bg-black/60 backdrop-blur-sm" onClick={() => setDrawer(false)} />
-          <aside ref={drawerRef} className="glass-float absolute inset-y-0 left-0 flex w-[86%] max-w-xs animate-[slide-in_var(--dur-3)_var(--ease-out)_both] flex-col gap-1 !rounded-l-none !bg-[var(--surface-1)] p-4">
+          <aside ref={drawerRef} className="absolute inset-y-0 left-0 flex w-[86%] max-w-xs animate-[slide-in_var(--dur-3)_var(--ease-out)_both] flex-col overflow-y-auto border-r border-line bg-[var(--surface-1)] p-4">
             <div className="mb-3 flex items-center justify-between">
               <Logo />
               <button type="button" className="btn btn-icon" aria-label="Close menu" onClick={() => setDrawer(false)}>
                 <X size={18} />
               </button>
             </div>
-            {[{ href: "/", key: "nav.discover" as const, icon: Compass }, ...NAV, { href: "/dashboard", key: "nav.dashboard" as const, icon: LayoutDashboard }, { href: "/settings", key: "nav.settings" as const, icon: Settings }].map((n) => {
-              const active = isActive(path, n.href);
-              return (
-                <Link key={n.href} href={n.href} aria-current={active ? "page" : undefined} className={`flex min-h-12 items-center gap-3 rounded-xl px-3 font-semibold transition-colors ${active ? "bg-[var(--surface-3)] text-text shadow-[inset_0_0_0_1px_var(--line-2)]" : "text-soft hover:bg-[var(--surface-2)] hover:text-text"}`}>
-                  <n.icon size={19} aria-hidden="true" className={active ? "text-brand" : ""} /> {t(n.key)}
-                </Link>
-              );
-            })}
+            <DrawerLink href="/" label={t("nav.discover")} icon={Compass} active={isActive(path, "/")} />
+            <p className="eyebrow px-3 pb-1 pt-5">Start exploring</p>
+            <DrawerLink href="/markets" label="Markets" icon={BarChart3} active={path === "/markets"} />
+            <DrawerLink href="/markets/new" label="New pairs" icon={Sparkles} active={path.startsWith("/markets/new")} />
+            <DrawerLink href="/markets/heating" label="Heating up" icon={Flame} active={path.startsWith("/markets/heating")} />
+            <DrawerLink href="/chains" label="Chains" icon={Link2} active={path.startsWith("/chains")} />
+            <DrawerLink href="/pulse" label={t("nav.pulse")} icon={Activity} active={isActive(path, "/pulse")} />
+            <DrawerLink href="/copilot" label={t("nav.copilot")} icon={Bot} active={isActive(path, "/copilot")} />
+            <p className="eyebrow px-3 pb-1 pt-5">Other</p>
+            <DrawerLink href="/promotion" label={t("nav.promotion")} icon={Megaphone} active={isActive(path, "/promotion")} />
+            <DrawerLink href="/boost" label={t("nav.boost")} icon={Rocket} active={isActive(path, "/boost")} />
+            <DrawerLink href="/dashboard" label={t("nav.dashboard")} icon={LayoutDashboard} active={isActive(path, "/dashboard")} />
+            <DrawerLink href="/settings" label={t("nav.settings")} icon={Settings} active={isActive(path, "/settings")} />
             <div className="mt-auto flex flex-col gap-3 border-t border-line pt-4">
               <Link href="/add-coin" className="btn btn-primary w-full">
                 <PlusCircle size={16} /> {t("nav.addCoin")}
@@ -155,10 +160,10 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
 
       <nav className="fixed inset-x-0 bottom-0 z-50 px-4 pb-[max(env(safe-area-inset-bottom),10px)] xl:hidden" aria-label="Mobile">
         <LayoutGroup id={dockGroup}>
-          <div className="glass-float mx-auto grid h-[60px] max-w-md grid-cols-5 items-center !rounded-full px-1.5">
+          <div className="mx-auto grid h-[60px] max-w-md grid-cols-5 items-center border border-[var(--line-2)] bg-[var(--float)] px-1.5 shadow-[var(--shadow-lg)] backdrop-blur-xl">
             <DockLink href="/" label={t("nav.home")} icon={Compass} active={isActive(path, "/")} />
             <DockLink href="/markets" label={t("nav.markets")} icon={BarChart3} active={isActive(path, "/markets")} />
-            <Link href="/add-coin" aria-label={t("nav.addCoin")} className="btn btn-primary btn-icon mx-auto -mt-7 !h-[52px] !w-[52px] !rounded-full shadow-[0_8px_24px_rgba(10,90,255,0.5)]">
+            <Link href="/add-coin" aria-label={t("nav.addCoin")} className="btn btn-primary btn-icon mx-auto -mt-6 !h-[52px] !w-[52px] shadow-[0_8px_24px_rgba(10,90,255,0.5)]">
               <PlusCircle size={24} />
             </Link>
             <DockLink href="/copilot" label={t("nav.ai")} icon={Bot} active={isActive(path, "/copilot")} />
@@ -174,9 +179,17 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
 function DockLink({ href, label, icon: Icon, active }: { href: string; label: string; icon: typeof Compass; active: boolean }) {
   return (
     <Link href={href} aria-current={active ? "page" : undefined} className={`relative mx-auto flex h-12 w-14 flex-col items-center justify-center gap-0.5 text-[10px] font-semibold transition-colors ${active ? "text-brand" : "text-muted"}`}>
-      {active && <motion.span layoutId="dock-active" transition={SPRING} className="absolute inset-0 rounded-2xl bg-[color-mix(in_srgb,var(--brand)_14%,transparent)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--brand)_30%,transparent)]" />}
+      {active && <motion.span layoutId="dock-active" transition={SPRING} className="absolute inset-0 rounded-lg bg-[color-mix(in_srgb,var(--brand)_14%,transparent)] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--brand)_30%,transparent)]" />}
       <Icon size={20} aria-hidden="true" className="relative z-10" />
       <span className="relative z-10">{label}</span>
+    </Link>
+  );
+}
+
+function DrawerLink({ href, label, icon: Icon, active }: { href: string; label: string; icon: typeof Compass; active: boolean }) {
+  return (
+    <Link href={href} aria-current={active ? "page" : undefined} className={`flex min-h-12 items-center gap-3 rounded px-3 text-[13px] font-bold uppercase tracking-wider transition-colors ${active ? "bg-[var(--surface-3)] text-text shadow-[inset_2px_0_0_var(--brand)]" : "text-soft hover:bg-[var(--surface-2)] hover:text-text"}`}>
+      <Icon size={19} aria-hidden="true" className={active ? "text-brand" : ""} /> {label}
     </Link>
   );
 }

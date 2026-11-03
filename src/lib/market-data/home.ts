@@ -29,7 +29,7 @@ export async function getHomeData(networkId?: string | null): Promise<HomeData> 
   return {
     organic: rankOrganic(trendingPools, 20).map((s) => ({ ...s.pool, score: Math.round(s.score) })),
     heating: heatingUp(pools).slice(0, 12),
-    fresh: freshPools.slice(0, 20),
+    fresh: freshPools.filter((p) => (p.liquidityUsd ?? 0) >= 1_000).slice(0, 20),
     gainers: [...movers].sort((a, b) => (b.change.h24 ?? 0) - (a.change.h24 ?? 0)).slice(0, 12),
     losers: [...movers].sort((a, b) => (a.change.h24 ?? 0) - (b.change.h24 ?? 0)).slice(0, 12),
     volume: [...withData].sort((a, b) => (b.volumeUsd.h24 ?? 0) - (a.volumeUsd.h24 ?? 0)).slice(0, 12),

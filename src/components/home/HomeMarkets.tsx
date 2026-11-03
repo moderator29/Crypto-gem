@@ -1,3 +1,4 @@
+import { Panel } from "@/components/ui/Panel";
 import type { RankedPool } from "@/lib/market-data/home";
 import { ROW_COLS } from "./rowCols";
 import { TokenRow } from "./TokenRow";
@@ -5,8 +6,8 @@ import { TokenRow } from "./TokenRow";
 /** Top of the organic ranking as a compact table. The full, filterable table lives on /markets. */
 export function HomeMarkets({ rows }: { rows: RankedPool[] }) {
   return (
-    <div className="grid gap-2">
-      <div className={`hidden items-center gap-x-3 px-3.5 pb-1 text-[11px] font-bold uppercase tracking-wider text-muted md:grid ${ROW_COLS}`}>
+    <Panel title="Markets" href="/markets" linkLabel="Open markets" note="Organic rank. Paid placements never change this order.">
+      <div className={`hidden items-center gap-x-3 border-b border-line bg-[var(--surface-2)]/40 px-3.5 py-2 text-[11px] font-bold uppercase tracking-wider text-muted md:grid ${ROW_COLS}`}>
         <span>#</span>
         <span>Token</span>
         <span>Price</span>
@@ -17,9 +18,11 @@ export function HomeMarkets({ rows }: { rows: RankedPool[] }) {
         <span className="hidden text-right lg:block">Age</span>
         <span />
       </div>
-      {rows.map((p, i) => (
-        <TokenRow key={p.id} pool={p} rank={i + 1} />
-      ))}
-    </div>
+      <div className="rows">
+        {rows.map((p, i) => (
+          <TokenRow key={p.id} pool={p} rank={i + 1} />
+        ))}
+      </div>
+    </Panel>
   );
 }

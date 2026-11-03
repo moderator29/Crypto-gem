@@ -68,7 +68,7 @@ export function HomeHero({ data, chains }: { data: HomeData | null; chains: Chai
         <div className="mt-5 flex flex-wrap items-center gap-2">
           <span className="text-xs text-muted">Chains</span>
           {chains.slice(0, 6).map((c, i) => (
-            <Link key={c.networkId} href={`/chains/${c.networkId}`} className={`${i > 3 ? "hidden sm:inline-flex" : "inline-flex"} items-center gap-1.5 rounded-full border border-line bg-[var(--surface-1)] py-1 pl-1 pr-3 text-xs font-semibold text-soft transition hover:border-[var(--line-2)] hover:text-text`}>
+            <Link key={c.networkId} href={`/chains/${c.networkId}`} className={`${i > 3 ? "hidden sm:inline-flex" : "inline-flex"} items-center gap-1.5 rounded border border-line bg-[var(--surface-1)] py-1 pl-1 pr-3 text-xs font-semibold text-soft transition hover:border-[var(--line-2)] hover:text-text`}>
               <ChainBadge networkId={c.networkId} size={20} /> {c.name}
             </Link>
           ))}

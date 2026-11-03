@@ -1,4 +1,6 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
+import { Panel } from "@/components/ui/Panel";
 import { ChainBadge } from "@/components/ui/ChainBadge";
 import { TokenLogo } from "@/components/ui/TokenLogo";
 import { getNetwork } from "@/lib/market-data/networks";
@@ -7,12 +9,13 @@ import { ageShort, priceUsd, usdCompact } from "@/lib/utils/format";
 import { Change } from "./TokenRow";
 
 /** Compact list for half-width sections. Each row is a real link to the token page. */
-export function MiniList({ pools, note }: { pools: Array<{ pool: PoolSummary; note?: string }>; note?: (p: PoolSummary) => string }) {
+export function MiniList({ title, icon, href, pools, note }: { title: string; icon?: ReactNode; href?: string; pools: Array<{ pool: PoolSummary; note?: string }>; note?: (p: PoolSummary) => string }) {
   return (
-    <ul className="card divide-y divide-[var(--line-1)] overflow-hidden">
+    <Panel title={title} icon={icon} href={href}>
+    <ul className="rows">
       {pools.map(({ pool: p, note: n }) => (
         <li key={p.id}>
-          <Link href={`/token/${p.networkId}/${p.baseToken.address}`} className="flex items-center gap-3 px-4 py-3 transition hover:bg-[var(--surface-2)]">
+          <Link href={`/token/${p.networkId}/${p.baseToken.address}`} className="flex items-center gap-3 px-4 py-3 transition">
             <TokenLogo src={p.baseToken.imageUrl} symbol={p.baseToken.symbol} size={38} networkId={p.networkId} address={p.baseToken.address} />
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-2"><span className="truncate font-semibold">{p.baseToken.name || p.baseToken.symbol}</span><ChainBadge networkId={p.networkId} size={16} /></span>
@@ -23,5 +26,6 @@ export function MiniList({ pools, note }: { pools: Array<{ pool: PoolSummary; no
         </li>
       ))}
     </ul>
+    </Panel>
   );
 }

@@ -55,7 +55,7 @@ export default async function SearchPage({ searchParams }: Props) {
         <>
           <RememberSearch q={q} />
           <p className="text-sm text-muted">{pools.length} token{pools.length === 1 ? "" : "s"} across {networks.length} network{networks.length === 1 ? "" : "s"}. The same symbol can exist on many networks, so check the network and address before you trade.</p>
-          <MiniList pools={pools.map((pool) => ({ pool }))} />
+          <MiniList title="Matches" pools={pools.map((pool) => ({ pool }))} />
         </>
       )}
     </div>
