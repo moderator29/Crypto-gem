@@ -39,4 +39,4 @@ docs                  architecture and integration notes
 
 Real data or an honest empty state. Non-custodial: no keys, no custody, trades happen on external venues. Paid placements are always labelled and never alter organic rank. Mobile first.
 
-Docs: `ARCHITECTURE.md`, `API_INTEGRATIONS.md`, `NOWPAYMENTS_SETUP.md`, `SETUP.md`, `SECURITY.md`, `DATABASE_SCHEMA.md`, `IMPLEMENTATION_PLAN.md`, `STEINZLABS_REUSE_AUDIT.md`.
+Docs: `ADMIN.md`, `ARCHITECTURE.md`, `API_INTEGRATIONS.md`, `NOWPAYMENTS_SETUP.md`, `SETUP.md`, `SECURITY.md`, `DATABASE_SCHEMA.md`, `IMPLEMENTATION_PLAN.md`, `STEINZLABS_REUSE_AUDIT.md`.
