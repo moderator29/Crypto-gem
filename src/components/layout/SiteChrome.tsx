@@ -87,7 +87,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
               </button>
             </div>
             {[...NAV, { href: "/add-coin", key: "nav.applyListing" as const, icon: PlusCircle }].map((n) => (
-              <Link key={n.href} href={n.href} onClick={() => setDrawer(false)} aria-current={isActive(path, n.href) ? "page" : undefined} className="flex min-h-12 items-center gap-3 rounded-xl px-3 font-semibold text-soft aria-[current=page]:bg-[var(--border)] aria-[current=page]:text-text">
+              <Link key={n.href} href={n.href} onClick={() => setDrawer(false)} aria-current={isActive(path, n.href) ? "page" : undefined} className="flex min-h-12 items-center gap-3 rounded-xl px-3 font-semibold text-soft aria-[current=page]:bg-[color-mix(in_srgb,var(--neon)_20%,transparent)] aria-[current=page]:text-white aria-[current=page]:shadow-[inset_0_0_0_1px_rgba(90,160,255,0.45),0_0_20px_var(--neon-glow)]">
                 <n.icon size={19} /> {t(n.key)}
               </Link>
             ))}
