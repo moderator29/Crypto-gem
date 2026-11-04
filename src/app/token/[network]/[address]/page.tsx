@@ -11,6 +11,7 @@ import { WatchButton } from "@/components/dashboard/WatchButton";
 import { getBoostedKeys } from "@/lib/ads/boosted";
 import { NavIcon } from "@/components/ui/NavIcon";
 import { ShareButton } from "@/components/ui/ShareButton";
+import { getHomeData } from "@/lib/market-data/home";
 import { QuickAlert } from "@/components/account/QuickAlert";
 import { ViewTracker } from "@/components/token/ViewTracker";
 import { BuyPanel } from "@/components/token/BuyPanel";
@@ -67,6 +68,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
   const trade = tradeLinks(net.id, canonical, top?.address);
   const solUsd = net.id === "solana" ? await geckoTerminal.token("solana", "So11111111111111111111111111111111111111112").then((t) => t.priceUsd).catch(() => null) : null;
   const explorer = explorerTokenUrl(net.id, canonical);
+  const similar = (await getHomeData(net.id).catch(() => null))?.organic.filter((p) => p.baseToken.address.toLowerCase() !== canonical.toLowerCase()).slice(0, 8) ?? [];
 
   // A listed (published) project can be voted on. Unlisted tokens have no listing row, so no vote button.
   let listing: { id: string; votes: number } | null = null;
@@ -211,6 +213,19 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
             )}
           </section>
           <RiskPanel networkId={net.id} address={canonical} />
+          {similar.length > 0 && (
+            <section className="card p-4 md:p-5" aria-label="Similar tokens">
+              <h2 className="h3 mb-3">More on {net.name}</h2>
+              <div className="scroll-x">
+                {similar.map((p, i) => (
+                  <Link key={p.id} href={`/token/${p.networkId}/${p.baseToken.address}`} className="card-flat hover-lift row-in flex w-[190px] shrink-0 items-center gap-2.5 p-3" style={{ ["--i" as string]: i }}>
+                    <TokenLogo src={p.baseToken.imageUrl} symbol={p.baseToken.symbol} size={34} networkId={p.networkId} address={p.baseToken.address} />
+                    <span className="min-w-0"><span className="block truncate text-sm font-semibold">{p.baseToken.symbol}</span><Change v={p.change.h24} /></span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
         </div>
 
         <aside className="order-first space-y-4 lg:order-none">

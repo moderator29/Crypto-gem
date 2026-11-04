@@ -2,10 +2,12 @@ import { AlertTriangle, ExternalLink } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CountUp } from "@/components/fx/CountUp";
 import { Change } from "@/components/home/TokenRow";
 import { PriceTable } from "@/components/markets/PriceTable";
 import { ChainBadge } from "@/components/ui/ChainBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Stat } from "@/components/ui/Kit";
 import { LinkTabs } from "@/components/ui/LinkTabs";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { getMarketList, type MarketList } from "@/lib/market-data/lists";
@@ -54,9 +56,10 @@ export default async function ChainPage({ params, searchParams }: Props) {
 
       {stats && (
         <div className="stagger grid grid-cols-2 gap-3 md:grid-cols-4">
-          {([["24h volume", usdCompact(stats.volume24hUsd)], ["Liquidity", usdCompact(stats.liquidityUsd)], ["Pools sampled", String(stats.pools)], ["New pools, 24h", String(stats.newPools)]] as const).map(([k, v]) => (
-            <div key={k} className="card p-4"><p className="eyebrow">{k}</p><p className="num mt-2.5 text-2xl font-bold tracking-tight">{v}</p></div>
-          ))}
+          <Stat label="24h volume" value={stats.volume24hUsd === null ? "—" : <CountUp value={stats.volume24hUsd} kind="usd" />} />
+          <Stat label="Liquidity" value={stats.liquidityUsd === null ? "—" : <CountUp value={stats.liquidityUsd} kind="usd" />} />
+          <Stat label="Pools sampled" value={<CountUp value={stats.pools} />} />
+          <Stat label="New pools, 24h" value={<CountUp value={stats.newPools} />} />
           <div className="card col-span-2 p-4 md:col-span-4"><p className="eyebrow">Median 24h change, liquid pools</p><p className="num mt-2 text-xl font-bold"><Change v={stats.medianChange24h} /></p></div>
         </div>
       )}

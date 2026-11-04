@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { TocNav } from "@/components/learn/TocNav";
 
 export const LAST_UPDATED = "3 November 2026";
 
@@ -27,30 +28,39 @@ export interface LegalSection {
  * `owner` is a static developer note emitted as an HTML comment so placeholders are easy to find in source.
  */
 export function LegalPage({ title, intro, sections, owner }: { title: string; intro: ReactNode; sections: LegalSection[]; owner: string }) {
+  const toc = sections.map((x, i) => ({ id: x.id, text: `${i + 1}. ${x.title}` }));
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-5">
+    <div className="mx-auto grid w-full max-w-5xl gap-8 lg:grid-cols-[minmax(0,1fr)_240px]">
       <div hidden dangerouslySetInnerHTML={{ __html: `<!-- ${owner.replace(/-->/g, "")} -->` }} />
-      <header className="card p-6 md:p-8">
-        <h1 className="font-display text-3xl font-bold leading-tight md:text-4xl">{title}</h1>
-        <p className="mt-1 text-xs text-muted">Last updated {LAST_UPDATED}</p>
-        <div className="mt-4 text-soft">{intro}</div>
-      </header>
+      <div className="min-w-0 max-w-3xl space-y-5">
+        <header className="card card-lit p-6 md:p-8">
+          <h1 className="h1">{title}</h1>
+          <p className="mt-1 text-xs text-muted">Last updated {LAST_UPDATED}</p>
+          <div className="mt-4 text-soft">{intro}</div>
+        </header>
 
-      <nav aria-label="Contents" className="card-flat p-5">
-        <h2 className="text-xs font-bold uppercase tracking-widest text-muted">Contents</h2>
-        <ol className="mt-3 grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
-          {sections.map((s, i) => (
-            <li key={s.id}><a className="block min-h-8 py-1 text-soft hover:text-text" href={`#${s.id}`}>{i + 1}. {s.title}</a></li>
-          ))}
-        </ol>
-      </nav>
+        <details className="card-flat p-4 lg:hidden">
+          <summary className="cursor-pointer text-sm font-semibold">Contents</summary>
+          <ol className="mt-3 space-y-0.5 text-sm">
+            {sections.map((s, i) => (
+              <li key={s.id}><a className="block min-h-9 py-1.5 text-soft hover:text-text" href={`#${s.id}`}>{i + 1}. {s.title}</a></li>
+            ))}
+          </ol>
+        </details>
 
-      {sections.map((s, i) => (
-        <section key={s.id} id={s.id} aria-labelledby={`${s.id}-h`} className="card scroll-mt-24 space-y-3 p-6 md:p-8">
-          <h2 id={`${s.id}-h`} className="font-display text-xl font-bold md:text-2xl">{i + 1}. {s.title}</h2>
-          <div className="space-y-3 break-words text-sm leading-relaxed text-soft md:text-base [&_a]:text-brand [&_li]:ml-5 [&_li]:list-disc [&_ul]:space-y-1.5">{s.body}</div>
-        </section>
-      ))}
+        {sections.map((s, i) => (
+          <section key={s.id} id={s.id} aria-labelledby={`${s.id}-h`} className="card reveal scroll-mt-24 space-y-3 p-6 md:p-8">
+            <h2 id={`${s.id}-h`} className="h2">{i + 1}. {s.title}</h2>
+            <div className="space-y-3 break-words text-sm leading-relaxed text-soft md:text-base [&_a]:text-brand [&_li]:ml-5 [&_li]:list-disc [&_ul]:space-y-1.5">{s.body}</div>
+          </section>
+        ))}
+      </div>
+      <aside className="hidden lg:block">
+        <div className="sticky top-24 space-y-3">
+          <p className="eyebrow !text-muted">Contents</p>
+          <TocNav items={toc} />
+        </div>
+      </aside>
     </div>
   );
 }
