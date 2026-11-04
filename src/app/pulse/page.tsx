@@ -1,7 +1,10 @@
 import { Activity, AlertTriangle, Flame } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CountUp } from "@/components/fx/CountUp";
+import { Spotlight } from "@/components/fx/Spotlight";
 import { Change, TokenRow } from "@/components/home/TokenRow";
+import { Stat } from "@/components/ui/Kit";
 import { getHomeData } from "@/lib/market-data/home";
 import { geckoTerminal } from "@/lib/market-data/providers/geckoterminal";
 import { chainPulse, heatBucket } from "@/lib/market-data/pulse";
@@ -34,20 +37,29 @@ export default async function PulsePage() {
 
   return (
     <div className="space-y-6">
-      <header className="card p-6 md:p-8">
-        <h1 className="flex items-center gap-3 font-display text-3xl font-bold md:text-4xl"><Activity className="text-brand" /> Market Pulse</h1>
-        <p className="mt-2 max-w-2xl text-soft">Where activity is concentrating right now, measured from live DEX pools. Chain tiles show the median 24h change of liquid pools, so one pumping token cannot colour a whole chain.</p>
+      <header className="card card-lit relative overflow-hidden p-6 md:p-8">
+        <div className="fx-aurora" aria-hidden="true"><i /><i /><i /></div>
+        <h1 className="relative z-10 flex items-center gap-3 font-display text-3xl font-bold md:text-4xl"><Activity className="fx-float text-brand" /> Market Pulse</h1>
+        <p className="relative z-10 mt-2 max-w-2xl text-soft">Where activity is concentrating right now, measured from live DEX pools. Chain tiles show the median 24h change of liquid pools, so one pumping token cannot colour a whole chain.</p>
       </header>
 
       {!data ? (
         <div className="card flex items-center gap-2 p-6 text-sm" role="alert"><AlertTriangle size={16} className="text-down" /> Market data is temporarily unavailable. Reload in a minute.</div>
       ) : (
         <>
+          <div className="stagger grid grid-cols-2 gap-3 md:grid-cols-4">
+            <Stat label="Chains measured" value={<CountUp value={chains.length} />} />
+            <Stat label="24h volume sampled" value={<CountUp value={chains.reduce((a, c) => a + (c.volume24hUsd ?? 0), 0)} kind="usd" />} />
+            <Stat label="Pools sampled" value={<CountUp value={trending.length + fresh.length} />} />
+            <Stat label="Unusual volume" value={<CountUp value={data.heating.length} />} note="pools right now" />
+          </div>
+
           <section aria-label="Chain heatmap" className="space-y-3">
             <h2 className="font-display text-xl font-bold">Chain heatmap</h2>
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
+            <div className="stagger grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
               {chains.map((c) => (
-                <Link key={c.networkId} href={`/markets?network=${c.networkId}`} className={`card-flat hover-lift space-y-1 p-4 ${HEAT[heatBucket(c.medianChange24h) + 3]}`}>
+                <Spotlight key={c.networkId} className="rounded-[var(--r-md)]">
+                <Link href={`/markets?network=${c.networkId}`} className={`card-flat hover-lift block space-y-1 p-4 ${HEAT[heatBucket(c.medianChange24h) + 3]}`}>
                   <div className="flex items-center justify-between gap-2"><span className="truncate font-semibold">{c.name}</span><Change v={c.medianChange24h} /></div>
                   <dl className="num grid grid-cols-2 gap-x-2 text-xs text-soft">
                     <dt className="text-soft">Volume</dt><dd className="text-right">{usdCompact(c.volume24hUsd)}</dd>
@@ -56,6 +68,7 @@ export default async function PulsePage() {
                     <dt className="text-soft">Buys/sells</dt><dd className="text-right">{c.buySellRatio === null ? "—" : c.buySellRatio.toFixed(2)}</dd>
                   </dl>
                 </Link>
+                </Spotlight>
               ))}
             </div>
             <p className="text-[11px] text-muted">Sample: {trending.length} trending and {fresh.length} newly created pools across all networks, sourced from GeckoTerminal. Chains with few sampled pools are less reliable. Updated every minute.</p>

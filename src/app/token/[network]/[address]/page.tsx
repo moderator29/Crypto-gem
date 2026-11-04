@@ -11,6 +11,7 @@ import { WatchButton } from "@/components/dashboard/WatchButton";
 import { getBoostedKeys } from "@/lib/ads/boosted";
 import { NavIcon } from "@/components/ui/NavIcon";
 import { ShareButton } from "@/components/ui/ShareButton";
+import { QuickAlert } from "@/components/account/QuickAlert";
 import { ViewTracker } from "@/components/token/ViewTracker";
 import { BuyPanel } from "@/components/token/BuyPanel";
 import { RiskPanel } from "@/components/token/RiskPanel";
@@ -123,9 +124,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
           )}
           <CopyButton value={canonical} label="Copy" />
           <WatchButton network={net.id} address={canonical} />
-          <Link href={`/alerts?network=${net.id}&address=${encodeURIComponent(canonical)}&symbol=${encodeURIComponent(identity?.symbol ?? "")}&name=${encodeURIComponent(identity?.name ?? "")}&price=${top?.priceUsd ?? ""}`} className="btn btn-sm">
-            <NavIcon name="alert" size={16} /> Alert
-          </Link>
+          <span className="inline-flex items-center rounded-lg border border-[var(--line-2)] bg-[var(--surface-2)] text-xs font-semibold"><QuickAlert network={net.id} address={canonical} symbol={identity?.symbol ?? "?"} name={identity?.name ?? "Token"} price={price} compact /><span className="pr-3">Alert</span></span>
           <ShareButton title={`${identity?.name ?? "Token"} on Crypto Gems`} />
           <Link href={`/compare?a=${net.id}:${encodeURIComponent(canonical)}`} className="btn btn-sm">
             <NavIcon name="compare" size={16} /> Compare

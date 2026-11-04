@@ -10,9 +10,10 @@ import { normalizeAddress } from "@/lib/market-data/identifiers";
 import { priceUsd, usdCompact } from "@/lib/utils/format";
 import { useDisplayPrefs } from "@/lib/displayPrefs";
 import { Sparkline } from "./Sparkline";
+import { QuickAlert } from "@/components/account/QuickAlert";
 import { WatchStar } from "./WatchStar";
 
-const COLS = "grid-cols-[32px_minmax(0,1fr)_auto_68px] md:grid-cols-[36px_32px_minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_132px]";
+const COLS = "grid-cols-[32px_minmax(0,1fr)_auto_68px] md:grid-cols-[72px_32px_minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_132px]";
 
 function Delta({ v }: { v: number | null }) {
   if (v === null) return <span className="num text-xs text-muted">{"—"}</span>;
@@ -72,7 +73,7 @@ export function PriceTable({ pools, startRank = 1, sorting, boosted }: { pools: 
           const cap = p.marketCapUsd && p.marketCapUsd > 0 ? p.marketCapUsd : p.fdvUsd;
           return (
             <li key={p.id} style={{ ["--i" as string]: i }} className={`row-in relative grid items-center gap-x-2 border-b border-line px-2.5 ${prefs.compact ? "py-1.5" : "py-2.5"} md:gap-x-3 md:px-3 transition last:border-0 hover:bg-[var(--surface-2)] ${COLS}`}>
-              <WatchStar network={p.networkId} address={t.address} symbol={t.symbol} />
+              <span className="flex flex-col items-center md:flex-row"><WatchStar network={p.networkId} address={t.address} symbol={t.symbol} /><span className="hidden md:block"><QuickAlert network={p.networkId} address={t.address} symbol={t.symbol} name={t.name} price={p.priceUsd} compact /></span></span>
               <span className="num hidden text-sm text-muted md:block">{startRank + i}</span>
               <span className="flex min-w-0 items-center gap-3">
                 <TokenLogo src={t.imageUrl} symbol={t.symbol} size={34} networkId={p.networkId} address={t.address} />

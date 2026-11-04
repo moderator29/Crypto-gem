@@ -1,6 +1,7 @@
 "use client";
 
 import { CircleDollarSign, Clock, Megaphone, Receipt, ShieldCheck, Hourglass } from "lucide-react";
+import { CountUp } from "@/components/fx/CountUp";
 import { useAdminQuery } from "./api";
 import { Loading, Notice, PageTitle, fmtUsd } from "./ui";
 
@@ -18,12 +19,12 @@ export function OverviewView() {
   const { data, error, loading, status } = useAdminQuery<Overview>("/api/admin/overview");
   const stats = data
     ? [
-        { label: "Pending submissions", value: String(data.pendingSubmissions), icon: Clock },
-        { label: "Published listings", value: String(data.publishedListings), icon: ShieldCheck },
-        { label: "Pending payments", value: String(data.pendingPayments), icon: Hourglass },
-        { label: "Paid orders", value: String(data.paidOrders), icon: Receipt },
-        { label: "Gross paid revenue", value: fmtUsd(data.grossPaidRevenueUsd), icon: CircleDollarSign },
-        { label: "Active campaigns", value: String(data.activeCampaigns), icon: Megaphone },
+        { label: "Pending submissions", value: <CountUp value={data.pendingSubmissions} />, icon: Clock },
+        { label: "Published listings", value: <CountUp value={data.publishedListings} />, icon: ShieldCheck },
+        { label: "Pending payments", value: <CountUp value={data.pendingPayments} />, icon: Hourglass },
+        { label: "Paid orders", value: <CountUp value={data.paidOrders} />, icon: Receipt },
+        { label: "Gross paid revenue", value: <span title={fmtUsd(data.grossPaidRevenueUsd)}><CountUp value={data.grossPaidRevenueUsd} kind="usd" /></span>, icon: CircleDollarSign },
+        { label: "Active campaigns", value: <CountUp value={data.activeCampaigns} />, icon: Megaphone },
       ]
     : [];
   return (
@@ -33,10 +34,10 @@ export function OverviewView() {
       {!loading && error && <Notice tone={status === 403 ? "info" : "error"}>{status === 403 ? "Your role does not include the overview. Use the sections above." : error}</Notice>}
       {data && (
         <>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+          <div className="stagger grid grid-cols-2 gap-3 lg:grid-cols-3">
             {stats.map((s) => (
-              <div key={s.label} className="card-flat min-w-0 space-y-2 p-4">
-                <s.icon size={18} className="text-brand" />
+              <div key={s.label} className="card-flat hover-lift min-w-0 space-y-2 p-4">
+                <span className="icon-tile grid h-8 w-8 place-items-center rounded-lg"><s.icon size={16} /></span>
                 <p className="break-words text-xl font-bold sm:text-2xl">{s.value}</p>
                 <p className="text-xs text-muted sm:text-sm">{s.label}</p>
               </div>
