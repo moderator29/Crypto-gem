@@ -21,6 +21,12 @@ const ART: Record<string, ReactNode> = {
   compare: (<><path d="M4 18l5-7 4 4 7-9" /><path className="acc" d="M4 9l5 3 4-6 7 8" /></>),
   status: (<><circle cx="12" cy="12" r="8.5" /><path className="acc" d="M8 12.500l2.8 2.800L16 9.5" /></>),
   shield: (<><path d="M12 3l7.5 3v5.500c0 4.5-3 7.8-7.5 9.5-4.5-1.7-7.5-5-7.5-9.500V6L12 3z" /><path className="acc" d="M8.8 12l2.2 2.2 4.2-4.4" /></>),
+  tools: (<><path d="M14.500 5.500a4 4 0 0 0-5 5L4 16l4 4 5.500-5.500a4 4 0 0 0 5-5l-2.500 2.500-2.500-.5-.5-2.500 2.500-2.500z" /><circle className="acc" cx="7" cy="17" r="1" /></>),
+  learn: (<><path d="M3 8l9-4 9 4-9 4-9-4z" /><path className="acc" d="M7 10.500V15c0 1.500 2.200 3 5 3s5-1.500 5-3v-4.500" /></>),
+  help: (<><circle cx="12" cy="12" r="8.500" /><path className="acc" d="M9.500 9.500a2.500 2.500 0 1 1 3.500 2.300c-.7.400-1 .900-1 1.700" /><circle className="acc" cx="12" cy="16.500" r=".6" /></>),
+  log: (<><rect x="4" y="3.500" width="16" height="17" rx="2" /><path d="M8 8h8M8 12h8" /><path className="acc" d="M8 16h4" /></>),
+  sound: (<><path d="M4 10v4h3l5 4V6L7 10H4z" /><path className="acc" d="M16 9a4 4 0 0 1 0 6M18.500 6.500a8 8 0 0 1 0 11" /></>),
+  mute: (<><path d="M4 10v4h3l5 4V6L7 10H4z" /><path className="acc" d="M16 9.500l5 5M21 9.500l-5 5" /></>),
   alert: (<><path d="M6 16.500V11a6 6 0 0 1 12 0v5.500l1.5 1.500h-15L6 16.500z" /><path className="acc" d="M12 8.500v3.500l2 1" /></>),
 };
 

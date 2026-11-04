@@ -10,6 +10,7 @@ import { useT } from "@/components/i18n/I18nProvider";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { Logo } from "@/components/ui/Logo";
 import { NavIcon, type NavIconName } from "@/components/ui/NavIcon";
+import { setSoundPrefs, useSoundPrefs, playSound } from "@/components/fx/sound";
 import { SearchDialog } from "./SearchDialog";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -43,6 +44,15 @@ const GROUPS: NavGroup[] = [
       { href: "/add-coin", label: "Add coin", icon: "add", match: (p) => p.startsWith("/add-coin") },
       { href: "/boost", label: "Boost", icon: "boost", match: (p) => p.startsWith("/boost") },
       { href: "/promotion", label: "Promotion", icon: "promo", match: (p) => p.startsWith("/promotion") },
+    ],
+  },
+  {
+    title: "Resources",
+    items: [
+      { href: "/tools", label: "Trader tools", icon: "tools", match: (p) => p.startsWith("/tools") },
+      { href: "/learn", label: "Learn", icon: "learn", match: (p) => p.startsWith("/learn") },
+      { href: "/help", label: "Help", icon: "help", match: (p) => p.startsWith("/help") },
+      { href: "/changelog", label: "Changelog", icon: "log", match: (p) => p.startsWith("/changelog") },
     ],
   },
   {
@@ -92,6 +102,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
   const [searchOpen, setSearchOpen] = useState(false);
   const [drawer, setDrawer] = useState(false);
   const drawerRef = useRef<HTMLElement>(null);
+  const sound = useSoundPrefs();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -155,6 +166,9 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
             <Link href="/notifications" className="btn btn-icon bell-ring" aria-label="Notifications">
               <NavIcon name="bell" size={20} />
             </Link>
+            <button type="button" className="btn btn-icon hidden sm:inline-flex" aria-pressed={sound.enabled} aria-label={sound.enabled ? "Turn sound off" : "Turn sound on"} onClick={() => { setSoundPrefs({ enabled: !sound.enabled }); if (!sound.enabled) setTimeout(() => playSound("success"), 30); }}>
+              <NavIcon name={sound.enabled ? "sound" : "mute"} size={19} />
+            </button>
             <ThemeToggle className="hidden sm:inline-flex" />
             <Link href="/add-coin" className="btn btn-primary hidden sm:inline-flex">
               <NavIcon name="add" size={18} className="[&_.acc]:!stroke-current" /> {t("nav.addCoin")}

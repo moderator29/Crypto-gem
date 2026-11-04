@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useT } from "@/components/i18n/I18nProvider";
+import { playSound, setSoundPrefs, useSoundPrefs } from "@/components/fx/sound";
 import { LinkRow, RowGroup, SwitchRow } from "@/components/ui/Rows";
 import { setDisplayPrefs, useDisplayPrefs } from "@/lib/displayPrefs";
 import { LOCALE_COOKIE, LOCALES } from "@/lib/i18n/config";
@@ -12,6 +13,7 @@ export function PreferencesGroups() {
   const { locale } = useT();
   const router = useRouter();
   const prefs = useDisplayPrefs();
+  const sound = useSoundPrefs();
   const [light, setLight] = useState(false);
   useEffect(() => {
     const id = setTimeout(() => setLight(document.documentElement.getAttribute("data-theme") === "light"), 0);
@@ -34,6 +36,13 @@ export function PreferencesGroups() {
         <LinkRow href="/alerts" icon="alert" label="Price alerts" hint="Get notified when a price crosses" />
         <LinkRow href="/notifications" icon="inbox" label="Notifications" hint="Alerts, payments and listing decisions" />
         <LinkRow href="/dashboard" icon="dashboard" label="Dashboard" hint="Listings, boosts, campaigns, payments" />
+      </RowGroup>
+      <RowGroup title="Sound and feel">
+        <SwitchRow checked={sound.enabled} onChange={(v) => { setSoundPrefs({ enabled: v }); if (v) setTimeout(() => playSound("success"), 30); }} icon="sound" label="Interface sounds" hint="Soft taps, success chimes and alerts. Off by default" />
+        <li className="flex min-h-14 items-center gap-3.5 px-4">
+          <label htmlFor="pref-volume" className="min-w-0 flex-1 text-[15px] font-semibold">Volume</label>
+          <input id="pref-volume" type="range" min={0} max={100} value={Math.round(sound.volume * 100)} onChange={(e) => setSoundPrefs({ volume: Number(e.target.value) / 100 })} onPointerUp={() => playSound("notify")} className="w-40 accent-[var(--brand)]" disabled={!sound.enabled} />
+        </li>
       </RowGroup>
       <RowGroup title="Display">
         <SwitchRow checked={light} onChange={applyTheme} icon="settings" label="Light mode" hint="Dark is the default" />

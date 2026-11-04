@@ -1,0 +1,75 @@
+/* Shared motion and effect styles. Owned by the lead session. Other workers add page styles in pages.css. */
+
+@property --ang { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+
+/* Entrances */
+.fx-fade { animation: fx-fade 220ms ease-out both; }
+.fx-pop { animation: fx-pop 260ms var(--ease-out) both; }
+.fx-sheet { animation: fx-sheet 340ms var(--ease-out) both; }
+.fx-fill { transform-origin: left; animation: fx-fill 900ms var(--ease-out) both; }
+@keyframes fx-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fx-pop { from { opacity: 0; transform: translateY(10px) scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes fx-sheet { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: none; } }
+@keyframes fx-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* Pointer tilt */
+.fx-tilt { transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform 180ms ease-out; will-change: transform; }
+.fx-tilt:hover { transition-duration: 60ms; }
+
+/* Pointer spotlight */
+.fx-spot { position: relative; isolation: isolate; }
+.fx-spot::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; opacity: 0;
+  background: radial-gradient(340px circle at var(--sx, 50%) var(--sy, 50%), color-mix(in srgb, var(--neon) 20%, transparent), transparent 60%);
+  transition: opacity 240ms ease;
+}
+.fx-spot:hover::before { opacity: 1; }
+
+/* Button sheen: a light band sweeps across primary buttons on hover */
+.btn-primary { overflow: hidden; }
+.btn-primary::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; transform: translateX(-120%) skewX(-18deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+}
+.btn-primary:hover::after { animation: fx-sheen 700ms ease-out; }
+@keyframes fx-sheen { to { transform: translateX(120%) skewX(-18deg); } }
+
+/* Spinning gradient border for featured cards */
+.fx-border { position: relative; border-radius: var(--r-lg); }
+.fx-border::before {
+  content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: conic-gradient(from var(--ang), transparent 0 55%, var(--brand) 75%, var(--brand-2) 90%, transparent);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: fx-spin 5s linear infinite;
+}
+@keyframes fx-spin { to { --ang: 360deg; } }
+
+/* Aurora mesh for hero areas */
+.fx-aurora { position: absolute; inset: -20% -10% auto -10%; height: 120%; pointer-events: none; z-index: 0; filter: blur(60px); opacity: 0.9; }
+.fx-aurora i { position: absolute; border-radius: 999px; }
+.fx-aurora i:nth-child(1) { width: 46%; height: 70%; left: 4%; top: 0; background: var(--aurora-a); animation: fx-drift-a 16s ease-in-out infinite alternate; }
+.fx-aurora i:nth-child(2) { width: 38%; height: 60%; right: 6%; top: 10%; background: var(--aurora-b); animation: fx-drift-b 19s ease-in-out infinite alternate; }
+.fx-aurora i:nth-child(3) { width: 30%; height: 50%; left: 38%; top: 30%; background: var(--aurora-c); animation: fx-drift-a 22s ease-in-out infinite alternate-reverse; }
+@keyframes fx-drift-a { to { transform: translate(8%, 10%) scale(1.15); } }
+@keyframes fx-drift-b { to { transform: translate(-10%, 6%) scale(1.1); } }
+
+/* Idle float and pulse ring */
+.fx-float { animation: fx-float 5s ease-in-out infinite; }
+@keyframes fx-float { 50% { transform: translateY(-8px) rotate(1.5deg); } }
+.fx-ring { position: relative; }
+.fx-ring::after { content: ""; position: absolute; inset: -4px; border-radius: inherit; border: 2px solid var(--brand); opacity: 0; animation: fx-ring 2.2s ease-out infinite; pointer-events: none; }
+@keyframes fx-ring { 0% { transform: scale(0.9); opacity: 0.7; } 100% { transform: scale(1.25); opacity: 0; } }
+
+/* Direction bounce on a changed price arrow */
+.fx-bounce { animation: fx-bounce 520ms var(--ease-out); }
+@keyframes fx-bounce { 40% { transform: translateY(-4px) scale(1.2); } }
+
+/* Animated divider */
+.fx-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--line-3), transparent); background-size: 200% 100%; animation: fx-slide 6s linear infinite; }
+@keyframes fx-slide { to { background-position: -200% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-aurora i, .fx-float, .fx-ring::after, .fx-border::before, .fx-divider, .fx-bounce { animation: none; }
+  .fx-tilt { transform: none; }
+}

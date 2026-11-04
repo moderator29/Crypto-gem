@@ -10,6 +10,10 @@ import { dirOf } from "@/lib/i18n/config";
 import { messagesFor } from "@/lib/i18n/messages";
 import { getLocale } from "@/lib/i18n/server";
 import "./globals.css";
+import "@/styles/fx.css";
+import "@/styles/pages.css";
+import { RouteProgress } from "@/components/fx/RouteProgress";
+import { SoundTaps } from "@/components/fx/SoundTaps";
 
 export const metadata: Metadata = {
   title: { default: "Crypto Gems | Discover, analyse and promote crypto projects", template: "%s | Crypto Gems" },
@@ -37,6 +41,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <I18nProvider locale={locale} messages={messagesFor(locale)}>
           <AuthProvider>
             <ToastProvider>
+              <RouteProgress />
+              <SoundTaps />
               <SiteChrome footer={<Footer />}>{children}</SiteChrome>
             </ToastProvider>
           </AuthProvider>
