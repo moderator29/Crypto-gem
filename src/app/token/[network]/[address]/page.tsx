@@ -1,4 +1,4 @@
-import { ArrowUpRight, Bot, ExternalLink, ShieldAlert, Info } from "lucide-react";
+import { ArrowUpRight, Bot, ExternalLink, ShieldAlert, Info, Zap } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -8,6 +8,7 @@ import { PriceChart } from "@/components/token/PriceChart";
 import { VoteButton } from "@/components/token/VoteButton";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 import { WatchButton } from "@/components/dashboard/WatchButton";
+import { getBoostedKeys } from "@/lib/ads/boosted";
 import { NavIcon } from "@/components/ui/NavIcon";
 import { ShareButton } from "@/components/ui/ShareButton";
 import { RiskPanel } from "@/components/token/RiskPanel";
@@ -59,6 +60,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
   const identity = info?.identity ?? (top && top.baseToken.address.toLowerCase() === canonical.toLowerCase() ? top.baseToken : top?.quoteToken ?? top?.baseToken) ?? null;
   const price = info?.priceUsd ?? top?.priceUsd ?? null;
   const risks = marketRiskSignals(sorted);
+  const isBoosted = (await getBoostedKeys().catch(() => new Set<string>())).has(`${net.id}:${canonical}`);
   const trade = tradeLinks(net.id, canonical, top?.address);
   const explorer = explorerTokenUrl(net.id, canonical);
 
@@ -92,7 +94,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
         <div className="flex items-center gap-3 md:gap-4">
           <TokenLogo src={identity?.imageUrl} symbol={identity?.symbol ?? "?"} size={48} networkId={networkId} address={address} />
           <div className="min-w-0 flex-1">
-            <h1 className="font-display truncate text-xl font-bold leading-tight md:text-2xl">{identity?.name || "Unnamed token"}</h1>
+            <h1 className="font-display truncate text-xl font-bold leading-tight md:text-2xl">{identity?.name || "Unnamed token"}{isBoosted && <span className="badge badge-sponsored ml-2 align-middle"><Zap size={11} aria-hidden="true" /> Boosted</span>}</h1>
             <p className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted">
               <span className="font-semibold text-soft">{identity?.symbol}</span>
               <span className="rounded-full border border-line px-2 py-0.5 font-semibold text-soft">{net.name}</span>

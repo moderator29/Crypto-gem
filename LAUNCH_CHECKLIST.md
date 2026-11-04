@@ -64,3 +64,18 @@ Not needed: `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (no browser client talks to S
 - Whether Boost placements should be sold as rank ranges (the reference does) or kept as unranked sponsored slots (current, safer for trust).
 - Refund policy for paid campaigns that are rejected at creative review.
 - Whether to keep a light theme as an option. Dark neon is the default and only identity today; a light variant exists behind the toggle.
+
+## 5. Accounts, the database, and Privy
+
+Privy handles sign-in (email code, wallet, Google) and wallet linking. It does not store application data. Listings, orders, payments, campaigns, boosts, watchlists, alerts and notifications need a database, and Supabase is used only for that: users never sign up there, and there is no Supabase Auth. The first time a Privy user reaches the server a `profiles` row is created from their verified Privy id (`/api/account/sync`).
+
+## 6. Data provider keys added for token detection
+
+| Name | Needed | Where to get it |
+| --- | --- | --- |
+| none | DexScreener and GoPlus | Both are public and need no key. DexScreener supplies detection fallbacks and the banner strip. GoPlus supplies the token security check |
+| `DEXTOOLS_API_KEY`, `DEXTOOLS_PLAN` | Optional | developer.dextools.io. Plan is `trial`, `standard`, `advanced` or `pro`. DexTools is a paid API |
+| `BIRDEYE_API_KEY` | Optional, Solana | bds.birdeye.so, create an API key. Free tier has limits |
+| `HELIUS_API_KEY` or `RPC_SOLANA` | Recommended, Solana | helius.dev, create a project and copy the key. Reads on-chain name, symbol, decimals and supply for any Solana mint |
+
+Detection order for every field is on-chain, GeckoTerminal, DexScreener, CoinGecko, CoinMarketCap, DexTools, Birdeye. Whatever no provider can supply is listed as missing for the owner to complete.

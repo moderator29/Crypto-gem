@@ -751,3 +751,19 @@ h3 {
     repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 14px),
     var(--surface-2);
 }
+
+/* Boost pack cards get warmer and brighter with the tier. */
+.boost-pack {
+  background:
+    radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--neon) calc(var(--tier, 1) * 4%), transparent), transparent 62%),
+    var(--surface-1);
+  transition: transform var(--dur-3) var(--ease-out), border-color var(--dur-2) var(--ease-out), box-shadow var(--dur-3) var(--ease-out);
+}
+.boost-pack:hover { transform: translateY(-3px); border-color: var(--line-3); }
+
+/* Scroll reveal without JavaScript: browsers that support view timelines animate sections in as they enter. */
+@supports (animation-timeline: view()) {
+  .reveal { animation: reveal-up linear both; animation-timeline: view(); animation-range: entry 0% entry 30%; }
+}
+@keyframes reveal-up { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .reveal { animation: none; } }

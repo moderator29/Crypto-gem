@@ -1,4 +1,5 @@
 import "server-only";
+import { normalizeAddress } from "@/lib/market-data/identifiers";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 
 export interface BoostedProject {
@@ -39,4 +40,10 @@ export async function getBoostedProjects(limit = 6): Promise<BoostedProject[]> {
   } catch {
     return [];
   }
+}
+
+/** Keys (`network:address`) of every project with a boost running now, for badges on lists and token pages. */
+export async function getBoostedKeys(): Promise<Set<string>> {
+  const items = await getBoostedProjects(200);
+  return new Set(items.filter((b) => b.networkId && b.address).map((b) => `${b.networkId}:${normalizeAddress(b.address as string)}`));
 }

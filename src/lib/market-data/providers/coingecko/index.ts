@@ -97,6 +97,18 @@ export const coingecko = {
     }
   },
 
+  /** Coins matching a name or symbol. Used to find a contract when the owner does not have the address to hand. */
+  async search(q: string): Promise<Array<{ id: string; name: string; symbol: string; imageUrl: string | null; rank: number | null }>> {
+    const raw = await cg<{ coins?: Array<{ id: string; name: string; symbol: string; large?: string; thumb?: string; market_cap_rank?: number | null }> }>(`/search?query=${encodeURIComponent(q)}`, 5 * 60_000);
+    return (raw.coins ?? []).map((c) => ({ id: c.id, name: c.name, symbol: c.symbol.toUpperCase(), imageUrl: str(c.large ?? c.thumb), rank: c.market_cap_rank ?? null }));
+  },
+
+  /** Contract addresses of one coin per CoinGecko asset platform. Empty for coins with no contract, such as native coins. */
+  async platforms(coinId: string): Promise<Record<string, string>> {
+    const raw = await cg<{ platforms?: Record<string, string> }>(`/coins/${encodeURIComponent(coinId)}?localization=false&tickers=false&market_data=false&community_data=false&developer_data=false&sparkline=false`, 30 * 60_000);
+    return Object.fromEntries(Object.entries(raw.platforms ?? {}).filter(([k, v]) => k && v));
+  },
+
   async global(): Promise<{ totalMarketCapUsd: number | null; volume24hUsd: number | null; btcDominance: number | null; change24h: number | null; observedAt: string }> {
     const raw = await cg<{ data: { total_market_cap?: { usd?: number }; total_volume?: { usd?: number }; market_cap_percentage?: { btc?: number }; market_cap_change_percentage_24h_usd?: number } }>("/global", 5 * 60_000);
     return {

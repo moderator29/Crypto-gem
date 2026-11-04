@@ -1,5 +1,7 @@
 "use client";
 
+import { TokenFinder } from "./TokenFinder";
+import { classifyAddress } from "@/lib/market-data/identifiers";
 import { AlertTriangle, ArrowLeft, BadgeCheck, CheckCircle2, Globe, Loader2, RefreshCw, Rocket, ScanSearch, Upload, X, Zap } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -200,10 +202,11 @@ export function Wizard() {
         <section className="card space-y-4 p-5 md:p-7" aria-label="Identify your token">
           <div>
             <StepLabel n={idx + 1} />
-            <h2 className="font-display text-2xl font-bold">Paste your contract address</h2>
-            <p className="mt-1 text-sm text-soft">We&apos;ll detect the chain and pre-fill the token details automatically.</p>
+            <h2 className="font-display text-2xl font-bold">Paste your contract address or search by name</h2>
+            <p className="mt-1 text-sm text-soft">We detect the chain and pre-fill the token details from several data sources, so one provider being down never blocks you.</p>
           </div>
-          <input className="input num" value={address} onChange={(e) => { setAddress(e.target.value); setNetwork(null); }} onPaste={() => setNetwork(null)} placeholder="0x… or Solana mint" spellCheck={false} autoComplete="off" autoCapitalize="off" aria-label="Contract address" inputMode="text" />
+          <input className="input num" value={address} onChange={(e) => { setAddress(e.target.value); setNetwork(null); }} onPaste={() => setNetwork(null)} placeholder="Contract address, mint, or token name" spellCheck={false} autoComplete="off" autoCapitalize="off" aria-label="Contract address" inputMode="text" />
+          {classifyAddress(address.trim()) === "unknown" && address.trim().length >= 2 && <TokenFinder query={address} onPick={(a, n) => { setAddress(a); setNetwork(n); }} />}
           <div className="scroll-x" aria-label="Supported chains">
             {NETWORKS.filter((n) => n.contractLookup).slice(0, 14).map((n) => <span key={n.id} className="badge shrink-0">{n.name}</span>)}
           </div>

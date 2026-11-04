@@ -56,18 +56,21 @@ export function PlacementPreview({ placement, device, creative }: { placement: P
     <div className={`${frame} card-flat space-y-2 p-3`} aria-label="Discover page preview">
       <div className="flex items-center gap-2"><div className={`${bar} h-4 w-4`} /><div className={`${bar} h-2.5 w-16`} /><div className={`${bar} ml-auto h-4 w-10 rounded-full`} /></div>
       <div className={`${bar} h-4`} />
-      <Zone on={is("hero")} label="Hero" creative={is("hero") ? creative : null} className={device === "mobile" ? "h-20" : "h-24"} />
-      <Zone on={is("featured")} label="Featured" creative={is("featured") ? creative : null} className="h-9" />
+      <div className="flex gap-1.5">
+        <Zone on={is("hero")} label="Hero" creative={is("hero") ? creative : null} className="h-10 flex-[1.4]" />
+        <Zone on={is("featured")} label="Featured" creative={is("featured") ? creative : null} className="h-10 flex-1" />
+        <Zone on={is("side")} label="Side" creative={is("side") ? creative : null} className="h-10 flex-1" />
+      </div>
+      <div className="grid grid-cols-2 gap-1.5"><div className="h-5 rounded border border-dashed border-[var(--line-2)]" /><div className="h-5 rounded border border-dashed border-[var(--line-2)]" /></div>
       <Zone on={is("ecosystem")} label="Ecosystem" creative={is("ecosystem") ? creative : null} className="h-7" />
       <div className="flex gap-1">{Array.from({ length: 4 }, (_, i) => <div key={i} className={`${bar} h-4 w-10 rounded-full`} />)}</div>
-      <div className={device === "mobile" ? "space-y-1.5" : "grid grid-cols-[1fr_28%] gap-2"}>
+      <div>
         <div className="space-y-1.5">
           <Row on={is("trending")} creative={creative} />
           <Row on={false} />
           <Row on={is("new-listings", "hot-pairs")} creative={creative} />
           <Row on={false} />
         </div>
-        <Zone on={is("side")} label="Side" creative={is("side") ? creative : null} className={device === "mobile" ? "h-12" : "h-full min-h-[64px]"} />
       </div>
     </div>
   );

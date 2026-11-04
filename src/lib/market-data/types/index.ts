@@ -1,4 +1,4 @@
-export type ProviderId = "geckoterminal" | "coingecko" | "coinmarketcap" | "rpc";
+export type ProviderId = "geckoterminal" | "coingecko" | "coinmarketcap" | "rpc" | "dexscreener" | "dextools" | "birdeye";
 
 export type Freshness = "live" | "recent" | "stale";
 

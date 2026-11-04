@@ -5,6 +5,8 @@ import Link from "next/link";
 import type { SortDir, SortKey } from "@/lib/market-data/lists";
 import { TokenLogo } from "@/components/ui/TokenLogo";
 import type { PoolSummary } from "@/lib/market-data/types";
+import { Zap } from "lucide-react";
+import { normalizeAddress } from "@/lib/market-data/identifiers";
 import { priceUsd, usdCompact } from "@/lib/utils/format";
 import { useDisplayPrefs } from "@/lib/displayPrefs";
 import { Sparkline } from "./Sparkline";
@@ -51,7 +53,7 @@ function Head({ k, label, className = "", sp }: { k: SortKey; label: string; cla
 }
 
 /** Price board: watch star, rank, token, price with 24h change beneath, cap, volume and a real 7 day trend. */
-export function PriceTable({ pools, startRank = 1, sorting }: { pools: PoolSummary[]; startRank?: number; sorting?: SortProps }) {
+export function PriceTable({ pools, startRank = 1, sorting, boosted }: { pools: PoolSummary[]; startRank?: number; sorting?: SortProps; boosted?: ReadonlySet<string> }) {
   const prefs = useDisplayPrefs();
   return (
     <div className="card overflow-hidden">
@@ -77,6 +79,7 @@ export function PriceTable({ pools, startRank = 1, sorting }: { pools: PoolSumma
                 <span className="min-w-0">
                   <Link href={`/token/${p.networkId}/${t.address}`} className="block truncate text-sm font-semibold leading-tight after:absolute after:inset-0 after:content-['']">
                     {t.name || t.symbol}
+                    {boosted?.has(`${p.networkId}:${normalizeAddress(t.address)}`) && <Zap size={13} className="ml-1.5 inline text-warm" aria-label="Boosted" />}
                   </Link>
                   <span className="block truncate text-xs uppercase text-muted">{t.symbol}</span>
                 </span>

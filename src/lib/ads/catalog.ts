@@ -20,9 +20,9 @@ export interface Placement {
 }
 
 export const PLACEMENTS: Placement[] = [
-  { id: "hero", name: "Homepage Hero", blurb: "The first thing every visitor sees. Large rotating banner at the top of Discover.", where: "Discover, top of page", desktop: { w: 1600, h: 500 }, mobile: { w: 960, h: 540 }, prices: { 1: 350, 3: 945, 7: 1540 }, exclusive: false, slots: 5 },
-  { id: "featured", name: "Featured Banner", blurb: "Wide banner below the hero for projects that want prominence without the hero slot.", where: "Discover, below hero", desktop: { w: 1200, h: 300 }, mobile: { w: 960, h: 400 }, prices: { 1: 250, 3: 675, 7: 1190 }, exclusive: false, slots: 4 },
-  { id: "side", name: "Side Banner", blurb: "Rotating card beside the trending list. Shared rotation across advertisers.", where: "Discover, beside trending", desktop: { w: 600, h: 600 }, mobile: { w: 960, h: 400 }, prices: { 1: 200, 3: 540, 7: 980 }, exclusive: false, slots: 6 },
+  { id: "hero", name: "Homepage Hero", blurb: "First position in the scrolling banner strip at the top of Discover. The first thing every visitor sees.", where: "Discover, top of page", desktop: { w: 1600, h: 500 }, mobile: { w: 960, h: 540 }, prices: { 1: 350, 3: 945, 7: 1540 }, exclusive: false, slots: 5 },
+  { id: "featured", name: "Featured Banner", blurb: "Second position in the banner strip. Prominence at a lower price than the hero slot.", where: "Discover, below hero", desktop: { w: 1200, h: 300 }, mobile: { w: 960, h: 400 }, prices: { 1: 250, 3: 675, 7: 1190 }, exclusive: false, slots: 4 },
+  { id: "side", name: "Side Banner", blurb: "Third position in the banner strip. Shared rotation across advertisers.", where: "Discover, beside trending", desktop: { w: 600, h: 600 }, mobile: { w: 960, h: 400 }, prices: { 1: 200, 3: 540, 7: 980 }, exclusive: false, slots: 6 },
   { id: "trending", name: "Trending Sponsorship", blurb: "Clearly labelled sponsored slots next to the trending list. Never mixed into organic rank.", where: "Discover, trending", desktop: { w: 640, h: 200 }, mobile: { w: 640, h: 200 }, prices: { 1: 500, 3: 1350, 7: 2450 }, exclusive: true, slots: 10 },
   { id: "new-listings", name: "New Listings Sponsorship", blurb: "Extra exposure alongside freshly listed projects.", where: "Discover, freshly launched", desktop: { w: 640, h: 200 }, mobile: { w: 640, h: 200 }, prices: { 1: 250, 3: 675, 7: 1190 }, exclusive: false, slots: 6 },
   { id: "hot-pairs", name: "Hot Pairs Sponsorship", blurb: "Advertise around newly created liquidity pools.", where: "Discover, new pairs", desktop: { w: 640, h: 200 }, mobile: { w: 640, h: 200 }, prices: { 1: 250, 3: 675, 7: 1190 }, exclusive: false, slots: 6 },
@@ -57,11 +57,12 @@ export interface BoostPack {
 }
 
 export const BOOST_PACKS: BoostPack[] = [
-  { id: "spark", name: "Spark", credits: 50, hours: 6, priceUsd: 30, label: null, priority: 1, allocations: ["Sponsored slot in your chain's discovery list", "Boosted badge on your token page"] },
-  { id: "ignite", name: "Ignite", credits: 100, hours: 12, priceUsd: 50, label: null, priority: 2, allocations: ["Everything in Spark", "Sponsored slot in the trending list"] },
-  { id: "surge", name: "Surge", credits: 200, hours: 24, priceUsd: 100, label: "Popular", priority: 3, allocations: ["Everything in Ignite", "Featured discovery card", "Eligible ecosystem placements"] },
-  { id: "momentum", name: "Momentum", credits: 350, hours: 48, priceUsd: 175, label: "Best Value", priority: 4, allocations: ["Everything in Surge", "Higher priority in sponsored rotation", "New Listings and Hot Pairs sponsorship"] },
-  { id: "dominance", name: "Dominance", credits: 500, hours: 72, priceUsd: 250, label: "Premium", priority: 5, allocations: ["Everything in Momentum", "Top priority in sponsored rotation", "Premium sponsored visibility across selected destinations"] },
+  { id: "spark", name: "Spark", credits: 100, hours: 12, priceUsd: 100, label: null, priority: 1, allocations: ["Sponsored strip on Discover for 12 hours", "Boosted badge on coin lists and your token page", "Standard rotation priority"] },
+  { id: "rise", name: "Rise", credits: 250, hours: 24, priceUsd: 250, label: null, priority: 2, allocations: ["Everything in Spark, for 24 hours", "Rotation priority above Spark"] },
+  { id: "surge", name: "Surge", credits: 500, hours: 48, priceUsd: 500, label: "Popular", priority: 3, allocations: ["Everything in Rise, for 48 hours", "Rotation priority above Rise", "Highlighted card in the sponsored strip"] },
+  { id: "rocket", name: "Rocket", credits: 749, hours: 72, priceUsd: 749, label: "Best Value", priority: 4, allocations: ["Everything in Surge, for 72 hours", "Rotation priority above Surge", "Wider highlighted card"] },
+  { id: "orbit", name: "Orbit", credits: 1250, hours: 120, priceUsd: 1250, label: null, priority: 5, allocations: ["Everything in Rocket, for 5 days", "Rotation priority above Rocket", "Premium card style in the sponsored strip"] },
+  { id: "moon", name: "Moon", credits: 1500, hours: 168, priceUsd: 1500, label: "Premium", priority: 6, allocations: ["Everything in Orbit, for 7 days", "Top rotation priority, shown first", "Premium card style"] },
 ];
 
 export function getBoostPack(id: string): BoostPack | undefined {

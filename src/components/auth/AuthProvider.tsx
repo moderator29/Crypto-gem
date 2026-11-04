@@ -29,6 +29,18 @@ function Bridge({ children }: { children: React.ReactNode }) {
     registerTokenGetter(authenticated ? getAccessToken : null);
     return () => registerTokenGetter(null);
   }, [authenticated, getAccessToken]);
+  const labelHint = user?.email?.address ?? user?.google?.email ?? (user?.wallet?.address ? `${user.wallet.address.slice(0, 6)}…${user.wallet.address.slice(-4)}` : null);
+  useEffect(() => {
+    if (!authenticated || !user?.id) return;
+    let live = true;
+    void getAccessToken().then((jwt) => {
+      if (!live || !jwt) return;
+      return fetch("/api/account/sync", { method: "POST", headers: { Authorization: `Bearer ${jwt}`, "content-type": "application/json" }, body: JSON.stringify({ label: labelHint }) }).catch(() => undefined);
+    });
+    return () => {
+      live = false;
+    };
+  }, [authenticated, user?.id, labelHint, getAccessToken]);
   const value = useMemo<AuthState>(
     () => ({
       configured: true,

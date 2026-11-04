@@ -24,7 +24,7 @@ export default async function BoostProjectPage({ params }: { params: Promise<{ i
     : BOOST_PACKS;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
+    <div className="space-y-5">
       <Link href="/boost" className="btn btn-sm inline-flex"><ArrowLeft size={16} /> Back</Link>
       <header className="card space-y-4 p-5">
         <div>
@@ -39,7 +39,7 @@ export default async function BoostProjectPage({ params }: { params: Promise<{ i
           </div>
         </div>
       </header>
-      <BoostConfigurator submissionId={p.id} project={{ name: p.name, symbol: p.symbol, logo: p.logo_url, network: getNetwork(p.network_id ?? "")?.name ?? null }} packs={packs} />
+      <BoostConfigurator submissionId={p.id} project={{ name: p.name, symbol: p.symbol, logo: p.logo_url, network: getNetwork(p.network_id ?? "")?.name ?? null, networkId: p.network_id ?? null, address: p.address ?? null }} packs={packs} />
     </div>
   );
 }

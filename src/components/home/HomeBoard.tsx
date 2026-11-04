@@ -26,7 +26,8 @@ const TABS = [
 type TabId = (typeof TABS)[number]["id"] | "map";
 
 /** The home price board: one list with view tabs, a price map tab, and a link to the watchlist. */
-export function HomeBoard({ data }: { data: HomeData }) {
+export function HomeBoard({ data, boosted }: { data: HomeData; boosted?: string[] }) {
+  const boostedSet = useMemo(() => new Set(boosted ?? []), [boosted]);
   const { t } = useT();
   const [tab, setTab] = useState<TabId>("organic");
   const prefs = useDisplayPrefs();
@@ -86,7 +87,7 @@ export function HomeBoard({ data }: { data: HomeData }) {
             </div>
           )}
         </div></div>}
-      {tab === "map" ? <HeatMap pools={mapPools} /> : rows.length > 0 ? <PriceTable pools={rows} sorting={{ sort: sort?.key ?? null, dir: sort?.dir ?? "desc", onSort: (key, next) => setSort(next ? { key, dir: next } : null) }} /> : <p className="card p-8 text-center text-sm text-muted">Nothing to show in this view right now.</p>}
+      {tab === "map" ? <HeatMap pools={mapPools} /> : rows.length > 0 ? <PriceTable pools={rows} boosted={boostedSet} sorting={{ sort: sort?.key ?? null, dir: sort?.dir ?? "desc", onSort: (key, next) => setSort(next ? { key, dir: next } : null) }} /> : <p className="card p-8 text-center text-sm text-muted">Nothing to show in this view right now.</p>}
       <p className="text-[11px] text-muted">Source GeckoTerminal. Pool level DEX data for the pools we sample. Trend lines are the last 7 days of real candles.</p>
     </section>
   );
