@@ -36,7 +36,7 @@ export function TopTrending({ items }: { items: RankedPool[] }) {
       <div ref={ref} className="scroll-x pb-1">
         {items.slice(0, 12).map((p, i) => (
           <Tilt key={p.id} className="shrink-0 snap-start">
-          <Link href={`/token/${p.networkId}/${p.baseToken.address}`} className="card hover-lift block w-[158px] overflow-hidden !rounded-2xl sm:w-[188px]" style={{ animationDelay: `${i * 40}ms` }}>
+          <Link href={`/token/${p.networkId}/${p.baseToken.address}`} className={`card hover-lift block w-[158px] overflow-hidden !rounded-2xl sm:w-[188px] ${i === 0 ? "fx-border" : ""}`} style={{ animationDelay: `${i * 40}ms` }}>
             <div className="relative grid h-[88px] place-items-center bg-[radial-gradient(circle_at_50%_30%,var(--aurora-a),transparent_75%)] sm:h-[104px]">
               <TokenLogo src={p.baseToken.imageUrl} symbol={p.baseToken.symbol} size={64} networkId={p.networkId} address={p.baseToken.address} />
               <span className="num absolute left-2.5 top-2 rounded-full bg-black/40 px-2 py-0.5 text-[11px] font-bold text-warm backdrop-blur">#{i + 1}</span>

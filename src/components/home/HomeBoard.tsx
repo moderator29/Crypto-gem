@@ -1,6 +1,7 @@
 "use client";
 
 import { BarChart3, Clock3, Flame, Grid2x2, Star, TrendingDown, TrendingUp, Zap } from "lucide-react";
+import { LayoutGroup, motion } from "framer-motion";
 import Link from "next/link";
 import { SlidersHorizontal } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -62,17 +63,19 @@ export function HomeBoard({ data, boosted }: { data: HomeData; boosted?: string[
 
   return (
     <section id="market" aria-label="Markets" className="scroll-mt-20 space-y-3">
-      <div className="scroll-x" role="tablist" aria-label="Market views">
+      <LayoutGroup id="board-tabs"><div className="scroll-x" role="tablist" aria-label="Market views">
         {TABS.map((x) => (
-          <button key={x.id} type="button" role="tab" aria-selected={tab === x.id} className="chip" onClick={() => setTab(x.id)}>
-            <x.icon size={14} aria-hidden="true" /> {t(x.key)}
+          <button key={x.id} type="button" role="tab" aria-selected={tab === x.id} className="chip tab-spring" onClick={() => setTab(x.id)}>
+            {tab === x.id && <motion.span layoutId="board-tab" transition={{ type: "spring", stiffness: 420, damping: 36 }} className="tab-spring-bg" />}
+            <span className="relative z-10 inline-flex items-center gap-1.5"><x.icon size={14} aria-hidden="true" /> {t(x.key)}</span>
           </button>
         ))}
-        <button type="button" role="tab" aria-selected={tab === "map"} className="chip" onClick={() => setTab("map")}>
-          <Grid2x2 size={14} aria-hidden="true" /> Map
+        <button type="button" role="tab" aria-selected={tab === "map"} className="chip tab-spring" onClick={() => setTab("map")}>
+          {tab === "map" && <motion.span layoutId="board-tab" transition={{ type: "spring", stiffness: 420, damping: 36 }} className="tab-spring-bg" />}
+          <span className="relative z-10 inline-flex items-center gap-1.5"><Grid2x2 size={14} aria-hidden="true" /> Map</span>
         </button>
         <Link href="/dashboard/watchlist" className="chip"><Star size={14} aria-hidden="true" /> Watchlist</Link>
-      </div>
+      </div></LayoutGroup>
       {tab !== "map" && <div className="flex flex-wrap items-center gap-2"><ChainFilter options={chainOptions} value={activeChain} onChange={setChain} />{sort && <button type="button" className="chip" onClick={() => setSort(null)}>Clear sort</button>}
         <div className="relative ml-auto">
           <button type="button" className="btn" aria-expanded={viewOpen} onClick={() => setViewOpen((o) => !o)}><SlidersHorizontal size={15} aria-hidden="true" /> View</button>

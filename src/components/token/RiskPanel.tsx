@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Meter } from "@/components/ui/Kit";
 import { NavIcon } from "@/components/ui/NavIcon";
 
 interface Report { flags: Array<{ level: "high" | "medium" | "info"; label: string }>; holders: number | null; buyTax: number | null; sellTax: number | null; checked: number }
@@ -9,7 +10,7 @@ type State = { s: "loading" } | { s: "none" } | { s: "error" } | { s: "ok"; r: R
 const TONE = { high: "bg-down", medium: "bg-warm", info: "bg-brand" } as const;
 
 /** Token security readout from GoPlus (EVM chains). Shows each flag it found, or says nothing was flagged, or says it cannot check. */
-export function RiskPanel({ networkId, address }: { networkId: string; address: string }) {
+export function RiskPanel({ networkId, address, market = [] }: { networkId: string; address: string; market?: Array<"high" | "medium" | "info"> }) {
   const [st, setSt] = useState<State>({ s: "loading" });
   useEffect(() => {
     let live = true;
@@ -22,8 +23,19 @@ export function RiskPanel({ networkId, address }: { networkId: string; address: 
     };
   }, [networkId, address]);
 
+  const weight = { high: 3, medium: 1.5, info: 0.4 } as const;
+  const flags = st.s === "ok" ? st.r.flags.map((f) => f.level) : [];
+  const score = Math.min(10, [...market, ...flags].reduce((t, l) => t + weight[l], 0));
+  const level = score >= 5 ? { label: "High", tone: "down" as const } : score >= 2 ? { label: "Elevated", tone: "warm" as const } : { label: "Low", tone: "up" as const };
   return (
     <section className="card p-4 md:p-5" aria-label="Security check">
+      {st.s !== "loading" && (
+        <div className="mb-4 space-y-1.5" aria-label="Combined risk">
+          <div className="flex items-center justify-between text-sm"><span className="font-semibold">Combined risk signal</span><span className={`badge ${level.tone === "up" ? "badge-up" : level.tone === "down" ? "badge-down" : "badge-warn"}`}>{level.label}</span></div>
+          <Meter value={(score / 10) * 100} tone={level.tone} label="Combined risk" />
+          <p className="text-[11px] text-muted">Adds up pool-data warnings and contract flags. A low reading is not a guarantee of safety.</p>
+        </div>
+      )}
       <h2 className="h3 mb-3 flex items-center gap-2"><NavIcon name="shield" size={20} /> Security check</h2>
       {st.s === "loading" && <div className="skeleton h-16" />}
       {st.s === "none" && <p className="text-sm text-soft">No security record is available for this token. That is not a sign it is safe. Checks cover EVM chains only.</p>}

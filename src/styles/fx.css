@@ -37,7 +37,7 @@
 /* Spinning gradient border for featured cards */
 .fx-border { position: relative; border-radius: var(--r-lg); }
 .fx-border::before {
-  content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
+  content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
   background: conic-gradient(from var(--ang), transparent 0 55%, var(--brand) 75%, var(--brand-2) 90%, transparent);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
@@ -82,3 +82,27 @@
 .fx-donut { animation: fx-donut 900ms var(--ease-out) both; transform-origin: 50% 50%; }
 @keyframes fx-donut { from { opacity: 0; stroke-dasharray: 0 300; } }
 @media (prefers-reduced-motion: reduce) { .fx-gauge, .fx-needle, .fx-donut { animation: none; } }
+
+/* Glass with a fine noise grain, for hero and floating panels */
+.glass-noise { position: relative; isolation: isolate; }
+.glass-noise::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; opacity: 0.07; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* Empty-state artwork */
+.fx-orbit-wrap { position: relative; display: grid; place-items: center; width: 96px; height: 96px; }
+.fx-orbit-wrap::before, .fx-orbit-wrap::after { content: ""; position: absolute; border-radius: 999px; border: 1px dashed var(--line-2); }
+.fx-orbit-wrap::before { inset: 0; animation: fx-rot 22s linear infinite; }
+.fx-orbit-wrap::after { inset: 14px; border-style: solid; border-color: var(--line-1); animation: fx-rot 30s linear infinite reverse; }
+.fx-orbit-wrap > i { position: absolute; width: 8px; height: 8px; border-radius: 999px; background: var(--brand); box-shadow: 0 0 10px var(--neon-glow); top: -4px; left: calc(50% - 4px); transform-origin: 4px 52px; animation: fx-rot 22s linear infinite; }
+@keyframes fx-rot { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .fx-orbit-wrap::before, .fx-orbit-wrap::after, .fx-orbit-wrap > i { animation: none; } }
+
+/* Sparkline scrub marker */
+.spark-scrub { pointer-events: none; }
+
+/* Chip whose active highlight is a shared spring element, so it glides between tabs */
+.chip.tab-spring { position: relative; }
+.chip.tab-spring[aria-selected="true"] { background: var(--surface-1); border-color: transparent; box-shadow: none; color: #fff; }
+.tab-spring-bg { position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(180deg, #ff5a3c, #e8432a); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 4px 14px rgba(232,67,42,.3); }

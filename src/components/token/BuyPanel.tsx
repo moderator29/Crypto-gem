@@ -19,13 +19,14 @@ const fmtTokens = (n: number) => (n >= 1000 ? n.toLocaleString("en-US", { maximu
  * their own wallet. Crypto Gems never holds keys, never signs, never touches funds. Solana tokens get a live
  * Jupiter quote. Other chains get an estimate from the pool price, labelled as an estimate.
  */
-export function BuyPanel({ networkId, address, symbol, decimals, poolPriceUsd, solUsd, links }: { networkId: string; address: string; symbol: string; decimals: number | null; poolPriceUsd: number | null; solUsd: number | null; links: TradeLink[] }) {
+export function BuyPanel({ networkId, address, symbol, decimals, poolPriceUsd, solUsd, links, explorerBase }: { networkId: string; address: string; symbol: string; decimals: number | null; poolPriceUsd: number | null; solUsd: number | null; links: TradeLink[]; explorerBase: string | null }) {
   const solana = networkId === "solana";
   const [pay, setPay] = useState<"SOL" | "USDC">("SOL");
   const [amount, setAmount] = useState("1");
   const [slip, setSlip] = useState<(typeof SLIPPAGE)[number]>(50);
   const [st, setSt] = useState<QState>({ s: "idle" });
   const [tick, setTick] = useState(0);
+  const [wallet, setWallet] = useState("");
 
   const n = Number(amount);
   const valid = Number.isFinite(n) && n > 0;
@@ -117,6 +118,13 @@ export function BuyPanel({ networkId, address, symbol, decimals, poolPriceUsd, s
         <p className="text-sm text-muted">No verified trading venue is available for this network yet.</p>
       )}
       {links.slice(1).map((t) => <a key={t.url} href={t.url} target="_blank" rel="noopener noreferrer nofollow" className="btn w-full">{t.label} <ArrowUpRight size={15} /></a>)}
+      {explorerBase && (
+        <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); const w = wallet.trim(); if (/^[A-Za-z0-9]{20,64}$/.test(w)) window.open(`${explorerBase}/${solana ? "account" : "address"}/${w}`, "_blank", "noopener,noreferrer"); }}>
+          <label className="sr-only" htmlFor="buy-wallet">Your wallet address</label>
+          <input id="buy-wallet" className="input !min-h-10 flex-1 text-xs" placeholder="Paste your wallet to see its history" value={wallet} onChange={(e) => setWallet(e.target.value)} spellCheck={false} autoComplete="off" />
+          <button type="submit" className="btn btn-sm" disabled={!/^[A-Za-z0-9]{20,64}$/.test(wallet.trim())}>Explorer <ArrowUpRight size={13} /></button>
+        </form>
+      )}
       <p className="text-center text-[11px] text-muted">Crypto Gems never holds keys or funds. You approve and sign every swap in your own wallet on the venue you choose. Not financial advice.</p>
     </section>
   );

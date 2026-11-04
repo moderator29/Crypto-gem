@@ -1,6 +1,7 @@
 "use client";
 
 import { ArrowDown, ArrowUp } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { SortDir, SortKey } from "@/lib/market-data/lists";
 import { TokenLogo } from "@/components/ui/TokenLogo";
@@ -14,6 +15,24 @@ import { QuickAlert } from "@/components/account/QuickAlert";
 import { WatchStar } from "./WatchStar";
 
 const COLS = "grid-cols-[32px_minmax(0,1fr)_auto_68px] md:grid-cols-[72px_32px_minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_132px]";
+
+/** Price that flashes green or red when a refresh changes it, with the change arrow bouncing in the new direction. */
+function LivePrice({ value }: { value: number | null }) {
+  const prev = useRef(value);
+  const [dir, setDir] = useState<"up" | "down" | null>(null);
+  useEffect(() => {
+    const before = prev.current;
+    prev.current = value;
+    if (before === null || value === null || before === value) return;
+    const on = setTimeout(() => setDir(value > before ? "up" : "down"), 0);
+    const off = setTimeout(() => setDir(null), 1100);
+    return () => {
+      clearTimeout(on);
+      clearTimeout(off);
+    };
+  }, [value]);
+  return <span className={`rounded text-sm font-semibold ${dir === "up" ? "flash-up" : dir === "down" ? "flash-down" : ""}`}>{priceUsd(value)}</span>;
+}
 
 function Delta({ v }: { v: number | null }) {
   if (v === null) return <span className="num text-xs text-muted">{"—"}</span>;
@@ -86,7 +105,7 @@ export function PriceTable({ pools, startRank = 1, sorting, boosted }: { pools: 
                 </span>
               </span>
               <span className="num flex flex-col items-end md:items-start">
-                <span className="text-sm font-semibold">{priceUsd(p.priceUsd)}</span>
+                <LivePrice value={p.priceUsd} />
                 <Delta v={p.change.h24} />
               </span>
               <span className="num hidden flex-col md:flex">

@@ -1,4 +1,5 @@
 import { chainPulse } from "@/lib/market-data/pulse";
+import { Movers } from "@/components/home/Movers";
 import { RecentlyViewed } from "@/components/home/RecentlyViewed";
 import { PulseStrip } from "@/components/home/PulseStrip";
 import { getFearGreed } from "@/lib/market-data/providers/fng";
@@ -40,11 +41,14 @@ export default async function HomePage() {
 
       {data && data.organic.length > 0 && <PulseStrip data={data} chains={chains} fng={fng} />}
       <RecentlyViewed />
+      <div className="fx-divider" aria-hidden="true" />
       <div className="reveal"><BannerStrip campaigns={campaigns} demos={demos} from={featuredFrom} /></div>
       <BoostedStrip items={boosted} />
+      <div className="fx-divider" aria-hidden="true" />
       <div className="reveal"><QuickLinks /></div>
       {data && <div className="reveal"><TopTrending items={data.organic} /></div>}
 
+      {data && <Movers gainers={data.gainers} losers={data.losers} />}
       {data && data.organic.length > 0 ? <HomeBoard data={data} boosted={boostedKeys} /> : <p className="card p-8 text-center text-sm text-muted" role="status">Market data is temporarily unavailable. Lists return automatically when the provider does.</p>}
     </div>
   );

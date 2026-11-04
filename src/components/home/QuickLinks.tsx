@@ -1,23 +1,24 @@
 "use client";
 
-import { BarChart3, Clock, Megaphone, PlusCircle, TrendingUp, Zap, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useT } from "@/components/i18n/I18nProvider";
+import { NavIcon, type NavIconName } from "@/components/ui/NavIcon";
 import type { MessageKey } from "@/lib/i18n/messages";
 
-type Item = { key: MessageKey; icon: LucideIcon } & ({ tab: string } | { href: string });
+type Item = { key: MessageKey; icon: NavIconName } & ({ tab: string } | { href: string });
 
 const ITEMS: Item[] = [
-  { key: "tab.trending", icon: Zap, tab: "organic" },
-  { key: "quick.topGainers", icon: TrendingUp, tab: "gainers" },
-  { key: "quick.allCoins", icon: BarChart3, tab: "volume" },
-  { key: "quick.newListings", icon: Clock, tab: "fresh" },
-  { key: "nav.promote", icon: Megaphone, href: "/promotion" },
-  { key: "nav.applyListing", icon: PlusCircle, href: "/add-coin" },
+  { key: "tab.trending", icon: "heating", tab: "organic" },
+  { key: "quick.topGainers", icon: "pulse", tab: "gainers" },
+  { key: "quick.allCoins", icon: "markets", tab: "volume" },
+  { key: "quick.newListings", icon: "fresh", tab: "fresh" },
+  { key: "nav.promote", icon: "promo", href: "/promotion" },
+  { key: "nav.applyListing", icon: "add", href: "/add-coin" },
 ];
 
-const CLS = "card-flat flex shrink-0 snap-start items-center gap-2 px-4 py-3 text-sm font-semibold text-soft transition hover:text-text";
+const CLS = "card-flat nav-tile hover-lift flex shrink-0 snap-start items-center gap-2.5 px-4 py-3 text-sm font-semibold text-soft transition hover:text-text";
 
+/** Shortcut chips under the banners. Icons nudge on hover. Tab shortcuts switch the board below without leaving the page. */
 export function QuickLinks() {
   const { t } = useT();
   return (
@@ -25,7 +26,7 @@ export function QuickLinks() {
       {ITEMS.map((l) =>
         "href" in l ? (
           <Link key={l.key} href={l.href} className={CLS}>
-            <l.icon size={16} className="text-brand" /> {t(l.key)}
+            <NavIcon name={l.icon} size={19} /> {t(l.key)}
           </Link>
         ) : (
           <button
@@ -37,7 +38,7 @@ export function QuickLinks() {
               document.getElementById("market")?.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
           >
-            <l.icon size={16} className="text-brand" /> {t(l.key)}
+            <NavIcon name={l.icon} size={19} /> {t(l.key)}
           </button>
         ),
       )}

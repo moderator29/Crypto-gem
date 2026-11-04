@@ -12,6 +12,7 @@ import { getBoostedKeys } from "@/lib/ads/boosted";
 import { NavIcon } from "@/components/ui/NavIcon";
 import { ShareButton } from "@/components/ui/ShareButton";
 import { getHomeData } from "@/lib/market-data/home";
+import { dexscreener } from "@/lib/market-data/providers/dexscreener";
 import { QuickAlert } from "@/components/account/QuickAlert";
 import { ViewTracker } from "@/components/token/ViewTracker";
 import { BuyPanel } from "@/components/token/BuyPanel";
@@ -68,6 +69,8 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
   const trade = tradeLinks(net.id, canonical, top?.address);
   const solUsd = net.id === "solana" ? await geckoTerminal.token("solana", "So11111111111111111111111111111111111111112").then((t) => t.priceUsd).catch(() => null) : null;
   const explorer = explorerTokenUrl(net.id, canonical);
+  const ds = await dexscreener.tokenPairs(canonical).then((pairs) => dexscreener.toInfo(pairs, canonical, net.id)).catch(() => null);
+  const links = [ds?.website && { label: "Website", href: ds.website }, ds?.twitter && { label: "X", href: ds.twitter }, ds?.telegram && { label: "Telegram", href: ds.telegram }, ds?.discord && { label: "Discord", href: ds.discord }].filter((l): l is { label: string; href: string } => Boolean(l));
   const similar = (await getHomeData(net.id).catch(() => null))?.organic.filter((p) => p.baseToken.address.toLowerCase() !== canonical.toLowerCase()).slice(0, 8) ?? [];
 
   // A listed (published) project can be voted on. Unlisted tokens have no listing row, so no vote button.
@@ -174,20 +177,26 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
               <p className="text-sm text-muted">No pools found.</p>
             ) : (
               <div className="grid gap-2">
-                {sorted.slice(0, 10).map((p) => (
-                  <div key={p.id} className="card-flat flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 text-sm">
-                    <span className="min-w-0">
-                      <span className="block truncate font-semibold">{p.name}</span>
-                      <span className="block text-xs text-muted">
-                        {p.dex?.replace(/-/g, " ") ?? "unknown DEX"} · {ageShort(p.createdAt)} old
-                      </span>
-                    </span>
-                    <span className="num text-right text-xs text-soft">
-                      <span className="block">{usdCompact(p.liquidityUsd)} liquidity</span>
-                      <span className="block">{usdCompact(p.volumeUsd.h24)} 24h volume</span>
-                    </span>
-                  </div>
-                ))}
+                {sorted.slice(0, 10).map((p, i) => {
+                  const share = (p.liquidityUsd ?? 0) / Math.max(1, sorted[0]?.liquidityUsd ?? 1);
+                  return (
+                    <div key={p.id} className="card-flat row-in relative overflow-hidden px-3.5 py-2.5 text-sm" style={{ ["--i" as string]: i }}>
+                      <span aria-hidden="true" className="absolute inset-y-0 left-0 bg-[color-mix(in_srgb,var(--brand)_10%,transparent)]" style={{ width: `${Math.max(2, share * 100)}%` }} />
+                      <div className="relative flex flex-wrap items-center justify-between gap-2">
+                        <span className="min-w-0">
+                          <span className="block truncate font-semibold">{p.name}</span>
+                          <span className="mt-0.5 flex items-center gap-1.5 text-xs text-muted">
+                            <span className="badge capitalize">{p.dex?.replace(/-/g, " ") ?? "unknown DEX"}</span> {ageShort(p.createdAt)} old
+                          </span>
+                        </span>
+                        <span className="num text-right text-xs text-soft">
+                          <span className="block">{usdCompact(p.liquidityUsd)} liquidity</span>
+                          <span className="block">{usdCompact(p.volumeUsd.h24)} 24h volume</span>
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>
@@ -212,7 +221,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
               </ul>
             )}
           </section>
-          <RiskPanel networkId={net.id} address={canonical} />
+          <RiskPanel networkId={net.id} address={canonical} market={risks.map((r) => r.level).filter((l): l is "high" | "medium" | "info" => l !== "low")} />
           {similar.length > 0 && (
             <section className="card p-4 md:p-5" aria-label="Similar tokens">
               <h2 className="h3 mb-3">More on {net.name}</h2>
@@ -229,7 +238,16 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
         </div>
 
         <aside className="order-first space-y-4 lg:order-none">
-          <BuyPanel networkId={net.id} address={canonical} symbol={identity?.symbol ?? "token"} decimals={identity?.decimals ?? null} poolPriceUsd={price} solUsd={solUsd} links={trade} />
+          <BuyPanel networkId={net.id} address={canonical} symbol={identity?.symbol ?? "token"} decimals={identity?.decimals ?? null} poolPriceUsd={price} solUsd={solUsd} links={trade} explorerBase={net.explorer ?? null} />
+          {links.length > 0 && (
+            <section className="card p-4" aria-label="Project links">
+              <h2 className="h3 mb-3">Links</h2>
+              <div className="flex flex-wrap gap-2">
+                {links.map((l) => <a key={l.label} href={l.href} target="_blank" rel="noopener noreferrer nofollow" className="btn btn-sm">{l.label} <ExternalLink size={12} aria-hidden="true" /></a>)}
+              </div>
+              <p className="mt-2 text-[11px] text-muted">Links come from DexScreener token profiles and are supplied by the project. Verify before connecting a wallet.</p>
+            </section>
+          )}
           <div className="card flex items-center justify-between gap-2 p-3"><span className="text-xs text-muted">Contract</span><CopyButton value={canonical} label="Copy contract" /></div>
           {listing && <section className="card p-4" aria-label="Community vote"><h2 className="mb-2 font-display text-lg font-bold">Community favourite</h2><VoteButton submissionId={listing.id} initialVotes={listing.votes} /></section>}
           <Link href={`/copilot?network=${net.id}&address=${encodeURIComponent(canonical)}`} className="btn w-full"><Bot size={16} /> Ask the Copilot about this token</Link>

@@ -1,22 +1,30 @@
 "use client";
 
-import { Coins, ExternalLink, ListChecks, LogIn, Megaphone, Rocket, Star, Trash2, Wallet } from "lucide-react";
+import { Coins, ExternalLink, LayoutGrid, List, ListChecks, LogIn, Megaphone, RefreshCw, Rocket, Search, Star, Trash2, Wallet } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { ChainBadge } from "@/components/ui/ChainBadge";
 import { CountUp } from "@/components/fx/CountUp";
+import { CopyButton } from "@/components/ui/CopyButton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Stat } from "@/components/ui/Kit";
 import { TokenLogo } from "@/components/ui/TokenLogo";
 import { useToast } from "@/components/ui/Toast";
 import { accessToken } from "@/lib/auth/client";
+import { useAccountFetch } from "@/lib/useAccountFetch";
 import { getNetwork } from "@/lib/market-data/networks";
 import { ageShort, priceUsd, usdCompact } from "@/lib/utils/format";
 import { buildActivity } from "./activity";
+import { BoostCard } from "./BoostCard";
 import { DashEmpty } from "./DashEmpty";
 import { useDashboard } from "./DashboardProvider";
+import { ExportButton } from "./ExportButton";
+import { ListingJourney } from "./ListingJourney";
+import { boostPhase, nextSteps } from "./logic";
+import { NextSteps } from "./NextSteps";
+import { useNow } from "./useNow";
 
 const STATUS: Record<string, string> = {
   draft: "Draft", submitted: "Submitted", pending_review: "In review", approved: "Approved", awaiting_payment: "Awaiting payment", payment_confirmed: "Paid", published: "Published", rejected: "Rejected", expired: "Expired", refunded: "Refunded", cancelled: "Cancelled", suspended: "Suspended",
@@ -45,9 +53,19 @@ export function Gate({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+/** Overview: quick stats, setup checklist, attention items and the activity timeline. */
 export function OverviewView() {
-  const { data } = useDashboard();
+  const { data, watch, refresh } = useDashboard();
+  const alertsRes = useAccountFetch<{ alerts: unknown[] }>("/api/alerts");
+  const [spin, setSpin] = useState(false);
   if (!data) return null;
+  const alertCount = alertsRes.state === "ok" ? alertsRes.data.alerts.length : null;
+  const reload = async () => {
+    setSpin(true);
+    await refresh();
+    alertsRes.reload();
+    setTimeout(() => setSpin(false), 600);
+  };
   const n = {
     listings: data.submissions.filter((s) => s.status === "published").length,
     review: data.submissions.filter((s) => ["pending_review", "submitted", "approved"].includes(s.status)).length,
@@ -63,6 +81,15 @@ export function OverviewView() {
   ];
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between gap-3">
+        <div className="scroll-x" aria-label="Quick stats">
+          {([["Watching", String(watch.length), "/dashboard/watchlist"], ["Price alerts", alertCount === null ? "—" : String(alertCount), "/alerts"], ["Orders", String(data.orders.length), "/dashboard/payments"]] as const).map(([k, v, href]) => (
+            <Link key={k} href={href} className="chip"><span className="num font-bold text-text">{v}</span> {k}</Link>
+          ))}
+        </div>
+        <button type="button" className="btn btn-icon btn-sm shrink-0" aria-label="Refresh dashboard" onClick={() => void reload()}><RefreshCw size={15} className={spin ? "animate-spin" : ""} /></button>
+      </div>
+      <NextSteps steps={nextSteps(data, watch, alertCount)} />
       <div className="stagger grid grid-cols-2 gap-3 md:grid-cols-3">
         <Stat label="Published listings" icon={<ListChecks size={16} aria-hidden="true" />} value={<CountUp value={n.listings} />} />
         <Stat label="In review" icon={<ListChecks size={16} aria-hidden="true" />} value={<CountUp value={n.review} />} />
@@ -106,47 +133,71 @@ export function OverviewView() {
   );
 }
 
+const LISTING_GROUPS = {
+  all: { label: "All", match: () => true },
+  live: { label: "Live", match: (s: string) => s === "published" },
+  progress: { label: "In progress", match: (s: string) => ["awaiting_payment", "submitted", "pending_review", "payment_confirmed", "approved"].includes(s) },
+  attention: { label: "Needs attention", match: (s: string) => ["draft", "rejected", "suspended", "cancelled", "refunded", "expired"].includes(s) },
+} as const;
+
+/** Listings with a status filter and an animated journey timeline per listing. */
 export function ListingsView() {
   const { data } = useDashboard();
+  const [group, setGroup] = useState<keyof typeof LISTING_GROUPS>("all");
   if (!data) return null;
   if (data.submissions.length === 0) return <DashEmpty icon={ListChecks} title="No listings yet" description="Paste a contract address and we detect the rest." action={<ButtonLink href="/add-coin" variant="primary">List your token</ButtonLink>} />;
   const payable = data.orders.find((o) => o.kind === "listing" && o.status === "pending");
+  const shown = data.submissions.filter((s) => LISTING_GROUPS[group].match(s.status));
   return (
-    <ul className="stagger grid gap-3">
-      {data.submissions.map((s) => (
-        <li key={s.id} className="card p-4">
-          <div className="flex items-start justify-between gap-3">
-            <span className="min-w-0">
-              <span className="flex items-center gap-2"><span className="truncate font-semibold">{s.name}</span><span className="text-muted">{s.symbol}</span>{s.network_id && <ChainBadge networkId={s.network_id} size={18} />}</span>
-              <span className="mt-0.5 block text-xs text-muted">{getNetwork(s.network_id ?? "")?.name ?? "No network"} · submitted {ageShort(s.created_at)} ago</span>
-            </span>
-            <Status s={s.status} />
-          </div>
-          {s.status === "rejected" && s.rejection_reason && <p className="mt-3 rounded-lg bg-[color-mix(in_srgb,var(--down)_10%,transparent)] p-3 text-sm text-down">Reason: {s.rejection_reason}</p>}
-          <div className="mt-3 flex flex-wrap gap-2">
-            {s.status === "published" && s.network_id && s.address && <ButtonLink href={`/token/${s.network_id}/${s.address}`} size="sm">View page <ExternalLink size={13} /></ButtonLink>}
-            {s.status === "published" && <ButtonLink href={`/boost/${s.id}`} size="sm"><Rocket size={13} /> Boost</ButtonLink>}
-            {s.status === "awaiting_payment" && payable && <ButtonLink href={`/pay/${payable.id}`} size="sm" variant="primary">Finish payment</ButtonLink>}
-          </div>
-        </li>
-      ))}
-    </ul>
+    <div className="space-y-4">
+      <div className="scroll-x" role="group" aria-label="Filter listings">
+        {(Object.keys(LISTING_GROUPS) as Array<keyof typeof LISTING_GROUPS>).map((k) => (
+          <button key={k} type="button" className="chip" aria-pressed={group === k} onClick={() => setGroup(k)}>{LISTING_GROUPS[k].label} <span className="num text-muted">{data.submissions.filter((s) => LISTING_GROUPS[k].match(s.status)).length}</span></button>
+        ))}
+      </div>
+      {shown.length === 0 && <p className="card-flat p-4 text-sm text-muted" role="status">No listings in this group.</p>}
+      <ul className="stagger grid gap-3">
+        {shown.map((s) => (
+          <li key={s.id} className="card p-4">
+            <div className="flex items-start justify-between gap-3">
+              <span className="min-w-0">
+                <span className="flex items-center gap-2"><span className="truncate font-semibold">{s.name}</span><span className="text-muted">{s.symbol}</span>{s.network_id && <ChainBadge networkId={s.network_id} size={18} />}</span>
+                <span className="mt-0.5 block text-xs text-muted">{getNetwork(s.network_id ?? "")?.name ?? "No network"} · submitted {ageShort(s.created_at)} ago</span>
+              </span>
+              <Status s={s.status} />
+            </div>
+            <ListingJourney status={s.status} reason={s.rejection_reason} />
+            <div className="mt-3 flex flex-wrap gap-2">
+              {s.status === "published" && s.network_id && s.address && <ButtonLink href={`/token/${s.network_id}/${s.address}`} size="sm">View page <ExternalLink size={13} /></ButtonLink>}
+              {s.status === "published" && <ButtonLink href={`/boost/${s.id}`} size="sm"><Rocket size={13} /> Boost</ButtonLink>}
+              {s.status === "awaiting_payment" && payable && <ButtonLink href={`/pay/${payable.id}`} size="sm" variant="primary">Finish payment</ButtonLink>}
+              {s.address && <CopyButton value={s.address} label="Copy contract" what="Contract address copied" />}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
+/** Boosts grouped as running (with a countdown ring), queued and ended. */
 export function BoostsView() {
   const { data } = useDashboard();
+  const boosts = data?.boosts ?? [];
+  const live = boosts.some((b) => b.status === "active");
+  const now = useNow(live);
   if (!data) return null;
-  if (data.boosts.length === 0) return <DashEmpty icon={Rocket} title="No boosts yet" description="Boost a listed project for clearly labelled sponsored visibility." action={<ButtonLink href="/boost" variant="primary">Choose a pack</ButtonLink>} />;
+  if (boosts.length === 0) return <DashEmpty icon={Rocket} title="No boosts yet" description="Boost a listed project for clearly labelled sponsored visibility." action={<ButtonLink href="/boost" variant="primary">Choose a pack</ButtonLink>} />;
+  const sections = ([["running", "Running now"], ["queued", "Queued"], ["ended", "Ended"]] as const).map(([phase, title]) => ({ phase, title, items: boosts.filter((b) => boostPhase(b, now ?? 0) === phase) })).filter((g) => g.items.length > 0);
   return (
-    <ul className="stagger grid gap-3">
-      {data.boosts.map((b) => (
-        <li key={b.id} className="card flex items-center justify-between gap-3 p-4">
-          <span className="min-w-0"><span className="block truncate font-semibold">{b.projectName ?? "Project"} <span className="font-normal capitalize text-muted">· {b.pack_id}</span></span><span className="num mt-0.5 block text-xs text-muted">{fmt(b.starts_at)} to {fmt(b.ends_at)}</span></span>
-          <Status s={b.status} />
-        </li>
+    <div className="space-y-6">
+      {sections.map((g) => (
+        <section key={g.phase} aria-label={g.title} className="space-y-3">
+          <h2 className="eyebrow">{g.title} <span className="num">({g.items.length})</span></h2>
+          <ul className="stagger grid gap-3">{g.items.map((b) => <BoostCard key={`${b.id}-${g.phase}`} boost={b} now={now} phase={g.phase} />)}</ul>
+        </section>
       ))}
-    </ul>
+    </div>
   );
 }
 
