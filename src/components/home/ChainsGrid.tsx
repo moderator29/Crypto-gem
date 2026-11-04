@@ -33,7 +33,7 @@ export function ChainsGrid({ chains, limit = 8 }: { chains: ChainPulse[]; limit?
               </span>
               <span className="relative space-y-1.5">
                 <span className="block h-1.5 overflow-hidden rounded-full bg-[var(--surface-3)]"><span className="fx-fill block h-full rounded-full" style={{ width: `${Math.max(3, share)}%`, background: glow }} /></span>
-                <span className="flex justify-between text-[11px] text-muted"><span>{c.pools} pools · {c.newPools} new</span><span className="num">{share.toFixed(0)}% of volume</span></span>
+                <span className="flex justify-between whitespace-nowrap text-[11px] text-muted" title="Share of sampled 24h volume"><span className="truncate">{c.pools} pools{c.newPools > 0 ? `, ${c.newPools} new` : ""}</span><span className="num shrink-0 pl-2">{share.toFixed(0)}%</span></span>
               </span>
             </Link>
           </Spotlight>

@@ -3,7 +3,8 @@
 import { Check, ChevronDown, Clock, Loader2, ShieldCheck, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { CountUp } from "@/components/fx/CountUp";
 import { ChainBadge } from "@/components/ui/ChainBadge";
 import { TokenLogo } from "@/components/ui/TokenLogo";
 import type { BoostPack } from "@/lib/ads/catalog";
@@ -22,6 +23,28 @@ const FAQ = [
   ["Can I buy more than one?", "Yes. Packs for the same project queue back to back and never overlap, so nothing you buy is wasted."],
 ] as const;
 
+type Tier = "standard" | "highlight" | "premium";
+const tierOf = (priority: number): Tier => (priority >= 5 ? "premium" : priority >= 3 ? "highlight" : "standard");
+const TIER_NOTE: Record<Tier, string> = { standard: "Standard sponsored card", highlight: "Highlighted card in the strip", premium: "Premium card style, shown first" };
+
+/** Miniature of the sponsored card tier the selected pack buys, using the project's real name and logo. */
+function StripPreview({ project, pack }: { project: Project; pack: BoostPack }) {
+  const tier = tierOf(pack.priority);
+  return (
+    <div className="space-y-2" aria-label="Your card in the sponsored strip">
+      <p className="eyebrow">Your card in the strip</p>
+      <div className="scroll-x">
+        <div key={pack.id} className="strip-card card fx-pop flex shrink-0 items-center gap-3 p-3" data-tier={tier} style={{ width: tier === "standard" ? 210 : tier === "highlight" ? 250 : 290 }}>
+          <TokenLogo src={project.logo} symbol={project.symbol} size={tier === "premium" ? 44 : 36} networkId={project.networkId ?? undefined} address={project.address} />
+          <span className="min-w-0 flex-1"><span className="block truncate font-semibold">{project.name}</span><span className="block truncate text-xs text-muted">{project.symbol}{project.network ? ` · ${project.network}` : ""}</span></span>
+          <span className="badge badge-sponsored shrink-0"><Zap size={11} /> Sponsored</span>
+        </div>
+      </div>
+      <p className="text-xs text-muted">{TIER_NOTE[tier]}. Layout preview only. It does not promise a position or results.</p>
+    </div>
+  );
+}
+
 /** Pack picker, order summary and payment list for one project. Pricing is read from the server, never typed here. */
 export function BoostConfigurator({ submissionId, project, packs }: { submissionId: string; project: Project; packs: BoostPack[] }) {
   const router = useRouter();
@@ -32,6 +55,8 @@ export function BoostConfigurator({ submissionId, project, packs }: { submission
   const [msg, setMsg] = useState<{ kind: "error" | "signin"; text: string } | null>(null);
   const [open, setOpen] = useState<number | null>(0);
   const pack = packs.find((p) => p.id === packId);
+  const payRef = useRef<HTMLDivElement>(null);
+  const toPay = () => payRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
 
   useEffect(() => {
     fetch("/api/payment-methods").then((r) => r.json()).then((j: { methods?: Method[] }) => { setMethods(j.methods ?? []); setMethodsState("ok"); }, () => setMethodsState("ok"));
@@ -52,7 +77,7 @@ export function BoostConfigurator({ submissionId, project, packs }: { submission
   const groups = [...new Set(methods.map((m) => m.label))];
 
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 pb-24 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:pb-0">
       <div className="space-y-6">
         <section aria-label="Choose a pack" className="space-y-3">
           <div className="flex items-center justify-between">
@@ -81,6 +106,8 @@ export function BoostConfigurator({ submissionId, project, packs }: { submission
           <p className="text-xs text-muted">A boost buys clearly labelled sponsored visibility. It never changes organic rank and does not guarantee a position. Boost points describe the size of the pack.</p>
         </section>
 
+        {pack && <section className="card p-4"><StripPreview project={project} pack={pack} /></section>}
+
         <section aria-label="Frequently asked questions" className="card divide-y divide-[var(--line-1)] overflow-hidden">
           {FAQ.map(([q, a], i) => (
             <div key={q}>
@@ -108,7 +135,7 @@ export function BoostConfigurator({ submissionId, project, packs }: { submission
           </dl>
         )}
 
-        <div className="space-y-3 border-t border-line pt-4">
+        <div ref={payRef} id="boost-pay" className="scroll-mt-24 space-y-3 border-t border-line pt-4">
           <h3 className="eyebrow">Pay with crypto</h3>
           {methodsState === "loading" && <div className="skeleton h-24" />}
           {methodsState === "ok" && methods.length === 0 && <p className="card-flat p-3 text-sm text-soft">No payment options are enabled right now. They appear here once payments are configured and verified by an administrator.</p>}
@@ -127,6 +154,12 @@ export function BoostConfigurator({ submissionId, project, packs }: { submission
           <p className="flex items-center justify-center gap-2 text-center text-xs text-muted"><ShieldCheck size={14} aria-hidden="true" /> Activates only after the payment is verified by our server.</p>
         </div>
       </aside>
+      {pack && (
+        <div className="boost-bar glass-float !rounded-2xl" role="region" aria-label="Selected pack">
+          <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{pack.name} · {duration(pack.hours)}</span><span className="num block text-lg font-bold text-warm">$<CountUp value={pack.priceUsd} duration={500} /></span></span>
+          <button type="button" className="btn btn-primary" onClick={toPay}>Pay</button>
+        </div>
+      )}
     </div>
   );
 }

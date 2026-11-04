@@ -43,7 +43,7 @@ export default function BoostPage() {
 
       <section aria-label="Compare packs" className="reveal space-y-4">
         <div><p className="eyebrow">Compare</p><h2 className="h2 mt-2">Every pack side by side</h2></div>
-        <div className="card overflow-x-auto">
+        <div className="card overflow-x-auto" tabIndex={0} role="region" aria-label="Pack comparison table">
           <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="border-b border-line text-left">

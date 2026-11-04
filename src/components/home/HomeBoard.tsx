@@ -74,9 +74,8 @@ export function HomeBoard({ data, boosted }: { data: HomeData; boosted?: string[
           {tab === "map" && <motion.span layoutId="board-tab" transition={{ type: "spring", stiffness: 420, damping: 36 }} className="tab-spring-bg" />}
           <span className="relative z-10 inline-flex items-center gap-1.5"><Grid2x2 size={14} aria-hidden="true" /> Map</span>
         </button>
-        <Link href="/dashboard/watchlist" className="chip"><Star size={14} aria-hidden="true" /> Watchlist</Link>
       </div></LayoutGroup>
-      {tab !== "map" && <div className="flex flex-wrap items-center gap-2"><ChainFilter options={chainOptions} value={activeChain} onChange={setChain} />{sort && <button type="button" className="chip" onClick={() => setSort(null)}>Clear sort</button>}
+      {tab !== "map" && <div className="flex flex-wrap items-center gap-2"><Link href="/dashboard/watchlist" className="chip"><Star size={14} aria-hidden="true" /> Watchlist</Link><ChainFilter options={chainOptions} value={activeChain} onChange={setChain} />{sort && <button type="button" className="chip" onClick={() => setSort(null)}>Clear sort</button>}
         <div className="relative ml-auto">
           <button type="button" className="btn" aria-expanded={viewOpen} onClick={() => setViewOpen((o) => !o)}><SlidersHorizontal size={15} aria-hidden="true" /> View</button>
           {viewOpen && (

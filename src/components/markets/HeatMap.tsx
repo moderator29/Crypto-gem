@@ -9,8 +9,8 @@ interface Rect { x: number; y: number; w: number; h: number }
 
 /** Discrete diverging scale: every readable tile also prints its percentage, so colour is never the only cue. */
 function tileColor(change: number): string {
-  if (change >= 20) return "#047857";
-  if (change >= 5) return "#059669";
+  if (change >= 20) return "#065f46";
+  if (change >= 5) return "#047857";
   if (change >= 1) return "#1f7a5c";
   if (change > -1) return "#31384f";
   if (change > -5) return "#8f3340";
@@ -105,7 +105,7 @@ export function HeatMap({ pools, height = 420 }: { pools: PoolSummary[]; height?
                     <>
                       <span className="max-w-full truncate font-bold leading-none" style={{ fontSize: big ? 14 : 11 }}>{p.baseToken.symbol}</span>
                       <span className="num mt-0.5 leading-none" style={{ fontSize: big ? 12 : 9.5 }}>{pct(ch, big ? 2 : 1)}</span>
-                      {big && <span className="num mt-0.5 leading-none text-white/70" style={{ fontSize: 9.5 }}>{usdCompact(p.volumeUsd.h24)}</span>}
+                      {big && <span className="num mt-0.5 leading-none text-white/90" style={{ fontSize: 9.5 }}>{usdCompact(p.volumeUsd.h24)}</span>}
                     </>
                   )}
                 </Link>

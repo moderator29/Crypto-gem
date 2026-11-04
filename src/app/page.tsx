@@ -35,7 +35,7 @@ export default async function HomePage() {
   const featuredFrom = Math.min(...Object.values(getPlacement("featured")?.prices ?? { 1: 250 }).filter((v): v is number => v !== undefined));
 
   return (
-    <div className="relative isolate space-y-5">
+    <div className="relative isolate space-y-5 [overflow-x:clip]">
       <div className="fx-aurora" aria-hidden="true"><i /><i /><i /></div>
       {data && <Ticker items={data.organic} />}
 

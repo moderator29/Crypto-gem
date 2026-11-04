@@ -2,16 +2,18 @@
 
 import Link from "next/link";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { CountUp } from "@/components/fx/CountUp";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { NavIcon, type NavIconName } from "@/components/ui/NavIcon";
 import { useAccountFetch } from "@/lib/useAccountFetch";
+import { ageShort } from "@/lib/utils/format";
 
-function Stat({ label, value, href }: { label: string; value: string; href: string }) {
+function Stat({ label, value, href }: { label: string; value: number | undefined; href: string }) {
   return (
-    <Link href={href} className="card-flat hover-lift flex-1 px-4 py-3 text-center">
-      <span className="num block text-2xl font-bold">{value}</span>
-      <span className="text-xs text-muted">{label}</span>
+    <Link href={href} className="card hover-lift flex flex-col gap-1 p-4">
+      <span className="eyebrow !text-muted">{label}</span>
+      <span className="num text-3xl font-bold">{value === undefined ? "–" : <CountUp value={value} />}</span>
     </Link>
   );
 }
@@ -28,35 +30,45 @@ export function ProfileView() {
   const { configured, ready, authenticated, label, userId, login } = useAuth();
   const watch = useAccountFetch<{ items: unknown[] }>("/api/watchlist");
   const alerts = useAccountFetch<{ alerts: Array<{ triggered_at: string | null }> }>("/api/alerts");
-  const notes = useAccountFetch<{ unread: number }>("/api/notifications");
+  const notes = useAccountFetch<{ unread: number; items: Array<{ id: string; title: string; href: string | null; read_at: string | null; created_at: string }> }>("/api/notifications");
 
   if (!configured) return <EmptyState title="Sign-in is not configured here" description="Your profile appears once sign-in is connected for this site." />;
   if (!ready) return <div className="skeleton h-64" aria-busy="true" />;
   if (!authenticated) return <EmptyState title="Sign in to see your profile" description="Use an email code, a wallet or Google." action={<button type="button" className="btn btn-primary" onClick={login}>Sign in</button>} />;
 
   const name = label ?? "Account";
-  const num = (v: number | undefined) => (v === undefined ? "–" : String(v));
+  const recent = notes.state === "ok" ? notes.data.items.slice(0, 4) : [];
   return (
-    <div className="space-y-5">
-      <div className="card overflow-hidden">
-        <div className="profile-banner h-28 md:h-36" aria-hidden="true" />
+    <div className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-3">
+      <div className="card overflow-hidden sm:col-span-3">
+        <div className="profile-banner bento-hero h-28 md:h-36" aria-hidden="true" />
         <div className="px-4 pb-5 md:px-6">
           <div className="-mt-10 flex items-end justify-between gap-3">
-            <span className="grid h-20 w-20 place-items-center rounded-2xl border-4 border-[var(--surface-1)] bg-gradient-to-br from-[#ff6a4a] to-[#c93a1f] text-3xl font-bold text-white shadow-[var(--shadow-md)]" aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>
+            <span className="fx-ring grid h-20 w-20 place-items-center rounded-full p-[3px]" style={{ background: "conic-gradient(var(--brand), var(--warm), var(--up), var(--brand))" }}>
+              <span className="grid h-full w-full place-items-center rounded-full border-4 border-[var(--surface-1)] bg-[var(--surface-2)] text-3xl font-bold" aria-hidden="true">{name.slice(0, 1).toUpperCase()}</span>
+            </span>
             <Link href="/settings" className="btn btn-sm"><NavIcon name="settings" size={16} /> Manage account</Link>
           </div>
           <h2 className="mt-3 text-2xl font-bold tracking-tight">{name}</h2>
           {userId && <p className="mt-1 flex items-center gap-2 text-xs text-muted"><span className="num truncate">{userId}</span><CopyButton value={userId} label="Copy" what="User ID copied" /></p>}
-          <div className="mt-5 flex gap-3">
-            <Stat label="Watching" value={num(watch.state === "ok" ? watch.data.items.length : undefined)} href="/dashboard/watchlist" />
-            <Stat label="Open alerts" value={num(alerts.state === "ok" ? alerts.data.alerts.filter((a) => !a.triggered_at).length : undefined)} href="/alerts" />
-            <Stat label="Unread" value={num(notes.state === "ok" ? notes.data.unread : undefined)} href="/notifications" />
-          </div>
         </div>
       </div>
+      <Stat label="Watching" value={watch.state === "ok" ? watch.data.items.length : undefined} href="/dashboard/watchlist" />
+      <Stat label="Open alerts" value={alerts.state === "ok" ? alerts.data.alerts.filter((a) => !a.triggered_at).length : undefined} href="/alerts" />
+      <Stat label="Unread" value={notes.state === "ok" ? notes.data.unread : undefined} href="/notifications" />
 
-      <section aria-label="Quick actions" className="space-y-2">
-        <h2 className="eyebrow px-1">Do more</h2>
+      <section aria-label="Recent notifications" className="card p-5 sm:col-span-3 lg:col-span-1">
+        <h2 className="h3 mb-3">Recent activity</h2>
+        {notes.state === "loading" ? <div className="skeleton h-24" /> : recent.length === 0 ? <p className="text-sm text-muted">Nothing yet. Alerts, payments and listing decisions show up here.</p> : (
+          <ul className="space-y-3">
+            {recent.map((i) => (
+              <li key={i.id}><Link href={i.href ?? "/notifications"} className="flex items-center gap-2 text-sm hover:text-brand">{!i.read_at && <span className="unread-dot" role="img" aria-label="Unread" />}<span className="min-w-0 flex-1 truncate">{i.title}</span><span className="num shrink-0 text-xs text-muted">{ageShort(i.created_at)}</span></Link></li>
+            ))}
+          </ul>
+        )}
+      </section>
+      <section aria-label="Quick actions" className="sm:col-span-3 lg:col-span-2">
+        <h2 className="eyebrow mb-2 px-1">Do more</h2>
         <ul className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2">
           {ACTIONS.map((a) => (
             <li key={a.href}>

@@ -4,6 +4,8 @@ import { AlertTriangle, CheckCircle2, ImagePlus, Loader2, ScanLine } from "lucid
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { CountUp } from "@/components/fx/CountUp";
+import { Stepper } from "@/components/ui/Kit";
 import { discount, PLACEMENTS, type Placement, type PlacementId } from "@/lib/ads/catalog";
 import { inspectImage } from "@/lib/ads/image";
 import { accessToken } from "@/lib/auth/client";
@@ -17,6 +19,9 @@ interface Avail { configured?: boolean; available?: boolean; reason?: string | n
 interface Pick { file: File; url: string }
 
 const today = () => new Date().toISOString().slice(0, 10);
+const STRIP_DAYS = 10;
+const addDays = (iso: string, n: number) => new Date(Date.parse(iso) + n * 86_400_000).toISOString().slice(0, 10);
+type Cell = "free" | "booked" | "unknown";
 
 export function BookingWizard({ initial }: { initial: PlacementId }) {
   const router = useRouter();
@@ -29,6 +34,7 @@ export function BookingWizard({ initial }: { initial: PlacementId }) {
   const [mobile, setMobile] = useState<Pick | null>(null);
   const [checks, setChecks] = useState<{ desktop?: { name: string; report: CreativeReport }; mobile?: { name: string; report: CreativeReport } }>({});
   const [safe, setSafe] = useState(false);
+  const [strip, setStrip] = useState<Cell[] | null>(null);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [methods, setMethods] = useState<Method[]>([]);
   const [currency, setCurrency] = useState("");
@@ -49,6 +55,19 @@ export function BookingWizard({ initial }: { initial: PlacementId }) {
     fetch(`/api/ads/availability?placement=${placement.id}&days=${effDays}&start=${start}`, { signal: ctrl.signal }).then((r) => r.json()).then(setAvail, () => undefined);
     return () => ctrl.abort();
   }, [placement.id, effDays, start]);
+
+  const stripOn = avail?.configured === true;
+  useEffect(() => {
+    if (!stripOn) return;
+    const ctrl = new AbortController();
+    const base = today();
+    void Promise.all(Array.from({ length: STRIP_DAYS }, (_, i) =>
+      fetch(`/api/ads/availability?placement=${placement.id}&days=${effDays}&start=${addDays(base, i)}`, { signal: ctrl.signal })
+        .then((r) => r.json() as Promise<Avail>)
+        .then((j): Cell => (j.available === true ? "free" : j.available === false ? "booked" : "unknown"), (): Cell => "unknown"),
+    )).then((cells) => { if (!ctrl.signal.aborted) setStrip(cells); });
+    return () => ctrl.abort();
+  }, [stripOn, placement.id, effDays]);
 
   /** Reads the chosen image, grades it against the slot, and keeps it only when nothing failed. */
   async function pickFile(variant: "desktop" | "mobile", f: File | undefined) {
@@ -92,7 +111,8 @@ export function BookingWizard({ initial }: { initial: PlacementId }) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
       <div className="space-y-5">
-        <section className="card space-y-4 p-5" aria-label="Placement and dates">
+        <Stepper steps={["Placement", "Creative", "Review and pay"]} current={!desktop || !destOk ? 1 : 2} />
+        <section className="card step-swap space-y-4 p-5" aria-label="Placement and dates">
           <h2 className="font-display text-lg font-bold">1. Placement and dates</h2>
           <div className="scroll-x" role="group" aria-label="Placement">
             {PLACEMENTS.map((p) => <button key={p.id} type="button" className="chip" aria-pressed={placement.id === p.id} onClick={() => { setPlacement(p); setDesktop(null); setMobile(null); setChecks({}); }}>{p.name}</button>)}
@@ -113,10 +133,28 @@ export function BookingWizard({ initial }: { initial: PlacementId }) {
           <label className="block"><span className="mb-1 block text-sm font-semibold">Start date (UTC)</span><input type="date" className="input" min={today()} value={start} onChange={(e) => setStart(e.target.value)} /></label>
           {avail?.configured && avail.available === true && <p className="flex items-center gap-2 text-sm text-up"><CheckCircle2 size={15} /> Available for these dates</p>}
           {avail?.available === false && <p className="flex items-center gap-2 text-sm text-down" role="alert"><AlertTriangle size={15} /> {avail.reason}</p>}
+          {stripOn && strip && (
+            <div className="space-y-1.5" aria-label={`Availability for the next ${STRIP_DAYS} start dates`}>
+              <p className="text-xs font-semibold text-soft">Start dates for {effDays} day{effDays > 1 ? "s" : ""}</p>
+              <div className="scroll-x">
+                {strip.map((c, i) => {
+                  const d = addDays(today(), i);
+                  const [, m, dd] = d.split("-");
+                  return (
+                    <button key={d} type="button" disabled={c === "booked"} aria-pressed={start === d} onClick={() => setStart(d)} className={`card-flat flex w-14 shrink-0 flex-col items-center gap-1 p-2 text-center ${start === d ? "!border-[var(--brand)]" : ""} ${c === "booked" ? "opacity-50" : ""}`} title={c === "free" ? "Available" : c === "booked" ? "Booked" : "Unknown"}>
+                      <span className="num text-[10px] text-muted">{m}/{dd}</span>
+                      <span className="status-dot" style={{ background: c === "free" ? "var(--up)" : c === "booked" ? "var(--down)" : "var(--line-2)", boxShadow: "none" }} aria-hidden="true" />
+                      <span className="text-[10px] font-semibold">{c === "free" ? "Free" : c === "booked" ? "Full" : "n/a"}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           {avail?.configured === false && <p className="text-xs text-muted">Live availability needs the database. It is checked again on submit.</p>}
         </section>
 
-        <section className="card space-y-4 p-5" aria-label="Creative">
+        <section className="card step-swap space-y-4 p-5 [animation-delay:80ms]" aria-label="Creative">
           <h2 className="font-display text-lg font-bold">2. Creative and destination</h2>
           {(["desktop", "mobile"] as const).map((v) => {
             const rec = v === "desktop" ? placement.desktop : placement.mobile;
@@ -139,13 +177,13 @@ export function BookingWizard({ initial }: { initial: PlacementId }) {
           <p className="text-xs text-muted">Creatives are reviewed before going live. Misleading claims, unsafe links and impersonation are rejected without refund of the review.</p>
         </section>
 
-        <section className="card space-y-4 p-5" aria-label="Review and pay">
+        <section className="card step-swap space-y-4 p-5 [animation-delay:160ms]" aria-label="Review and pay">
           <h2 className="font-display text-lg font-bold">3. Review and pay</h2>
-          <dl className="grid grid-cols-2 gap-3 text-sm">
+          <dl key={`${placement.id}-${effDays}`} className="fx-pop grid grid-cols-2 gap-3 text-sm">
             <div><dt className="text-xs text-muted">Placement</dt><dd className="font-semibold">{placement.name}</dd></div>
             <div><dt className="text-xs text-muted">Length</dt><dd className="font-semibold">{effDays} day{effDays > 1 ? "s" : ""} from {start}</dd></div>
-            {dc && dc.pct > 0 && <div><dt className="text-xs text-muted">Savings</dt><dd className="num font-semibold text-up">${(dc.original - dc.final).toLocaleString("en-US")} ({dc.pct}%)</dd></div>}
-            <div><dt className="text-xs text-muted">Total</dt><dd className="num font-display text-xl font-bold">${price?.toLocaleString("en-US") ?? "—"}</dd></div>
+            {dc && dc.pct > 0 && <div><dt className="text-xs text-muted">Savings</dt><dd className="num font-semibold text-up">$<CountUp value={dc.original - dc.final} /> ({dc.pct}%)</dd></div>}
+            <div><dt className="text-xs text-muted">Total</dt><dd className="num font-display text-xl font-bold">{price === null ? "—" : <>$<CountUp value={price} /></>}</dd></div>
           </dl>
           <label className="block"><span className="mb-1 block text-sm font-semibold">Pay with</span>
             <select className="input" value={currency} onChange={(e) => setCurrency(e.target.value)}>

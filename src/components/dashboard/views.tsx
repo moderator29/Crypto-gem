@@ -10,6 +10,7 @@ import { CountUp } from "@/components/fx/CountUp";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Stat } from "@/components/ui/Kit";
+import { NavIcon } from "@/components/ui/NavIcon";
 import { TokenLogo } from "@/components/ui/TokenLogo";
 import { useToast } from "@/components/ui/Toast";
 import { accessToken } from "@/lib/auth/client";
@@ -77,27 +78,21 @@ export function OverviewView() {
   const activity = buildActivity(data);
   const todo = [
     ...data.orders.filter((o) => o.status === "pending").map((o) => ({ key: o.id, text: `Finish payment for your ${o.kind.replace("_", " ")} order ($${Number(o.price_usd).toLocaleString("en-US")})`, href: `/pay/${o.id}`, cta: "Pay" })),
+    ...data.submissions.filter((s) => s.status === "draft").map((s) => ({ key: s.id, text: `${s.name} needs changes${s.rejection_reason ? `: ${s.rejection_reason}` : ""}`, href: "/dashboard/listings", cta: "Review" })),
     ...data.submissions.filter((s) => s.status === "rejected").map((s) => ({ key: s.id, text: `${s.name} was rejected${s.rejection_reason ? `: ${s.rejection_reason}` : ""}`, href: "/dashboard/listings", cta: "Review" })),
   ];
+  const who = data.email ? (data.email.split("@")[0] ?? "") : "";
+  const tile = (label: string, icon: React.ReactNode, value: React.ReactNode, wide = false) => (
+    <div className={`flex [&>*]:flex-1 ${wide ? "col-span-2" : ""}`}><Stat label={label} icon={icon} value={value} /></div>
+  );
+  const quick = [
+    { href: "/add-coin", icon: "add", label: "List a project" },
+    { href: "/boost", icon: "boost", label: "Boost a project" },
+    { href: "/promotion", icon: "promo", label: "Book advertising" },
+    { href: "/alerts", icon: "alert", label: "Price alerts" },
+  ] as const;
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-3">
-        <div className="scroll-x" aria-label="Quick stats">
-          {([["Watching", String(watch.length), "/dashboard/watchlist"], ["Price alerts", alertCount === null ? "—" : String(alertCount), "/alerts"], ["Orders", String(data.orders.length), "/dashboard/payments"]] as const).map(([k, v, href]) => (
-            <Link key={k} href={href} className="chip"><span className="num font-bold text-text">{v}</span> {k}</Link>
-          ))}
-        </div>
-        <button type="button" className="btn btn-icon btn-sm shrink-0" aria-label="Refresh dashboard" onClick={() => void reload()}><RefreshCw size={15} className={spin ? "animate-spin" : ""} /></button>
-      </div>
-      <NextSteps steps={nextSteps(data, watch, alertCount)} />
-      <div className="stagger grid grid-cols-2 gap-3 md:grid-cols-3">
-        <Stat label="Published listings" icon={<ListChecks size={16} aria-hidden="true" />} value={<CountUp value={n.listings} />} />
-        <Stat label="In review" icon={<ListChecks size={16} aria-hidden="true" />} value={<CountUp value={n.review} />} />
-        <Stat label="Active boosts" icon={<Rocket size={16} aria-hidden="true" />} value={<CountUp value={n.boosts} />} />
-        <Stat label="Active campaigns" icon={<Megaphone size={16} aria-hidden="true" />} value={<CountUp value={n.campaigns} />} />
-        <Stat label="Pending payments" icon={<Wallet size={16} aria-hidden="true" />} value={<CountUp value={n.pending} />} />
-        <Stat label="Total paid" icon={<Coins size={16} aria-hidden="true" />} value={<CountUp value={n.spend} kind="usd" />} />
-      </div>
+    <div className="space-y-4">
       {todo.length > 0 && (
         <section aria-label="Needs your attention" className="card card-lit p-5">
           <h2 className="h3 mb-3">Needs your attention</h2>
@@ -106,29 +101,57 @@ export function OverviewView() {
           </ul>
         </section>
       )}
-      {activity.length > 0 ? (
-        <section aria-label="Recent activity" className="card p-5">
-          <h2 className="h3 mb-4">Recent activity</h2>
-          <ol className="timeline stagger space-y-4">
-            {activity.map((e) => (
-              <li key={e.key}>
-                <Link href={e.href} className="group flex items-center gap-3 rounded-lg">
-                  <span className="relative z-10 grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[var(--line-2)] bg-[var(--surface-2)] text-brand transition-colors group-hover:border-[var(--brand)]"><e.icon size={14} aria-hidden="true" /></span>
-                  <span className="min-w-0 flex-1 text-sm text-soft group-hover:text-text">{e.text}</span>
-                  <span className="num shrink-0 text-xs text-muted">{ageShort(e.at) === "—" ? "" : `${ageShort(e.at)} ago`}</span>
-                </Link>
-              </li>
-            ))}
-          </ol>
+      <div className="stagger grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <section aria-label="Welcome" className="bento-hero card relative col-span-2 flex flex-col justify-between gap-6 overflow-hidden p-5 md:p-6 lg:row-span-2">
+          <div className="relative space-y-2">
+            <p className="eyebrow">Welcome back</p>
+            <h2 className="font-display text-2xl font-bold leading-tight md:text-3xl">{who ? `Hello, ${who}` : "Your dashboard"}</h2>
+            <p className="text-sm text-soft">
+              <span className="num font-semibold text-text">{n.listings}</span> live listing{n.listings === 1 ? "" : "s"}, <span className="num font-semibold text-text">{n.boosts}</span> running boost{n.boosts === 1 ? "" : "s"} and <span className="num font-semibold text-text">{watch.length}</span> token{watch.length === 1 ? "" : "s"} on your watchlist.
+            </p>
+          </div>
+          <div className="relative flex flex-wrap items-center gap-2">
+            <div className="scroll-x min-w-0 flex-1" aria-label="Quick stats">
+              {([["Alerts", alertCount === null ? "—" : String(alertCount), "/alerts"], ["Orders", String(data.orders.length), "/dashboard/payments"]] as const).map(([k, v, href]) => (
+                <Link key={k} href={href} className="chip"><span className="num font-bold text-text">{v}</span> {k}</Link>
+              ))}
+            </div>
+            <button type="button" className="btn btn-icon btn-sm shrink-0" aria-label="Refresh dashboard" onClick={() => void reload()}><RefreshCw size={15} className={spin ? "animate-spin" : ""} /></button>
+          </div>
         </section>
-      ) : (
-        <DashEmpty icon={Rocket} title="Nothing here yet" description="Your listings, orders, boosts and campaigns will show up as a timeline once you start." />
-      )}
-      <section aria-label="Next actions" className="grid gap-3 sm:grid-cols-3">
-        <ButtonLink href="/add-coin">List a project</ButtonLink>
-        <ButtonLink href="/boost"><Rocket size={15} /> Boost a project</ButtonLink>
-        <ButtonLink href="/promotion">Book advertising</ButtonLink>
-      </section>
+        {tile("Published", <ListChecks size={16} aria-hidden="true" />, <CountUp value={n.listings} />)}
+        {tile("Active boosts", <Rocket size={16} aria-hidden="true" />, <CountUp value={n.boosts} />)}
+        {tile("Total paid", <Coins size={16} aria-hidden="true" />, <CountUp value={n.spend} kind="usd" />, true)}
+        {tile("In review", <ListChecks size={16} aria-hidden="true" />, <CountUp value={n.review} />)}
+        {tile("Campaigns", <Megaphone size={16} aria-hidden="true" />, <CountUp value={n.campaigns} />)}
+        {tile("Pending payments", <Wallet size={16} aria-hidden="true" />, <CountUp value={n.pending} />)}
+        {tile("Watching", <Star size={16} aria-hidden="true" />, <CountUp value={watch.length} />)}
+        <NextSteps className="col-span-2" steps={nextSteps(data, watch, alertCount)} />
+        {activity.length > 0 ? (
+          <section aria-label="Recent activity" className="card col-span-2 p-5">
+            <h2 className="h3 mb-4">Recent activity</h2>
+            <ol className="timeline stagger space-y-4">
+              {activity.map((e) => (
+                <li key={e.key}>
+                  <Link href={e.href} className="group flex items-center gap-3 rounded-lg">
+                    <span className="relative z-10 grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[var(--line-2)] bg-[var(--surface-2)] text-brand transition-colors group-hover:border-[var(--brand)]"><e.icon size={14} aria-hidden="true" /></span>
+                    <span className="min-w-0 flex-1 text-sm text-soft group-hover:text-text">{e.text}</span>
+                    <span className="num shrink-0 text-xs text-muted">{ageShort(e.at) === "—" ? "" : `${ageShort(e.at)} ago`}</span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </section>
+        ) : (
+          <div className="col-span-2"><DashEmpty icon={Rocket} title="Nothing here yet" description="Your listings, orders, boosts and campaigns will show up as a timeline once you start." /></div>
+        )}
+        {quick.map((q) => (
+          <Link key={q.href} href={q.href} className="card hover-lift nav-tile flex flex-col items-start gap-3 p-4">
+            <span className="grid h-11 w-11 place-items-center rounded-xl bg-[var(--surface-3)]"><NavIcon name={q.icon} size={22} /></span>
+            <span className="text-sm font-semibold">{q.label}</span>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

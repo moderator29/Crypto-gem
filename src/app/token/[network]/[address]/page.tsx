@@ -171,7 +171,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
         ))}
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+      <div className="grid gap-4 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-4">
           <section className="card p-4 md:p-5" aria-label="Pools">
             <h2 className="mb-3 font-display text-lg font-bold">Pools ({sorted.length})</h2>

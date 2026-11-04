@@ -71,7 +71,7 @@ export function BannerStrip({ campaigns, demos, from }: { campaigns: ActiveCampa
         <div className="relative overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_4%,#000_96%,transparent)]">
           <div className="marquee gap-3" style={{ ["--marquee-dur" as string]: `${Math.max(loop.length, 4) * 9}s` }}>
             {[0, 1].map((copy) => (
-              <div key={copy} className="flex shrink-0 gap-3 pr-3" aria-hidden={copy === 1 ? true : undefined}>
+              <div key={copy} className="flex shrink-0 gap-3 pr-3" aria-hidden={copy === 1 ? true : undefined} inert={copy === 1 ? true : undefined}>
                 {loop.map((c, i) => <div key={i} className="shrink-0">{c}</div>)}
               </div>
             ))}

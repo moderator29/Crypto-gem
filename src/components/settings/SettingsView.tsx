@@ -13,9 +13,9 @@ import { useToast } from "@/components/ui/Toast";
 import { canUnlink } from "@/lib/settings";
 import { PreferencesGroups } from "./PreferencesGroups";
 
-function Section({ title, description, children }: { title: string; description?: string; children: React.ReactNode }) {
+function Section({ id, title, description, children }: { id: string; title: string; description?: string; children: React.ReactNode }) {
   return (
-    <section className="card p-5 md:p-6" aria-label={title}>
+    <section id={id} className="card scroll-mt-24 p-5 md:p-6" aria-label={title}>
       <h2 className="h3">{title}</h2>
       {description && <p className="mt-1 text-sm text-muted">{description}</p>}
       <div className="mt-4">{children}</div>
@@ -52,6 +52,38 @@ function useMethodRows(accounts: Linked[]): MethodRow[] {
   return snap.rows;
 }
 
+const NAV = [
+  { id: "profile", label: "Profile" },
+  { id: "sign-in", label: "Sign-in methods" },
+  { id: "preferences", label: "Preferences" },
+  { id: "session", label: "Session" },
+] as const;
+
+/** Section list for wide screens. The link for the section in view is highlighted as you scroll. */
+function SectionNav() {
+  const [active, setActive] = useState<string>(NAV[0].id);
+  useEffect(() => {
+    const els = NAV.map((n) => document.getElementById(n.id)).filter((e): e is HTMLElement => e !== null);
+    const io = new IntersectionObserver((entries) => {
+      const hit = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+      if (hit) setActive(hit.target.id);
+    }, { rootMargin: "-20% 0px -65% 0px" });
+    els.forEach((e) => io.observe(e));
+    return () => io.disconnect();
+  }, []);
+  return (
+    <nav aria-label="Settings sections" className="hidden lg:sticky lg:top-24 lg:block lg:self-start">
+      <ul className="space-y-1">
+        {NAV.map((n) => (
+          <li key={n.id}>
+            <a href={`#${n.id}`} aria-current={active === n.id ? "true" : undefined} className={`block rounded-xl px-3 py-2 text-sm font-semibold transition-colors ${active === n.id ? "bg-[var(--surface-3)] text-text" : "text-muted hover:text-text"}`}>{n.label}</a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
 /** Uses Privy hooks, so it is only rendered when sign-in is configured and the user is authenticated. */
 function Account() {
   const { user, linkEmail, linkWallet, linkGoogle, unlinkEmail, unlinkWallet, unlinkGoogle, logout } = usePrivy();
@@ -76,8 +108,10 @@ function Account() {
   };
 
   return (
-    <div className="space-y-4">
-      <Section title="Profile">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[200px_minmax(0,1fr)]">
+    <SectionNav />
+    <div className="min-w-0 space-y-4">
+      <Section id="profile" title="Profile">
         <dl className="grid gap-4 text-sm md:grid-cols-2">
           <div>
             <dt className="eyebrow">User ID</dt>
@@ -90,7 +124,7 @@ function Account() {
         </dl>
       </Section>
 
-      <Section title="Sign-in methods" description="Link more than one so you can always get back in. The last method cannot be removed.">
+      <Section id="sign-in" title="Sign-in methods" description="Link more than one so you can always get back in. The last method cannot be removed.">
         <p className="mb-2 flex items-center gap-2 text-xs font-semibold text-soft"><span className="num">{rows.filter((r) => !r.leaving).length}</span> linked{!removable && <Tip label="Why can I not remove it?">Add another sign-in method first. The last one stays so you can never lock yourself out.</Tip>}</p>
         <ul className="divide-y divide-[var(--line-1)]">
           {rows.map(({ key, acct: a, label, leaving }) => {
@@ -112,11 +146,12 @@ function Account() {
         <p className="mt-3 text-xs text-muted">Linking a wallet here proves you control it. Crypto Gems never holds your keys or funds.</p>
       </Section>
 
-      <PreferencesGroups />
+      <div id="preferences" className="scroll-mt-24"><PreferencesGroups /></div>
 
-      <Section title="Session">
+      <Section id="session" title="Session">
         <Button variant="danger" onClick={() => void logout()}><LogOut size={15} /> Sign out</Button>
       </Section>
+    </div>
     </div>
   );
 }
@@ -125,7 +160,7 @@ export function SettingsView() {
   const { configured, ready, authenticated, login } = useAuth();
   if (!configured) {
     return (
-      <div className="space-y-4">
+      <div className="mx-auto max-w-3xl space-y-4">
         <EmptyState title="Sign-in is not configured here" description="Account settings appear once sign-in is connected for this site." />
         <PreferencesGroups />
       </div>
@@ -134,7 +169,7 @@ export function SettingsView() {
   if (!ready) return <div className="skeleton h-56" aria-busy="true" />;
   if (!authenticated) {
     return (
-      <div className="space-y-4">
+      <div className="mx-auto max-w-3xl space-y-4">
         <EmptyState icon={LogIn} title="Sign in to manage your account" description="Use an email code, a wallet or Google." action={<Button variant="primary" onClick={login}>Sign in</Button>} />
         <PreferencesGroups />
       </div>

@@ -87,3 +87,18 @@
 .step-swap { animation: step-swap 320ms var(--ease-out) both; }
 @keyframes step-swap { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .step-swap { animation: none; } }
+
+/* Dashboard bento: animated welcome tile. */
+.bento-hero { background: linear-gradient(120deg, color-mix(in srgb, var(--brand) 22%, var(--surface-1)), var(--surface-1) 45%, color-mix(in srgb, var(--warm) 16%, var(--surface-1)) 100%); background-size: 220% 220%; animation: bento-shift 14s ease-in-out infinite; }
+.bento-hero::after { content: ""; position: absolute; width: 220px; height: 220px; right: -60px; top: -80px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--brand) 40%, transparent), transparent 70%); filter: blur(8px); pointer-events: none; }
+@keyframes bento-shift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+@media (prefers-reduced-motion: reduce) { .bento-hero { animation: none; } }
+
+/* Boost packs: one-time shine sweep on selection, and the mobile checkout bar. */
+.boost-pack[aria-pressed="true"]::after { content: ""; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.22) 50%, transparent 65%); transform: translateX(-120%); animation: pack-shine 900ms var(--ease-out) 1 forwards; pointer-events: none; }
+@keyframes pack-shine { to { transform: translateX(120%); } }
+.boost-bar { position: fixed; left: 12px; right: 12px; bottom: calc(var(--nav-h, 0px) + env(safe-area-inset-bottom) + 10px); z-index: 40; display: flex; align-items: center; gap: 12px; padding: 10px 12px; animation: fx-pop 260ms var(--ease-out) both; }
+@media (min-width: 1024px) { .boost-bar { display: none; } }
+.strip-card[data-tier="highlight"] { border-color: color-mix(in srgb, var(--brand) 60%, var(--line-2)); }
+.strip-card[data-tier="premium"] { border-color: var(--warm); box-shadow: 0 0 22px color-mix(in srgb, var(--warm) 35%, transparent); }
+@media (prefers-reduced-motion: reduce) { .boost-pack[aria-pressed="true"]::after, .boost-bar { animation: none; } .boost-pack[aria-pressed="true"]::after { display: none; } }

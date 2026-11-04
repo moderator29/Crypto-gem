@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChainFilter } from "@/components/markets/ChainFilter";
+import { CountUp } from "@/components/fx/CountUp";
+import { Stat } from "@/components/ui/Kit";
 import { PriceTable } from "@/components/markets/PriceTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LinkTabs } from "@/components/ui/LinkTabs";
@@ -72,6 +74,12 @@ export default async function MarketsPage({ params, searchParams }: Props) {
           <EmptyState icon={SearchX} title="Nothing matches this view" description={view === "heating" ? "No pool is running well above its own hourly pace with meaningful liquidity right now." : "No pools were returned for this chain and view."} action={network ? <Link href={def.path} className="btn btn-sm">Clear chain filter</Link> : undefined} />
         ) : (
           <>
+            <div className="reveal grid grid-cols-2 gap-3 md:grid-cols-4" aria-label="View summary">
+              <Stat label="Pools shown" value={<CountUp value={rows.length} />} note={def.label} />
+              <Stat label="24h volume" value={<CountUp value={rows.reduce((t, p) => t + (p.volumeUsd.h24 ?? 0), 0)} kind="usd" />} note="In this view" />
+              <Stat label="Liquidity" value={<CountUp value={rows.reduce((t, p) => t + (p.liquidityUsd ?? 0), 0)} kind="usd" />} note="In this view" />
+              <Stat label="Up in 24h" value={<CountUp value={rows.filter((p) => (p.change.h24 ?? 0) > 0).length} />} note={`of ${rows.filter((p) => p.change.h24 !== null).length} with data`} />
+            </div>
             <PriceTable pools={rows} startRank={list.paged ? (page - 1) * 20 + 1 : 1} sorting={{ sort, dir, sortHref: (key, nextDir) => `${def.path}${qs({ sort: nextDir ? key : null, dir: nextDir, page: 1 })}` }} />
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-xs text-muted">

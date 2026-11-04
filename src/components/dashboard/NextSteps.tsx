@@ -7,11 +7,11 @@ import { Meter } from "@/components/ui/Kit";
 import { completion, type NextStep } from "./logic";
 
 /** Setup checklist with an animated completion meter. Items come from the person's real rows. */
-export function NextSteps({ steps }: { steps: NextStep[] }) {
+export function NextSteps({ steps, className = "" }: { steps: NextStep[]; className?: string }) {
   const pct = completion(steps);
   const all = steps.every((s) => s.done === true);
   return (
-    <section aria-label="Next steps" className="card card-lit space-y-4 p-5">
+    <section aria-label="Next steps" className={`card card-lit space-y-4 p-5 ${className}`}>
       <div className="flex items-center justify-between gap-3">
         <h2 className="h3">{all ? "You are all set" : "Next steps"}</h2>
         <span className="text-sm font-semibold text-soft"><CountUp value={pct} kind="pct" /> complete</span>
