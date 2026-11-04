@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { NavIcon } from "@/components/ui/NavIcon";
 import { useToast } from "@/components/ui/Toast";
 import { accountCall, useAccountFetch } from "@/lib/useAccountFetch";
+import { dayGroup, type DayGroup } from "@/components/dashboard/logic";
 import { ageShort } from "@/lib/utils/format";
 
 interface Item { id: string; kind: string; title: string; body: string | null; href: string | null; read_at: string | null; created_at: string }
@@ -54,26 +55,37 @@ export function NotificationsView() {
       {items.length === 0 ? (
         <EmptyState title="Nothing here yet" description="When a price alert fires or a payment or listing changes, you will see it here." action={<Link href="/alerts" className="btn btn-sm">Set a price alert</Link>} />
       ) : (
-        <ul className="card divide-y divide-[var(--line-1)] overflow-hidden">
-          {items.map((i, n) => {
-            const inner = (
-              <>
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--surface-3)] text-soft"><NavIcon name={i.kind === "alert" ? "alert" : i.kind === "payment" ? "dashboard" : "inbox"} size={21} /></span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-2"><span className="truncate font-semibold">{i.title}</span>{!i.read_at && <span className="h-2 w-2 shrink-0 rounded-full bg-[var(--brand)]" aria-label="Unread" />}</span>
-                  {i.body && <span className="block text-sm text-soft">{i.body}</span>}
-                </span>
-                <span className="num shrink-0 text-xs text-muted">{ageShort(i.created_at)} ago</span>
-              </>
-            );
-            const cls = "row-in flex items-center gap-3 px-4 py-3.5 transition hover:bg-[var(--surface-2)]";
+        <div className="space-y-4">
+          {(["Today", "Yesterday", "Earlier"] as DayGroup[]).map((g) => {
+            const rows = items.map((i, n) => ({ i, n })).filter((r) => dayGroup(r.i.created_at) === g);
+            if (rows.length === 0) return null;
             return (
-              <li key={i.id} style={{ ["--i" as string]: n }}>
-                {i.href ? <Link href={i.href} className={cls} onClick={() => void open(i)}>{inner}</Link> : <div className={cls}>{inner}</div>}
-              </li>
+              <section key={g} aria-label={g}>
+                <h2 className="day-head">{g} <span className="num font-medium">({rows.length})</span></h2>
+                <ul className="card divide-y divide-[var(--line-1)] overflow-hidden">
+                  {rows.map(({ i, n }) => {
+                    const inner = (
+                      <>
+                        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--surface-3)] text-soft"><NavIcon name={i.kind === "alert" ? "alert" : i.kind === "payment" ? "dashboard" : "inbox"} size={21} /></span>
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-center gap-2"><span className={`truncate ${i.read_at ? "font-medium" : "font-semibold"}`}>{i.title}</span>{!i.read_at && <span className="unread-dot" role="img" aria-label="Unread" />}</span>
+                          {i.body && <span className="block text-sm text-soft">{i.body}</span>}
+                        </span>
+                        <span className="num shrink-0 text-xs text-muted">{ageShort(i.created_at)} ago</span>
+                      </>
+                    );
+                    const cls = "row-in flex items-center gap-3 px-4 py-3.5 transition hover:bg-[var(--surface-2)]";
+                    return (
+                      <li key={i.id} style={{ ["--i" as string]: n }}>
+                        {i.href ? <Link href={i.href} className={cls} onClick={() => void open(i)}>{inner}</Link> : <div className={cls}>{inner}</div>}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
             );
           })}
-        </ul>
+        </div>
       )}
     </div>
   );

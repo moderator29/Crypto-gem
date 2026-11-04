@@ -14,6 +14,7 @@ import { ShareButton } from "@/components/ui/ShareButton";
 import { getHomeData } from "@/lib/market-data/home";
 import { dexscreener } from "@/lib/market-data/providers/dexscreener";
 import { QuickAlert } from "@/components/account/QuickAlert";
+import { StickyPriceBar } from "@/components/token/StickyPriceBar";
 import { ViewTracker } from "@/components/token/ViewTracker";
 import { BuyPanel } from "@/components/token/BuyPanel";
 import { RiskPanel } from "@/components/token/RiskPanel";
@@ -100,6 +101,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
   const ld = { "@context": "https://schema.org", "@type": "FinancialProduct", name: identity?.name ?? "Token", alternateName: identity?.symbol ?? undefined, description: `${identity?.name ?? "Token"} on ${net.name}: live price, liquidity, pools and risk signals.`, category: "Cryptocurrency", url: `/token/${net.id}/${canonical}` };
   return (
     <div className="space-y-4">
+      <StickyPriceBar symbol={identity?.symbol ?? "?"} name={identity?.name ?? "Token"} logo={identity?.imageUrl ?? null} networkId={net.id} address={canonical} price={priceUsd(price)} change={top?.change.h24 ?? null} />
       <ViewTracker network={net.id} address={canonical} symbol={identity?.symbol ?? "?"} name={identity?.name ?? "Token"} logo={identity?.imageUrl ?? null} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld).replace(/</g, "\\u003c") }} />
       <header className="card space-y-3 p-4 md:p-5">

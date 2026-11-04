@@ -1,6 +1,8 @@
 "use client";
 
-import { Meter } from "@/components/ui/Kit";
+import { fireConfetti } from "@/components/fx/confetti";
+import { Meter, Stepper } from "@/components/ui/Kit";
+import { SummaryPanel } from "./SummaryPanel";
 import { TokenFinder } from "./TokenFinder";
 import { classifyAddress } from "@/lib/market-data/identifiers";
 import { AlertTriangle, ArrowLeft, BadgeCheck, CheckCircle2, Globe, Loader2, RefreshCw, Rocket, ScanSearch, Upload, X, Zap } from "lucide-react";
@@ -69,7 +71,7 @@ export function Wizard() {
   const [touched, setTouched] = useState<Set<keyof Form>>(new Set());
   const [pkg, setPkg] = useState<string>("pro");
   const [terms, setTerms] = useState(false);
-  const [submit, setSubmit] = useState<{ state: "idle" | "busy" | "setup" | "error"; message?: string }>({ state: "idle" });
+  const [submit, setSubmit] = useState<{ state: "idle" | "busy" | "done" | "setup" | "error"; message?: string }>({ state: "idle" });
   const router = useRouter();
   const [methods, setMethods] = useState<Array<{ id: string; label: string; provider_currency: string; network: string }>>([]);
   const [payCurrency, setPayCurrency] = useState("");
@@ -162,7 +164,9 @@ export function Wizard() {
         return setSubmit({ state: "idle" });
       }
       if (!res.ok) return setSubmit({ state: "error", message: j.error ?? "Submission failed" });
-      router.push(`/pay/${j.orderId}`);
+      setSubmit({ state: "done" });
+      fireConfetti();
+      setTimeout(() => router.push(`/pay/${j.orderId}`), 1100);
     } catch {
       setSubmit({ state: "error", message: "Network error. Your details are still here, try again." });
     }
@@ -190,17 +194,13 @@ export function Wizard() {
     <div className="space-y-5">
       <div className="flex items-center gap-3">
         <button type="button" onClick={goBack} className="btn btn-icon" aria-label="Back"><ArrowLeft size={18} /></button>
-        <ol className="scroll-x flex-1" aria-label="Progress">
-          {STEPS.map((s, i) => (
-            <li key={s.id} aria-current={i === idx ? "step" : undefined} className="chip">
-              <span className="num text-[11px] font-bold tracking-widest text-muted">{String(i + 1).padStart(2, "0")}</span> {s.label}
-            </li>
-          ))}
-        </ol>
+        <div className="min-w-0 flex-1"><Stepper steps={STEPS.map((x) => x.label)} current={idx} /></div>
       </div>
 
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="min-w-0 space-y-5">
       {step === "identify" && (
-        <section className="card space-y-4 p-5 md:p-7" aria-label="Identify your token">
+        <section className="card step-swap space-y-4 p-5 md:p-7" aria-label="Identify your token">
           <div>
             <StepLabel n={idx + 1} />
             <h2 className="font-display text-2xl font-bold">Paste your contract address or search by name</h2>
@@ -283,7 +283,7 @@ export function Wizard() {
       )}
 
       {step === "review" && (
-        <section className="card space-y-5 p-5 md:p-7" aria-label="Project details">
+        <section className="card step-swap space-y-5 p-5 md:p-7" aria-label="Project details">
           <div><StepLabel n={idx + 1} /><h2 className="font-display text-2xl font-bold">Project details</h2></div>
           {token && (
             <div className="card-flat p-3 text-sm">
@@ -350,6 +350,7 @@ export function Wizard() {
           </div>
           <label className="block"><span className="mb-1 block text-sm font-semibold">Description</span>
             <textarea className="input !min-h-28 py-3" value={form.description} onChange={(e) => set("description", e.target.value)} maxLength={2000} />
+            <span className="mt-1 flex items-center gap-2"><Meter className="flex-1" value={Math.min(100, (form.description.trim().length / 30) * 100)} tone={form.description.trim().length >= 30 ? "up" : "warm"} label="Description length" /><span className="num text-[11px] text-muted">{form.description.trim().length}/2000 · min 30</span></span>
             {touched.has("description") && errors.description && <span className="mt-1 block text-xs text-down">{errors.description}</span>}
           </label>
           <label className="block"><span className="mb-1 block text-sm font-semibold">Chinese description (optional)</span>
@@ -362,7 +363,7 @@ export function Wizard() {
       )}
 
       {step === "package" && (
-        <section className="space-y-4" aria-label="Choose a package">
+        <section className="step-swap space-y-4" aria-label="Choose a package">
           <div><StepLabel n={idx + 1} /><h2 className="font-display text-2xl font-bold">Choose your package</h2></div>
           <div className="grid gap-4 md:grid-cols-3">
             {LISTING_PACKAGES.map((p) => (
@@ -379,7 +380,7 @@ export function Wizard() {
       )}
 
       {step === "summary" && (
-        <section className="card space-y-4 p-5 md:p-7" aria-label="Order summary">
+        <section className="card step-swap space-y-4 p-5 md:p-7" aria-label="Order summary">
           <div><StepLabel n={idx + 1} /><h2 className="font-display text-2xl font-bold">Order summary</h2></div>
           <dl className="grid gap-3 text-sm md:grid-cols-2">
             {([["Project", form.name], ["Ticker", form.symbol], ["Network", net?.name ?? "Not specified"], ["Contract", token?.address ?? (address.trim() || "Not provided")], ["Package", `${chosenPkg.name}`], ["Contact", form.email]] as const).map(([k, v]) => (
@@ -402,13 +403,31 @@ export function Wizard() {
             </select>
           </label>
           {needSignin && <p className="card-flat p-3 text-sm" role="status">Sign in first so the order is tied to your account. <Link href="/login?next=/add-coin" className="font-semibold text-brand">Sign in</Link>. Your details here are kept only until you leave this page.</p>}
-          <button type="button" className="btn btn-primary w-full md:w-auto" disabled={!terms || !payCurrency || submit.state === "busy"} onClick={placeOrder}>
-            {submit.state === "busy" ? <Loader2 size={16} className="animate-spin" /> : <Rocket size={16} />} Continue to Secure Payment · ${chosenPkg.priceUsd.toLocaleString("en-US")}
+          <button type="button" className="btn btn-primary w-full md:w-auto" disabled={!terms || !payCurrency || submit.state === "busy" || submit.state === "done"} onClick={placeOrder}>
+            {submit.state === "busy" ? <Loader2 size={16} className="animate-spin" /> : submit.state === "done" ? <CheckCircle2 size={16} /> : <Rocket size={16} />} {submit.state === "done" ? "Order created" : "Continue to Secure Payment"} · ${chosenPkg.priceUsd.toLocaleString("en-US")}
           </button>
+          {submit.state === "done" && <p className="text-sm text-up" role="status">Order created. Taking you to payment.</p>}
           {submit.state === "setup" && <p className="card-flat p-3 text-sm text-warm" role="status">{submit.message}</p>}
           {submit.state === "error" && <p className="text-sm text-down" role="alert">{submit.message}</p>}
         </section>
       )}
+      </div>
+      <SummaryPanel
+        logo={form.logoUrl || null}
+        symbol={form.symbol}
+        name={form.name}
+        fields={[
+          { label: "Name", value: form.name.trim() || null },
+          { label: "Ticker", value: form.symbol.trim() || null },
+          { label: "Network", value: net?.name ?? null },
+          { label: "Contract", value: token?.address ? `${token.address.slice(0, 6)}…${token.address.slice(-4)}` : null },
+          { label: "Logo", value: form.logoUrl ? "Added" : null },
+          { label: "Website", value: form.website.trim() || null },
+          { label: "X / Twitter", value: form.twitter.trim() || null },
+          { label: "Telegram", value: form.telegram.trim() || null },
+        ]}
+      />
+      </div>
     </div>
   );
 }

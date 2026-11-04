@@ -2,11 +2,13 @@
 
 import { usePrivy } from "@privy-io/react-auth";
 import { LogIn, LogOut, Mail, Unlink, Wallet } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/Button";
 import { CopyButton } from "@/components/ui/CopyButton";
+import { playSound } from "@/components/fx/sound";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Tip } from "@/components/ui/Tip";
 import { useToast } from "@/components/ui/Toast";
 import { canUnlink } from "@/lib/settings";
 import { PreferencesGroups } from "./PreferencesGroups";
@@ -21,20 +23,52 @@ function Section({ title, description, children }: { title: string; description?
   );
 }
 
+interface Linked { type: string; address?: string; subject?: string; email?: string; name?: string }
+interface MethodRow { key: string; acct: Linked; label: string; leaving?: boolean }
+const METHOD_TYPES = ["email", "wallet", "google_oauth"];
+
+const toRow = (a: Linked): MethodRow => ({
+  key: `${a.type}-${a.address ?? a.subject}`,
+  acct: a,
+  label: a.type === "email" ? (a.address ?? "Email") : a.type === "wallet" ? `${a.address?.slice(0, 6)}…${a.address?.slice(-4)}` : a.email ?? a.name ?? "Google account",
+});
+
+/** Keeps removed rows on screen for one short exit animation, in their original place, then drops them. */
+function useMethodRows(accounts: Linked[]): MethodRow[] {
+  const current = useMemo(() => accounts.filter((a) => METHOD_TYPES.includes(a.type)).map(toRow), [accounts]);
+  const sig = current.map((r) => r.key).join("|");
+  const [snap, setSnap] = useState<{ sig: string; rows: MethodRow[] }>({ sig, rows: current });
+  if (snap.sig !== sig) {
+    const keep = snap.rows.filter((r) => !r.leaving).map((r) => (current.some((c) => c.key === r.key) ? current.find((c) => c.key === r.key)! : { ...r, leaving: true }));
+    const added = current.filter((c) => !keep.some((k) => k.key === c.key));
+    setSnap({ sig, rows: [...keep, ...added] });
+  }
+  const leaving = snap.rows.some((r) => r.leaving);
+  useEffect(() => {
+    if (!leaving) return;
+    const id = setTimeout(() => setSnap((s) => ({ ...s, rows: s.rows.filter((r) => !r.leaving) })), 300);
+    return () => clearTimeout(id);
+  }, [leaving, snap.sig]);
+  return snap.rows;
+}
+
 /** Uses Privy hooks, so it is only rendered when sign-in is configured and the user is authenticated. */
 function Account() {
   const { user, linkEmail, linkWallet, linkGoogle, unlinkEmail, unlinkWallet, unlinkGoogle, logout } = usePrivy();
   const toast = useToast();
   const [busy, setBusy] = useState<string | null>(null);
-  const accounts = (user?.linkedAccounts ?? []) as Array<{ type: string; address?: string; subject?: string; email?: string; name?: string }>;
+  const accounts = (user?.linkedAccounts ?? []) as Linked[];
   const removable = canUnlink(accounts);
+  const rows = useMethodRows(accounts);
 
   const run = async (key: string, fn: () => Promise<unknown> | void, ok: string) => {
     setBusy(key);
     try {
       await fn();
       toast.success(ok);
+      playSound("success");
     } catch {
+      playSound("error");
       toast.error("That did not complete", "You may have closed the window, or the provider declined. Nothing was changed.");
     } finally {
       setBusy(null);
@@ -51,20 +85,21 @@ function Account() {
           </div>
           <div>
             <dt className="eyebrow">Email</dt>
-            <dd className="mt-2 font-semibold">{user?.email?.address ?? user?.google?.email ?? "Not linked"}</dd>
+            <dd className="mt-2 flex items-center gap-2"><span className="min-w-0 truncate font-semibold">{user?.email?.address ?? user?.google?.email ?? "Not linked"}</span>{(user?.email?.address ?? user?.google?.email) && <CopyButton value={(user?.email?.address ?? user?.google?.email) as string} label="Copy" what="Email copied" />}</dd>
           </div>
         </dl>
       </Section>
 
       <Section title="Sign-in methods" description="Link more than one so you can always get back in. The last method cannot be removed.">
+        <p className="mb-2 flex items-center gap-2 text-xs font-semibold text-soft"><span className="num">{rows.filter((r) => !r.leaving).length}</span> linked{!removable && <Tip label="Why can I not remove it?">Add another sign-in method first. The last one stays so you can never lock yourself out.</Tip>}</p>
         <ul className="divide-y divide-[var(--line-1)]">
-          {accounts.filter((a) => ["email", "wallet", "google_oauth"].includes(a.type)).map((a) => {
-            const label = a.type === "email" ? a.address : a.type === "wallet" ? `${a.address?.slice(0, 6)}…${a.address?.slice(-4)}` : a.email ?? a.name ?? "Google account";
+          {rows.map(({ key, acct: a, label, leaving }) => {
             const Icon = a.type === "wallet" ? Wallet : Mail;
+            const busyKey = `u-${key}`;
             return (
-              <li key={`${a.type}-${a.address ?? a.subject}`} className="flex items-center justify-between gap-3 py-3">
-                <span className="flex min-w-0 items-center gap-3"><Icon size={17} className="shrink-0 text-muted" aria-hidden="true" /><span className="min-w-0"><span className="block truncate text-sm font-semibold">{label}</span><span className="block text-xs capitalize text-muted">{a.type === "google_oauth" ? "Google" : a.type}</span></span></span>
-                <Button size="sm" variant="ghost" disabled={!removable} loading={busy === `u-${a.type}-${a.address ?? a.subject}`} title={removable ? "Remove this sign-in method" : "Add another method before removing this one"} onClick={() => run(`u-${a.type}-${a.address ?? a.subject}`, () => (a.type === "email" ? unlinkEmail(a.address as string) : a.type === "wallet" ? unlinkWallet(a.address as string) : unlinkGoogle(a.subject as string)), "Sign-in method removed")}><Unlink size={14} /> Remove</Button>
+              <li key={key} className="method-row flex items-center justify-between gap-3 py-3" data-leaving={leaving ? "true" : undefined}>
+                <span className="flex min-w-0 items-center gap-3"><Icon size={17} className="shrink-0 text-muted" aria-hidden="true" /><span className="min-w-0"><span className="block truncate text-sm font-semibold">{label}</span><span className="flex items-center gap-1.5 text-xs capitalize text-muted"><span className="status-dot" aria-hidden="true" />{a.type === "google_oauth" ? "Google" : a.type} · Active</span></span></span>
+                <Button size="sm" variant="ghost" disabled={!removable || leaving} loading={busy === busyKey} title={removable ? "Remove this sign-in method" : "Add another method before removing this one"} onClick={() => run(busyKey, () => (a.type === "email" ? unlinkEmail(a.address as string) : a.type === "wallet" ? unlinkWallet(a.address as string) : unlinkGoogle(a.subject as string)), "Sign-in method removed")}><Unlink size={14} /> Remove</Button>
               </li>
             );
           })}

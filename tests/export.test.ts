@@ -80,7 +80,7 @@ describe("listing journey", () => {
     const j = listingJourney("rejected", "Logo is not yours");
     expect(j[2]).toMatchObject({ state: "blocked", label: "Rejected", note: "Logo is not yours" });
     expect(listingJourney("draft", null)[2]).toMatchObject({ state: "blocked", label: "Changes requested" });
-    expect(listingJourney("suspended", "Policy")[4].state).toBe("blocked");
+    expect(listingJourney("suspended", "Policy")[4]?.state).toBe("blocked");
   });
 });
 

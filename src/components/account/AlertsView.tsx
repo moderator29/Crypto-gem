@@ -9,7 +9,7 @@ import { TokenLogo } from "@/components/ui/TokenLogo";
 import { useToast } from "@/components/ui/Toast";
 import { getNetwork } from "@/lib/market-data/networks";
 import { accountCall, useAccountFetch } from "@/lib/useAccountFetch";
-import { priceUsd } from "@/lib/utils/format";
+import { ageShort, priceUsd } from "@/lib/utils/format";
 
 interface Alert { id: string; network_id: string; address: string; symbol: string | null; name: string | null; direction: "above" | "below"; price_usd: number; triggered_at: string | null; triggered_price: number | null }
 interface Hit { networkId: string; address: string; name: string; symbol: string; imageUrl: string | null; priceUsd: number | null }
@@ -38,6 +38,13 @@ export function AlertsView() {
     }, 300);
     return () => clearTimeout(t);
   }, [q]);
+
+  const target = Number(price);
+  const typed = price.trim() !== "";
+  const invalid = typed && (!Number.isFinite(target) || target <= 0);
+  const ref = token?.priceUsd ?? null;
+  const gap = !invalid && typed && ref ? ((target - ref) / ref) * 100 : null;
+  const wrongSide = gap !== null && ((dir === "above" && gap <= 0) || (dir === "below" && gap >= 0));
 
   async function create() {
     const n = Number(price);
@@ -98,9 +105,12 @@ export function AlertsView() {
           {(["above", "below"] as const).map((d) => <button key={d} type="button" className="chip flex-1 justify-center" aria-pressed={dir === d} onClick={() => setDir(d)}>Price goes {d}</button>)}
         </div>
         <label className="block space-y-2 text-sm font-semibold">Target price (USD)
-          <input className="input num" inputMode="decimal" placeholder="0.00" value={price} onChange={(e) => setPrice(e.target.value)} />
+          <input className="input num" inputMode="decimal" placeholder="0.00" value={price} aria-invalid={invalid} aria-describedby="alert-hint" onChange={(e) => setPrice(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") void create(); }} />
         </label>
-        <button type="button" className="btn btn-primary w-full" disabled={busy} onClick={() => void create()}>{busy ? "Saving" : "Create alert"}</button>
+        <p id="alert-hint" className={`text-xs ${invalid || wrongSide ? "text-down" : "text-muted"}`} aria-live="polite">
+          {invalid ? "Enter a number above zero." : gap !== null && ref ? `${Math.abs(gap).toFixed(1)}% ${gap >= 0 ? "above" : "below"} the price when you searched (${priceUsd(ref)}).${wrongSide ? ` It is already past this target, so it may fire on the next check.` : ""}` : token ? "Current price was not available for this token." : "Pick a token to compare with its price."}
+        </p>
+        <button type="button" className="btn btn-primary w-full" disabled={busy || invalid} onClick={() => void create()}>{busy ? "Saving" : "Create alert"}</button>
         <p className="text-xs text-muted">Alerts use DEX pool prices and are checked every few minutes. They are not trading advice and not a guarantee of timing.</p>
       </section>
 
@@ -117,7 +127,7 @@ export function AlertsView() {
                   <Link href={`/token/${a.network_id}/${a.address}`} className="block truncate font-semibold hover:text-brand">{a.symbol ?? a.name ?? "Token"}</Link>
                   <span className="text-sm text-soft">{a.direction === "above" ? "Above" : "Below"} <span className="num font-semibold">{priceUsd(Number(a.price_usd))}</span></span>
                 </span>
-                <span className={`badge ${a.triggered_at ? "badge-up" : ""}`}>{a.triggered_at ? `Fired at ${priceUsd(a.triggered_price)}` : "Watching"}</span>
+                <span className={`badge ${a.triggered_at ? "badge-up" : ""}`}>{a.triggered_at ? `Fired at ${priceUsd(a.triggered_price)} · ${ageShort(a.triggered_at)} ago` : <><span className="status-dot !h-1.5 !w-1.5" aria-hidden="true" /> Watching</>}</span>
                 <button type="button" className="btn btn-icon btn-sm btn-ghost" aria-label={`Remove alert for ${a.symbol ?? "token"}`} onClick={() => void remove(a.id)}><Trash2 size={15} /></button>
               </li>
             ))}

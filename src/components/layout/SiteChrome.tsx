@@ -1,7 +1,7 @@
 "use client";
 
 import { LayoutGroup, motion } from "framer-motion";
-import { Menu, Search, X } from "lucide-react";
+import { Menu, PanelLeftClose, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -71,21 +71,21 @@ const GROUPS: NavGroup[] = [
 const SPRING = { type: "spring", stiffness: 420, damping: 38 } as const;
 
 /** The big navigation list. Used as the persistent desktop sidebar and inside the mobile drawer. */
-function NavList({ path, id }: { path: string; id: string }) {
+function NavList({ path, id, collapsed = false }: { path: string; id: string; collapsed?: boolean }) {
   return (
     <LayoutGroup id={id}>
       <nav aria-label="Primary" className="flex flex-col gap-5">
         {GROUPS.map((g, gi) => (
           <div key={gi} className="flex flex-col gap-0.5">
-            {g.title && <p className="eyebrow px-3 pb-1.5">{g.title}</p>}
+            {g.title && (collapsed ? <span className="mx-auto my-1.5 block h-px w-6 bg-[var(--line-2)]" aria-hidden="true" /> : <p className="eyebrow px-3 pb-1.5">{g.title}</p>)}
             {g.items.map((n) => {
               const active = (n.match ?? ((p) => p === n.href))(path);
               return (
-                <Link key={n.href} href={n.href} aria-current={active ? "page" : undefined} className={`nav-row relative flex min-h-12 items-center gap-3.5 rounded-xl px-3 text-[15px] font-semibold transition-colors ${active ? "text-text" : "text-soft hover:text-text"}`}>
+                <Link key={n.href} href={n.href} aria-current={active ? "page" : undefined} title={collapsed ? n.label : undefined} aria-label={collapsed ? n.label : undefined} className={`nav-row relative flex min-h-12 items-center gap-3.5 rounded-xl px-3 text-[15px] font-semibold transition-colors ${collapsed ? "justify-center" : ""} ${active ? "text-text" : "text-soft hover:text-text"}`}>
                   {active && <motion.span layoutId="nav-bg" transition={SPRING} className="absolute inset-0 rounded-xl bg-[var(--surface-3)] shadow-[inset_0_0_0_1px_var(--line-2)]" />}
                   {active && <motion.span layoutId="nav-bar" transition={SPRING} className="absolute inset-y-2.5 left-0 w-[3px] rounded-full bg-[var(--brand)]" />}
                   <span className={`relative z-10 grid h-8 w-8 place-items-center rounded-lg ${active ? "bg-[color-mix(in_srgb,var(--brand)_14%,transparent)] text-text" : "text-soft"}`}><NavIcon name={n.icon} size={21} /></span>
-                  <span className="relative z-10">{n.label}</span>
+                  {!collapsed && <span className="relative z-10">{n.label}</span>}
                 </Link>
               );
             })}
@@ -103,6 +103,34 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
   const [drawer, setDrawer] = useState(false);
   const drawerRef = useRef<HTMLElement>(null);
   const sound = useSoundPrefs();
+  const [rail, setRail] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => {
+      try {
+        setRail(window.localStorage.getItem("cg:rail") === "1");
+      } catch {
+        setRail(false);
+      }
+    }, 0);
+    const on = () => setScrolled(window.scrollY > 8);
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => {
+      clearTimeout(id);
+      window.removeEventListener("scroll", on);
+    };
+  }, []);
+  const toggleRail = () => {
+    setRail((r) => {
+      try {
+        window.localStorage.setItem("cg:rail", r ? "0" : "1");
+      } catch {
+        /* remembered for this visit only */
+      }
+      return !r;
+    });
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -147,7 +175,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
       <div className="aurora" aria-hidden="true" />
       <a href="#content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[200] focus:rounded-lg focus:bg-[var(--surface-3)] focus:px-4 focus:py-2 focus:text-sm focus:font-semibold">Skip to content</a>
 
-      <header className="site-header sticky top-0 z-50">
+      <header className={`site-header sticky top-0 z-50 transition-shadow duration-300 ${scrolled ? "shadow-[0_8px_30px_rgba(0,0,0,0.35)]" : ""}`}>
         <div className="mx-auto flex h-[var(--header-h)] max-w-[1640px] items-center gap-3 px-4">
           <button type="button" className="btn btn-icon xl:hidden" aria-label={t("menu.open")} aria-expanded={drawer} onClick={() => setDrawer(true)}>
             <Menu size={20} />
@@ -200,8 +228,12 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
       )}
 
       <div className="mx-auto flex w-full max-w-[1640px] items-start">
-        <aside aria-label="Site navigation" className="sticky top-[var(--header-h)] hidden h-[calc(100dvh-var(--header-h))] w-64 shrink-0 overflow-y-auto border-r border-line px-3 py-5 xl:block">
-          <NavList path={path} id="side-nav" />
+        <aside aria-label="Site navigation" className={`sticky top-[var(--header-h)] hidden h-[calc(100dvh-var(--header-h))] shrink-0 overflow-y-auto overflow-x-hidden border-r border-line py-5 transition-[width] duration-300 ease-out xl:block ${rail ? "w-[84px] px-2" : "w-64 px-3"}`}>
+          <NavList path={path} id="side-nav" collapsed={rail} />
+          <button type="button" onClick={toggleRail} aria-pressed={rail} aria-label={rail ? "Expand sidebar" : "Collapse sidebar"} className="btn btn-sm mt-6 w-full">
+            <span className={`transition-transform duration-300 ${rail ? "rotate-180" : ""}`} aria-hidden="true"><PanelLeftClose size={16} /></span>
+            {!rail && <span>Collapse</span>}
+          </button>
         </aside>
         <div className="min-w-0 flex-1">
           <main id="content" className="mx-auto w-full max-w-[1240px] px-4 pt-6 md:pt-8">{children}</main>

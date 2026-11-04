@@ -206,6 +206,10 @@ export function CampaignsView() {
   if (!data) return null;
   if (data.campaigns.length === 0) return <DashEmpty icon={Megaphone} title="No campaigns yet" description="Reserve a placement, preview it in place, and track measured results here." action={<ButtonLink href="/promotion" variant="primary">View placements</ButtonLink>} />;
   return (
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <ExportButton name="campaigns" headers={["Campaign", "Placement", "Status", "Starts (UTC)", "Ends (UTC)", "Impressions", "Clicks", "CTR %"]} rows={data.campaigns.map((c) => [c.headline ?? "", c.placement_id, c.status, c.starts_at, c.ends_at, c.impressions, c.clicks, c.impressions > 0 ? Number(((c.clicks / c.impressions) * 100).toFixed(2)) : null])} />
+      </div>
     <ul className="stagger grid gap-3">
       {data.campaigns.map((c) => {
         const ctr = c.impressions > 0 ? `${((c.clicks / c.impressions) * 100).toFixed(2)}%` : "—";
@@ -223,30 +227,81 @@ export function CampaignsView() {
         );
       })}
     </ul>
+    </div>
   );
 }
 
+/** Orders with a status filter, a paid total and CSV export. */
 export function PaymentsView() {
   const { data } = useDashboard();
+  const [filter, setFilter] = useState<"all" | "pending" | "paid">("all");
   if (!data) return null;
   if (data.orders.length === 0) return <DashEmpty icon={Wallet} title="No orders yet" description="Listings, boosts and campaigns you buy will appear here with their payment status." />;
+  const shown = data.orders.filter((o) => filter === "all" || o.status === filter);
+  const paidTotal = data.orders.filter((o) => o.status === "paid").reduce((t, o) => t + Number(o.price_usd), 0);
   return (
-    <ul className="stagger grid gap-3">
-      {data.orders.map((o) => (
-        <li key={o.id} className="card flex flex-wrap items-center justify-between gap-3 p-4">
-          <span><span className="block font-semibold capitalize">{o.kind.replace("_", " ")} <span className="num font-normal text-soft">· ${Number(o.price_usd).toLocaleString("en-US")}</span></span><span className="num mt-0.5 block text-xs text-muted">{fmt(o.created_at)}</span></span>
-          <span className="flex items-center gap-3"><Status s={o.status} />{o.status === "pending" && <ButtonLink href={`/pay/${o.id}`} size="sm" variant="primary">Pay</ButtonLink>}</span>
-        </li>
-      ))}
-    </ul>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="scroll-x" role="group" aria-label="Filter orders">
+          {(["all", "pending", "paid"] as const).map((k) => <button key={k} type="button" className="chip capitalize" aria-pressed={filter === k} onClick={() => setFilter(k)}>{k} <span className="num text-muted">{k === "all" ? data.orders.length : data.orders.filter((o) => o.status === k).length}</span></button>)}
+        </div>
+        <ExportButton name="orders" headers={["Order ID", "Type", "Amount (USD)", "Status", "Created (UTC)", "Paid (UTC)"]} rows={shown.map((o) => [o.id, o.kind.replace("_", " "), Number(o.price_usd), o.status, o.created_at, o.paid_at])} />
+      </div>
+      <p className="text-sm text-soft">Total paid <span className="num font-semibold text-text">${paidTotal.toLocaleString("en-US")}</span></p>
+      {shown.length === 0 && <p className="card-flat p-4 text-sm text-muted" role="status">No orders with this status.</p>}
+      <ul className="stagger grid gap-3">
+        {shown.map((o) => (
+          <li key={o.id} className="card flex flex-wrap items-center justify-between gap-3 p-4">
+            <span><span className="block font-semibold capitalize">{o.kind.replace("_", " ")} <span className="num font-normal text-soft">· ${Number(o.price_usd).toLocaleString("en-US")}</span></span><span className="num mt-0.5 block text-xs text-muted">{fmt(o.created_at)}</span></span>
+            <span className="flex items-center gap-3"><Status s={o.status} />{o.status === "pending" && <ButtonLink href={`/pay/${o.id}`} size="sm" variant="primary">Pay</ButtonLink>}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
+const VIEW_KEY = "cg:watch-view";
+const readView = (): "list" | "grid" => {
+  try {
+    return window.localStorage.getItem(VIEW_KEY) === "grid" ? "grid" : "list";
+  } catch {
+    return "list";
+  }
+};
+
+/** Watchlist as a list or card grid (remembered), with a quick filter, CSV export and remove. */
 export function WatchlistView() {
   const { watch, refresh } = useDashboard();
   const toast = useToast();
   const [busy, setBusy] = useState<string | null>(null);
+  const [view, setView] = useState<"list" | "grid">(readView);
+  const [q, setQ] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (e.key === "/" && !e.metaKey && !e.ctrlKey && t && !["INPUT", "TEXTAREA", "SELECT"].includes(t.tagName) && !t.isContentEditable) {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  const shown = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return needle ? watch.filter((i) => `${i.live?.name ?? ""} ${i.live?.symbol ?? ""} ${getNetwork(i.network)?.name ?? i.network}`.toLowerCase().includes(needle)) : watch;
+  }, [watch, q]);
   if (watch.length === 0) return <DashEmpty icon={Star} title="Your watchlist is empty" description="Use the Watch button on any token page to follow it here." action={<ButtonLink href="/markets" variant="primary">Browse markets</ButtonLink>} />;
+  const choose = (v: "list" | "grid") => {
+    setView(v);
+    try {
+      window.localStorage.setItem(VIEW_KEY, v);
+    } catch {
+      /* private mode: the choice applies for this visit only */
+    }
+  };
   const remove = async (network: string, address: string) => {
     const key = `${network}:${address}`;
     setBusy(key);
@@ -262,18 +317,52 @@ export function WatchlistView() {
       setBusy(null);
     }
   };
+  const removeBtn = (i: (typeof watch)[number]) => (
+    <Button icon size="sm" variant="ghost" aria-label={`Remove ${i.live?.symbol ?? "token"} from watchlist`} loading={busy === `${i.network}:${i.address}`} onClick={() => void remove(i.network, i.address)}><Trash2 size={15} /></Button>
+  );
   return (
-    <ul className="stagger grid gap-2">
-      {watch.map((i) => (
-        <li key={`${i.network}:${i.address}`} className="card flex items-center gap-3 p-3">
-          <Link href={`/token/${i.network}/${i.address}`} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg transition hover:opacity-90">
-            <TokenLogo src={i.live?.imageUrl} symbol={i.live?.symbol ?? "?"} size={42} />
-            <span className="min-w-0 flex-1"><span className="flex items-center gap-2"><span className="truncate font-semibold">{i.live?.name ?? "Token"}</span><ChainBadge networkId={i.network} size={16} /></span><span className="block truncate text-xs text-muted">{i.live?.symbol} · {getNetwork(i.network)?.name ?? i.network}</span></span>
-            <span className="num text-right text-sm"><span className="block font-semibold">{priceUsd(i.live?.priceUsd)}</span><span className="block text-xs text-muted">{usdCompact(i.live?.liquidityUsd)} liq</span></span>
-          </Link>
-          <Button icon size="sm" variant="ghost" aria-label={`Remove ${i.live?.symbol ?? "token"} from watchlist`} loading={busy === `${i.network}:${i.address}`} onClick={() => void remove(i.network, i.address)}><Trash2 size={15} /></Button>
-        </li>
-      ))}
-    </ul>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="relative min-w-0 flex-1 basis-48">
+          <span className="sr-only">Filter watchlist</span>
+          <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" aria-hidden="true" />
+          <input ref={searchRef} className="input !pl-9" placeholder="Filter by name, symbol or network (press /)" value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Escape") { setQ(""); e.currentTarget.blur(); } }} />
+        </label>
+        <div className="seg" role="group" aria-label="Layout">
+          <button type="button" aria-pressed={view === "list"} aria-label="List view" onClick={() => choose("list")}><List size={16} /></button>
+          <button type="button" aria-pressed={view === "grid"} aria-label="Card grid view" onClick={() => choose("grid")}><LayoutGrid size={16} /></button>
+        </div>
+        <ExportButton name="watchlist" headers={["Name", "Symbol", "Network", "Address", "Price (USD)", "Liquidity (USD)"]} rows={shown.map((i) => [i.live?.name ?? "", i.live?.symbol ?? "", getNetwork(i.network)?.name ?? i.network, i.address, i.live?.priceUsd ?? null, i.live?.liquidityUsd ?? null])} />
+      </div>
+      {shown.length === 0 && <p className="card-flat p-4 text-sm text-muted" role="status">Nothing matches that filter.</p>}
+      {view === "list" ? (
+        <ul className="stagger grid gap-2">
+          {shown.map((i) => (
+            <li key={`${i.network}:${i.address}`} className="card flex items-center gap-3 p-3">
+              <Link href={`/token/${i.network}/${i.address}`} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg transition hover:opacity-90">
+                <TokenLogo src={i.live?.imageUrl} symbol={i.live?.symbol ?? "?"} size={42} />
+                <span className="min-w-0 flex-1"><span className="flex items-center gap-2"><span className="truncate font-semibold">{i.live?.name ?? "Token"}</span><ChainBadge networkId={i.network} size={16} /></span><span className="block truncate text-xs text-muted">{i.live?.symbol} · {getNetwork(i.network)?.name ?? i.network}</span></span>
+                <span className="num text-right text-sm"><span className="block font-semibold">{priceUsd(i.live?.priceUsd)}</span><span className="block text-xs text-muted">{usdCompact(i.live?.liquidityUsd)} liq</span></span>
+              </Link>
+              {removeBtn(i)}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <ul className="watch-grid stagger">
+          {shown.map((i) => (
+            <li key={`${i.network}:${i.address}`} className="card hover-lift relative flex min-w-0 flex-col items-center gap-2 p-4 text-center">
+              <span className="absolute right-1 top-1">{removeBtn(i)}</span>
+              <Link href={`/token/${i.network}/${i.address}`} className="flex min-w-0 max-w-full flex-col items-center gap-2 rounded-lg">
+                <TokenLogo src={i.live?.imageUrl} symbol={i.live?.symbol ?? "?"} size={52} />
+                <span className="max-w-full truncate font-semibold">{i.live?.symbol ?? "Token"}</span>
+                <span className="flex max-w-full items-center gap-1.5 text-xs text-muted"><ChainBadge networkId={i.network} size={14} /><span className="truncate">{getNetwork(i.network)?.name ?? i.network}</span></span>
+                <span className="num text-sm font-bold">{priceUsd(i.live?.priceUsd)}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

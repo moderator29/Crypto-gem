@@ -1,12 +1,15 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, ImagePlus, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ImagePlus, Loader2, ScanLine } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { discount, PLACEMENTS, type Placement, type PlacementId } from "@/lib/ads/catalog";
-import { checkCreative, inspectImage } from "@/lib/ads/image";
+import { inspectImage } from "@/lib/ads/image";
 import { accessToken } from "@/lib/auth/client";
+import { evaluateCreative, type CreativeReport } from "@/lib/export/creativeCheck";
+import { CreativeChecklist } from "./CreativeChecklist";
+import { DeviceFrames } from "./DeviceFrames";
 import { PlacementPreview } from "./PlacementPreview";
 
 interface Method { id: string; label: string; provider_currency: string; network: string }
@@ -24,7 +27,8 @@ export function BookingWizard({ initial }: { initial: PlacementId }) {
   const [headline, setHeadline] = useState("");
   const [desktop, setDesktop] = useState<Pick | null>(null);
   const [mobile, setMobile] = useState<Pick | null>(null);
-  const [fileErr, setFileErr] = useState<{ desktop?: string; mobile?: string }>({});
+  const [checks, setChecks] = useState<{ desktop?: { name: string; report: CreativeReport }; mobile?: { name: string; report: CreativeReport } }>({});
+  const [safe, setSafe] = useState(false);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [methods, setMethods] = useState<Method[]>([]);
   const [currency, setCurrency] = useState("");
@@ -46,13 +50,15 @@ export function BookingWizard({ initial }: { initial: PlacementId }) {
     return () => ctrl.abort();
   }, [placement.id, effDays, start]);
 
+  /** Reads the chosen image, grades it against the slot, and keeps it only when nothing failed. */
   async function pickFile(variant: "desktop" | "mobile", f: File | undefined) {
     if (!f) return;
     const bytes = new Uint8Array(await f.arrayBuffer());
     const rec = variant === "desktop" ? placement.desktop : placement.mobile;
-    const res = checkCreative(inspectImage(bytes), bytes.length, rec);
-    setFileErr((e) => ({ ...e, [variant]: res.ok ? undefined : res.error }));
-    if (!res.ok) return;
+    const info = inspectImage(bytes);
+    const report = evaluateCreative({ kind: info?.kind ?? null, bytes: bytes.length, width: info?.width ?? 0, height: info?.height ?? 0 }, rec);
+    setChecks((c) => ({ ...c, [variant]: { name: f.name, report } }));
+    if (!report.ok) return;
     const next = { file: f, url: URL.createObjectURL(f) };
     (variant === "desktop" ? setDesktop : setMobile)((old) => {
       if (old) URL.revokeObjectURL(old.url);
@@ -62,7 +68,9 @@ export function BookingWizard({ initial }: { initial: PlacementId }) {
 
   const dc = discount(placement, effDays as 1);
   const price = placement.prices[effDays as 1] ?? null;
-  const ready = desktop && /^https:\/\/.+\..+/.test(destination) && currency && terms && avail?.available !== false && !busy;
+  const destOk = /^https:\/\/.+\..+/.test(destination);
+  const destBad = destination.trim() !== "" && destination.trim() !== "https://" && !destOk;
+  const ready = desktop && destOk && currency && terms && avail?.available !== false && !busy;
 
   async function submit() {
     if (!desktop) return;
@@ -87,7 +95,7 @@ export function BookingWizard({ initial }: { initial: PlacementId }) {
         <section className="card space-y-4 p-5" aria-label="Placement and dates">
           <h2 className="font-display text-lg font-bold">1. Placement and dates</h2>
           <div className="scroll-x" role="group" aria-label="Placement">
-            {PLACEMENTS.map((p) => <button key={p.id} type="button" className="chip" aria-pressed={placement.id === p.id} onClick={() => { setPlacement(p); setDesktop(null); setMobile(null); }}>{p.name}</button>)}
+            {PLACEMENTS.map((p) => <button key={p.id} type="button" className="chip" aria-pressed={placement.id === p.id} onClick={() => { setPlacement(p); setDesktop(null); setMobile(null); setChecks({}); }}>{p.name}</button>)}
           </div>
           <p className="text-sm text-soft">{placement.blurb}</p>
           <div className="grid grid-cols-3 gap-2" role="group" aria-label="Duration">
@@ -121,12 +129,13 @@ export function BookingWizard({ initial }: { initial: PlacementId }) {
                   <span className="min-w-0 flex-1 truncate">{pick ? pick.file.name : `Upload JPG, PNG or WebP, about ${rec.w}×${rec.h}, up to 2 MB`}</span>
                   <input type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" onChange={(e) => pickFile(v, e.target.files?.[0])} />
                 </label>
-                {fileErr[v] && <p className="text-xs text-down" role="alert">{fileErr[v]}</p>}
+                {checks[v] && <CreativeChecklist report={checks[v].report} name={checks[v].name} />}
               </div>
             );
           })}
-          <label className="block"><span className="mb-1 block text-sm font-semibold">Destination URL (https)</span><input className="input" inputMode="url" value={destination} onChange={(e) => setDestination(e.target.value)} /></label>
-          <label className="block"><span className="mb-1 block text-sm font-semibold">Headline (optional, used as image description)</span><input className="input" maxLength={80} value={headline} onChange={(e) => setHeadline(e.target.value)} /></label>
+          <label className="block"><span className="mb-1 block text-sm font-semibold">Destination URL (https)</span><input className="input" inputMode="url" autoComplete="url" value={destination} aria-invalid={destBad} aria-describedby="dest-hint" onChange={(e) => setDestination(e.target.value)} />
+            <span id="dest-hint" className={`mt-1 block text-xs ${destBad ? "text-down" : destOk ? "text-up" : "text-muted"}`}>{destBad ? "Use a full link that starts with https:// and has a domain." : destOk ? "Looks good." : "Where visitors land when they click."}</span></label>
+          <label className="block"><span className="mb-1 flex items-center justify-between text-sm font-semibold">Headline (optional, used as image description)<span className="num text-xs font-normal text-muted">{headline.length}/80</span></span><input className="input" maxLength={80} value={headline} onChange={(e) => setHeadline(e.target.value)} /></label>
           <p className="text-xs text-muted">Creatives are reviewed before going live. Misleading claims, unsafe links and impersonation are rejected without refund of the review.</p>
         </section>
 
@@ -150,16 +159,22 @@ export function BookingWizard({ initial }: { initial: PlacementId }) {
         </section>
       </div>
 
-      <aside className="lg:sticky lg:top-20 lg:self-start">
+      <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
         <div className="card space-y-3 p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <h2 className="font-display text-lg font-bold">Live preview</h2>
             <div className="inline-flex rounded-full border border-line p-1" role="group" aria-label="Preview device">
               {(["desktop", "mobile"] as const).map((d) => <button key={d} type="button" aria-pressed={device === d} onClick={() => setDevice(d)} className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${device === d ? "bg-[var(--bg-elev)] text-text" : "text-muted"}`}>{d}</button>)}
             </div>
           </div>
-          <PlacementPreview placement={placement.id} device={device} creative={device === "mobile" ? (mobile ?? desktop)?.url : desktop?.url} />
+          <PlacementPreview placement={placement.id} device={device} creative={device === "mobile" ? (mobile ?? desktop)?.url : desktop?.url} safeArea={safe} />
           <p className="text-xs text-muted">Recommended {device === "desktop" ? `${placement.desktop.w}×${placement.desktop.h}` : `${placement.mobile.w}×${placement.mobile.h}`}. Where: {placement.where}.</p>
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold"><input type="checkbox" className="h-4 w-4" checked={safe} onChange={(e) => setSafe(e.target.checked)} /> <ScanLine size={15} aria-hidden="true" /> Show safe area</label>
+        </div>
+        <div className="card space-y-3 p-4">
+          <h2 className="font-display text-lg font-bold">Your creative on each device</h2>
+          {desktop || mobile ? <DeviceFrames desktop={placement.desktop} mobile={placement.mobile} desktopUrl={desktop?.url ?? null} mobileUrl={(mobile ?? desktop)?.url ?? null} alt={headline || "Your creative"} safe={safe} /> : <p className="text-sm text-muted">Add an image to see it in a browser and phone frame at the recommended sizes.</p>}
+          <p className="text-xs text-muted">The safe area marks where text and logos stay clear of edge trimming.</p>
         </div>
       </aside>
     </div>
