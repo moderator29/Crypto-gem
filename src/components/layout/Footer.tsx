@@ -6,7 +6,7 @@ export async function Footer() {
   const { t } = await getT();
   return (
     <footer className="mx-auto mt-12 w-full max-w-[1240px] px-4">
-      <div className="card grid gap-8 p-6 md:grid-cols-[1.4fr_1fr_1fr] md:p-8">
+      <div className="card grid gap-8 p-6 md:grid-cols-[1.4fr_1fr_1fr_1fr] md:p-8">
         <div className="space-y-3">
           <Logo />
           <p className="max-w-sm text-sm text-soft">{t("footer.tagline")}</p>
@@ -26,6 +26,15 @@ export async function Footer() {
           <Link className="block text-soft transition hover:text-text" href="/promotion">{t("footer.bookAds")}</Link>
           <Link className="block text-soft transition hover:text-text" href="/dashboard">{t("nav.dashboard")}</Link>
           <Link className="block text-soft transition hover:text-text" href="/settings">{t("nav.settings")}</Link>
+        </nav>
+        <nav aria-label="Resources" className="space-y-2 text-sm">
+          <h3 className="eyebrow mb-3">Resources</h3>
+          <Link className="block text-soft transition hover:text-text" href="/tools">Trader tools</Link>
+          <Link className="block text-soft transition hover:text-text" href="/learn">Learn</Link>
+          <Link className="block text-soft transition hover:text-text" href="/help">Help</Link>
+          <Link className="block text-soft transition hover:text-text" href="/status">Data status</Link>
+          <Link className="block text-soft transition hover:text-text" href="/changelog">Changelog</Link>
+          <Link className="block text-soft transition hover:text-text" href="/contact">Contact</Link>
         </nav>
       </div>
       <p className="flex flex-wrap items-center justify-center gap-x-4 pt-6 text-xs text-muted"><Link href="/about" className="hover:text-text">About</Link><Link href="/privacy" className="hover:text-text">Privacy</Link><Link href="/terms" className="hover:text-text">Terms</Link></p>

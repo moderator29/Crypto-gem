@@ -41,6 +41,29 @@ export default function BoostPage() {
 
       <BoostProjects />
 
+      <section aria-label="Compare packs" className="reveal space-y-4">
+        <div><p className="eyebrow">Compare</p><h2 className="h2 mt-2">Every pack side by side</h2></div>
+        <div className="card overflow-x-auto">
+          <table className="w-full min-w-[640px] text-sm">
+            <thead>
+              <tr className="border-b border-line text-left">
+                <th scope="col" className="sticky left-0 bg-[var(--surface-1)] px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-muted">Pack</th>
+                {BOOST_PACKS.map((b) => <th key={b.id} scope="col" className="px-4 py-3 font-semibold">{b.name}{b.label && <span className="badge badge-brand ml-2">{b.label}</span>}</th>)}
+              </tr>
+            </thead>
+            <tbody className="[&_td]:px-4 [&_td]:py-3 [&_th]:px-4 [&_th]:py-3 [&_tr]:border-b [&_tr]:border-line [&_tr:last-child]:border-0">
+              <tr><th scope="row" className="sticky left-0 bg-[var(--surface-1)] text-left font-medium text-muted">Price</th>{BOOST_PACKS.map((b) => <td key={b.id} className="num font-bold">${b.priceUsd.toLocaleString("en-US")}</td>)}</tr>
+              <tr><th scope="row" className="sticky left-0 bg-[var(--surface-1)] text-left font-medium text-muted">Boost points</th>{BOOST_PACKS.map((b) => <td key={b.id} className="num">{b.credits.toLocaleString("en-US")}</td>)}</tr>
+              <tr><th scope="row" className="sticky left-0 bg-[var(--surface-1)] text-left font-medium text-muted">Duration</th>{BOOST_PACKS.map((b) => <td key={b.id}>{duration(b.hours)}</td>)}</tr>
+              <tr><th scope="row" className="sticky left-0 bg-[var(--surface-1)] text-left font-medium text-muted">Price per day</th>{BOOST_PACKS.map((b) => <td key={b.id} className="num">${(Math.round((b.priceUsd / (b.hours / 24)) * 100) / 100).toLocaleString("en-US")}</td>)}</tr>
+              <tr><th scope="row" className="sticky left-0 bg-[var(--surface-1)] text-left font-medium text-muted">Rotation priority</th>{BOOST_PACKS.map((b) => <td key={b.id}><span className="inline-flex items-center gap-1.5"><span className="num font-semibold">{b.priority}</span><span className="flex gap-0.5" aria-hidden="true">{Array.from({ length: 6 }, (_, i) => <i key={i} className={`h-1.5 w-2 rounded-sm ${i < b.priority ? "bg-[var(--brand)]" : "bg-[var(--surface-3)]"}`} />)}</span></span></td>)}</tr>
+              <tr><th scope="row" className="sticky left-0 bg-[var(--surface-1)] text-left font-medium text-muted">Strip card</th>{BOOST_PACKS.map((b) => <td key={b.id}>{b.priority >= 5 ? "Premium" : b.priority >= 4 ? "Wide highlight" : b.priority >= 3 ? "Highlight" : "Standard"}</td>)}</tr>
+              <tr><th scope="row" className="sticky left-0 bg-[var(--surface-1)] text-left font-medium text-muted">Boosted badge</th>{BOOST_PACKS.map((b) => <td key={b.id}><Check size={16} className="text-up" aria-label="Included" /></td>)}</tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <section aria-label="Boost packs" className="reveal space-y-4">
         <div className="flex items-end justify-between gap-3">
           <div><p className="eyebrow">Packs</p><h2 className="h2 mt-2">Six packs, one clear price each</h2></div>

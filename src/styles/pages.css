@@ -1,1 +1,15 @@
 /* Page-level styles for the second worker's areas. Keep selectors specific to the page or component they belong to. */
+
+/* Empty-state artwork: a slow orbit ring around a floating icon. */
+.art-orbit { transform-origin: 60px 60px; animation: art-spin 18s linear infinite; }
+.art-orbit-rev { transform-origin: 60px 60px; animation: art-spin 26s linear infinite reverse; }
+.art-twinkle { animation: art-twinkle 2.6s ease-in-out infinite; }
+.art-twinkle:nth-of-type(2) { animation-delay: 0.9s; }
+.art-twinkle:nth-of-type(3) { animation-delay: 1.7s; }
+@keyframes art-spin { to { transform: rotate(360deg); } }
+@keyframes art-twinkle { 0%, 100% { opacity: 0.25; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.15); } }
+@media (prefers-reduced-motion: reduce) { .art-orbit, .art-orbit-rev, .art-twinkle { animation: none; } }
+
+/* Timeline rail for activity lists. */
+.timeline { position: relative; }
+.timeline::before { content: ""; position: absolute; left: 15px; top: 8px; bottom: 8px; width: 1px; background: linear-gradient(var(--line-2), transparent); }

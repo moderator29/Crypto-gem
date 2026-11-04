@@ -46,7 +46,7 @@
 @keyframes fx-spin { to { --ang: 360deg; } }
 
 /* Aurora mesh for hero areas */
-.fx-aurora { position: absolute; inset: -20% -10% auto -10%; height: 120%; pointer-events: none; z-index: 0; filter: blur(60px); opacity: 0.9; }
+.fx-aurora { position: absolute; inset: -4% -10% auto -10%; height: 520px; pointer-events: none; z-index: -1; filter: blur(60px); opacity: 0.9; }
 .fx-aurora i { position: absolute; border-radius: 999px; }
 .fx-aurora i:nth-child(1) { width: 46%; height: 70%; left: 4%; top: 0; background: var(--aurora-a); animation: fx-drift-a 16s ease-in-out infinite alternate; }
 .fx-aurora i:nth-child(2) { width: 38%; height: 60%; right: 6%; top: 10%; background: var(--aurora-b); animation: fx-drift-b 19s ease-in-out infinite alternate; }
@@ -73,3 +73,12 @@
   .fx-aurora i, .fx-float, .fx-ring::after, .fx-border::before, .fx-divider, .fx-bounce { animation: none; }
   .fx-tilt { transform: none; }
 }
+
+/* Gauge and donut entrances */
+.fx-gauge { animation: fx-gauge 1.2s var(--ease-out) both; }
+@keyframes fx-gauge { from { stroke-dashoffset: 251; } }
+.fx-needle { transition: transform 1.2s var(--ease-out); animation: fx-needle 1.2s var(--ease-out) both; }
+@keyframes fx-needle { from { transform: rotate(-90deg); } }
+.fx-donut { animation: fx-donut 900ms var(--ease-out) both; transform-origin: 50% 50%; }
+@keyframes fx-donut { from { opacity: 0; stroke-dasharray: 0 300; } }
+@media (prefers-reduced-motion: reduce) { .fx-gauge, .fx-needle, .fx-donut { animation: none; } }

@@ -13,6 +13,8 @@ import "./globals.css";
 import "@/styles/fx.css";
 import "@/styles/pages.css";
 import { RouteProgress } from "@/components/fx/RouteProgress";
+import { BackToTop } from "@/components/fx/BackToTop";
+import { KeyboardShortcuts } from "@/components/fx/KeyboardShortcuts";
 import { SoundTaps } from "@/components/fx/SoundTaps";
 
 export const metadata: Metadata = {
@@ -43,6 +45,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <ToastProvider>
               <RouteProgress />
               <SoundTaps />
+              <KeyboardShortcuts />
+              <BackToTop />
               <SiteChrome footer={<Footer />}>{children}</SiteChrome>
             </ToastProvider>
           </AuthProvider>

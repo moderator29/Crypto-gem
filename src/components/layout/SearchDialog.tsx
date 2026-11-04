@@ -7,6 +7,8 @@ import { useEffect, useRef, useState } from "react";
 import { getNetwork } from "@/lib/market-data/networks";
 import { priceUsd, shortAddress, usdCompact } from "@/lib/utils/format";
 import { TokenLogo } from "@/components/ui/TokenLogo";
+import { NavIcon } from "@/components/ui/NavIcon";
+import { matchPages } from "./pages";
 
 interface Result {
   networkId: string;
@@ -88,6 +90,7 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
 
   if (!open) return null;
   const shown = q.trim().length < 2 ? [] : results;
+  const jumps = matchPages(q);
   return (
     <div className="fixed inset-0 z-[80] flex items-stretch justify-center bg-[var(--bg)] sm:items-start sm:bg-black/55 sm:p-3 sm:pt-[10vh] sm:backdrop-blur-sm" onMouseDown={onClose} role="dialog" aria-modal="true" aria-label="Search">
       <div ref={panelRef} className="flex w-full max-w-xl flex-col overflow-hidden bg-[var(--canvas)] sm:glass-float sm:!bg-[var(--surface-1)]" onMouseDown={(e) => e.stopPropagation()}>
@@ -97,13 +100,25 @@ export function SearchDialog({ open, onClose }: { open: boolean; onClose: () => 
           </button>
           <Search size={18} className="hidden text-muted sm:block" />
           <form className="flex-1" role="search" onSubmit={(e) => { e.preventDefault(); const v = q.trim(); if (v.length >= 2) { onClose(); router.push(`/search?q=${encodeURIComponent(v)}`); } }}>
-            <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search tokens" placeholder="Search name, symbol or paste a contract address" className="h-14 w-full bg-transparent text-base outline-none placeholder:text-muted" />
+            <input ref={inputRef} value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search tokens" placeholder="Search a token, paste a contract, or jump to a page" className="h-14 w-full bg-transparent text-base outline-none placeholder:text-muted" />
           </form>
           <button type="button" onClick={onClose} aria-label="Close search" className="hidden h-9 w-9 place-items-center rounded-full text-muted hover:text-text sm:grid">
             <X size={18} />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-2 sm:max-h-[60vh] sm:flex-none">
+          {jumps.length > 0 && (
+            <div className="mb-1">
+              <p className="px-3 pb-1 pt-2 text-[11px] font-bold uppercase tracking-widest text-muted">{q.trim() ? "Pages" : "Jump to"}</p>
+              {jumps.map((j) => (
+                <Link key={j.href} href={j.href} onClick={onClose} className="nav-row flex items-center gap-3 rounded-xl p-2.5 hover:bg-[var(--surface-2)]">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[var(--surface-3)] text-soft"><NavIcon name={j.icon} size={19} /></span>
+                  <span className="min-w-0 flex-1"><span className="block text-sm font-semibold">{j.label}</span><span className="block truncate text-xs text-muted">{j.hint}</span></span>
+                  <span aria-hidden="true" className="text-xs text-muted">↵</span>
+                </Link>
+              ))}
+            </div>
+          )}
           {state === "loading" && <div className="skeleton m-2 h-12" />}
           {state === "error" && <p className="p-4 text-sm text-down">Search is temporarily unavailable. Try again shortly.</p>}
           {state === "idle" && q.trim().length >= 2 && shown.length === 0 && (

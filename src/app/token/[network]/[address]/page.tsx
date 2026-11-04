@@ -11,6 +11,8 @@ import { WatchButton } from "@/components/dashboard/WatchButton";
 import { getBoostedKeys } from "@/lib/ads/boosted";
 import { NavIcon } from "@/components/ui/NavIcon";
 import { ShareButton } from "@/components/ui/ShareButton";
+import { ViewTracker } from "@/components/token/ViewTracker";
+import { BuyPanel } from "@/components/token/BuyPanel";
 import { RiskPanel } from "@/components/token/RiskPanel";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { TokenLogo } from "@/components/ui/TokenLogo";
@@ -62,6 +64,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
   const risks = marketRiskSignals(sorted);
   const isBoosted = (await getBoostedKeys().catch(() => new Set<string>())).has(`${net.id}:${canonical}`);
   const trade = tradeLinks(net.id, canonical, top?.address);
+  const solUsd = net.id === "solana" ? await geckoTerminal.token("solana", "So11111111111111111111111111111111111111112").then((t) => t.priceUsd).catch(() => null) : null;
   const explorer = explorerTokenUrl(net.id, canonical);
 
   // A listed (published) project can be voted on. Unlisted tokens have no listing row, so no vote button.
@@ -88,8 +91,11 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
     ["Pool age", ageShort(top?.createdAt)],
   ];
 
+  const ld = { "@context": "https://schema.org", "@type": "FinancialProduct", name: identity?.name ?? "Token", alternateName: identity?.symbol ?? undefined, description: `${identity?.name ?? "Token"} on ${net.name}: live price, liquidity, pools and risk signals.`, category: "Cryptocurrency", url: `/token/${net.id}/${canonical}` };
   return (
     <div className="space-y-4">
+      <ViewTracker network={net.id} address={canonical} symbol={identity?.symbol ?? "?"} name={identity?.name ?? "Token"} logo={identity?.imageUrl ?? null} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld).replace(/</g, "\\u003c") }} />
       <header className="card space-y-3 p-4 md:p-5">
         <div className="flex items-center gap-3 md:gap-4">
           <TokenLogo src={identity?.imageUrl} symbol={identity?.symbol ?? "?"} size={48} networkId={networkId} address={address} />
@@ -131,6 +137,22 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
           )}
         </div>
       </header>
+
+      {top && (
+        <section className="grid grid-cols-2 gap-2 md:grid-cols-5" aria-label="Price change">
+          {([["5m", top.change.m5], ["1h", top.change.h1], ["6h", top.change.h6], ["24h", top.change.h24]] as const).map(([k, v]) => (
+            <div key={k} className={`card-flat flex items-center justify-between px-3.5 py-2.5 ${v === null ? "" : v >= 0 ? "!border-[color-mix(in_srgb,var(--up)_30%,transparent)]" : "!border-[color-mix(in_srgb,var(--down)_30%,transparent)]"}`}>
+              <span className="text-xs font-semibold text-muted">{k}</span><Change v={v} />
+            </div>
+          ))}
+          {top.txns24h && top.txns24h.buys + top.txns24h.sells > 0 && (
+            <div className="card-flat col-span-2 px-3.5 py-2.5 md:col-span-1" title="Buys versus sells in the last 24 hours">
+              <div className="mb-1.5 flex justify-between text-[11px] font-semibold"><span className="text-up">{top.txns24h.buys.toLocaleString("en-US")} buys</span><span className="text-down">{top.txns24h.sells.toLocaleString("en-US")} sells</span></div>
+              <div className="flex h-1.5 overflow-hidden rounded-full bg-[var(--down)]"><div className="fx-fill bg-[var(--up)]" style={{ width: `${(top.txns24h.buys / (top.txns24h.buys + top.txns24h.sells)) * 100}%` }} /></div>
+            </div>
+          )}
+        </section>
+      )}
 
       {top ? <PriceChart networkId={net.id} pool={top.address} /> : <div className="card p-6 text-sm text-soft">No trading pool with chart data exists for this token yet.</div>}
 
@@ -192,25 +214,9 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
           <RiskPanel networkId={net.id} address={canonical} />
         </div>
 
-        <aside className="space-y-4">
-          <section className="card p-4" aria-label="Trade">
-            <h2 className="font-display text-lg font-bold">Trade</h2>
-            <p className="mb-3 mt-1 text-xs text-muted">Crypto Gems does not execute trades. You will leave this site and trade with your own wallet.</p>
-            {trade.length === 0 ? (
-              <p className="text-sm text-muted">No verified trading venue is available for this network yet.</p>
-            ) : (
-              <div className="grid gap-2">
-                {trade.map((t, i) => (
-                  <a key={t.url} href={t.url} target="_blank" rel="noopener noreferrer nofollow" className={`btn ${i === 0 ? "btn-primary" : ""}`}>
-                    {t.label} <ArrowUpRight size={15} />
-                  </a>
-                ))}
-              </div>
-            )}
-            <div className="mt-3">
-              <CopyButton value={canonical} label="Copy contract" />
-            </div>
-          </section>
+        <aside className="order-first space-y-4 lg:order-none">
+          <BuyPanel networkId={net.id} address={canonical} symbol={identity?.symbol ?? "token"} decimals={identity?.decimals ?? null} poolPriceUsd={price} solUsd={solUsd} links={trade} />
+          <div className="card flex items-center justify-between gap-2 p-3"><span className="text-xs text-muted">Contract</span><CopyButton value={canonical} label="Copy contract" /></div>
           {listing && <section className="card p-4" aria-label="Community vote"><h2 className="mb-2 font-display text-lg font-bold">Community favourite</h2><VoteButton submissionId={listing.id} initialVotes={listing.votes} /></section>}
           <Link href={`/copilot?network=${net.id}&address=${encodeURIComponent(canonical)}`} className="btn w-full"><Bot size={16} /> Ask the Copilot about this token</Link>
           <AvailableSlot placement="token-page" variant="card" />

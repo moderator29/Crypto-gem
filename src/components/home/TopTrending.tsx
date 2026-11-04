@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Flame } from "lucide-react";
 import Link from "next/link";
 import { useRef } from "react";
 import { useT } from "@/components/i18n/I18nProvider";
+import { Tilt } from "@/components/fx/Tilt";
 import { TokenLogo } from "@/components/ui/TokenLogo";
 import type { RankedPool } from "@/lib/market-data/home";
 import { getNetwork } from "@/lib/market-data/networks";
@@ -34,7 +35,8 @@ export function TopTrending({ items }: { items: RankedPool[] }) {
       </div>
       <div ref={ref} className="scroll-x pb-1">
         {items.slice(0, 12).map((p, i) => (
-          <Link key={p.id} href={`/token/${p.networkId}/${p.baseToken.address}`} className="card hover-lift w-[158px] shrink-0 snap-start overflow-hidden !rounded-2xl sm:w-[188px]">
+          <Tilt key={p.id} className="shrink-0 snap-start">
+          <Link href={`/token/${p.networkId}/${p.baseToken.address}`} className="card hover-lift block w-[158px] overflow-hidden !rounded-2xl sm:w-[188px]" style={{ animationDelay: `${i * 40}ms` }}>
             <div className="relative grid h-[88px] place-items-center bg-[radial-gradient(circle_at_50%_30%,var(--aurora-a),transparent_75%)] sm:h-[104px]">
               <TokenLogo src={p.baseToken.imageUrl} symbol={p.baseToken.symbol} size={64} networkId={p.networkId} address={p.baseToken.address} />
               <span className="num absolute left-2.5 top-2 rounded-full bg-black/40 px-2 py-0.5 text-[11px] font-bold text-warm backdrop-blur">#{i + 1}</span>
@@ -52,6 +54,7 @@ export function TopTrending({ items }: { items: RankedPool[] }) {
               </div>
             </div>
           </Link>
+          </Tilt>
         ))}
       </div>
     </section>

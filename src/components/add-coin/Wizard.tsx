@@ -1,5 +1,6 @@
 "use client";
 
+import { Meter } from "@/components/ui/Kit";
 import { TokenFinder } from "./TokenFinder";
 import { classifyAddress } from "@/lib/market-data/identifiers";
 import { AlertTriangle, ArrowLeft, BadgeCheck, CheckCircle2, Globe, Loader2, RefreshCw, Rocket, ScanSearch, Upload, X, Zap } from "lucide-react";
@@ -252,6 +253,11 @@ export function Wizard() {
                   <div key={k}><dt className="text-xs text-muted">{k}</dt><dd className="font-semibold">{v}</dd></div>
                 ))}
               </dl>
+              <div className="space-y-1.5" aria-label="Detection coverage">
+                <div className="flex items-center justify-between text-xs"><span className="font-semibold text-soft">Detection coverage</span><span className="num font-semibold">{Math.round(((13 - token.missing.length) / 13) * 100)}%</span></div>
+                <Meter value={((13 - token.missing.length) / 13) * 100} tone={token.missing.length <= 3 ? "up" : token.missing.length <= 7 ? "warm" : "down"} label="Detection coverage" />
+                <p className="text-[11px] text-muted">{token.providerNotes.filter((n) => n.status === "ok").length} of {token.providerNotes.length} data sources answered.</p>
+              </div>
               {token.missing.length > 0 && <p className="text-xs text-warm">Not found by any provider: {token.missing.join(", ")}. You will complete these next.</p>}
               <p className="text-[11px] text-muted">Sources: {token.providerNotes.map((n) => `${SOURCE_LABEL[n.provider] ?? n.provider} ${n.status === "ok" ? "ok" : n.status === "not_configured" ? "not configured" : n.status === "no_match" ? "no match" : "unavailable"}`).join(" · ")}</p>
               <button type="button" className="btn btn-primary w-full md:w-auto" onClick={useDetected}>Use these details</button>

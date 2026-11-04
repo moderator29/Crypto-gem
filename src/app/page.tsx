@@ -1,3 +1,7 @@
+import { chainPulse } from "@/lib/market-data/pulse";
+import { RecentlyViewed } from "@/components/home/RecentlyViewed";
+import { PulseStrip } from "@/components/home/PulseStrip";
+import { getFearGreed } from "@/lib/market-data/providers/fng";
 import { BannerStrip } from "@/components/home/BannerStrip";
 import { getPlacement } from "@/lib/ads/catalog";
 import { dexscreener } from "@/lib/market-data/providers/dexscreener";
@@ -19,22 +23,27 @@ export default async function HomePage() {
   } catch {
     data = null;
   }
+  const chains = data ? chainPulse(data.organic, data.fresh) : [];
   const [hero, featured, boosted] = await Promise.all([getActiveCampaigns("hero"), getActiveCampaigns("featured"), getBoostedProjects()]);
 
   const sideAds = await getActiveCampaigns("side");
   const campaigns = [...new Map([...hero, ...featured, ...sideAds].map((c) => [c.id, c])).values()];
   const boostedKeys = [...(await getBoostedKeys().catch(() => new Set<string>()))];
+  const fng = await getFearGreed();
   const demos = await dexscreener.bannerProfiles(3).catch(() => []);
   const featuredFrom = Math.min(...Object.values(getPlacement("featured")?.prices ?? { 1: 250 }).filter((v): v is number => v !== undefined));
 
   return (
-    <div className="space-y-5">
+    <div className="relative isolate space-y-5">
+      <div className="fx-aurora" aria-hidden="true"><i /><i /><i /></div>
       {data && <Ticker items={data.organic} />}
 
-      <BannerStrip campaigns={campaigns} demos={demos} from={featuredFrom} />
+      {data && data.organic.length > 0 && <PulseStrip data={data} chains={chains} fng={fng} />}
+      <RecentlyViewed />
+      <div className="reveal"><BannerStrip campaigns={campaigns} demos={demos} from={featuredFrom} /></div>
       <BoostedStrip items={boosted} />
-      <QuickLinks />
-      {data && <TopTrending items={data.organic} />}
+      <div className="reveal"><QuickLinks /></div>
+      {data && <div className="reveal"><TopTrending items={data.organic} /></div>}
 
       {data && data.organic.length > 0 ? <HomeBoard data={data} boosted={boostedKeys} /> : <p className="card p-8 text-center text-sm text-muted" role="status">Market data is temporarily unavailable. Lists return automatically when the provider does.</p>}
     </div>
