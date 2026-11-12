@@ -151,3 +151,21 @@ a.gloss-letter:hover { background: var(--surface-3); color: var(--text); }
 .gloss-letter[aria-current="true"] { background: var(--brand); color: #fff; }
 .gloss-letter[aria-disabled="true"] { color: var(--text-muted); opacity: 0.35; }
 .gloss-head { scroll-margin-top: 130px; padding-top: 8px; }
+
+/* Direct payments: accepted-asset chips, Express Listing rail, contact buttons. */
+.asset-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 4px 12px 4px 8px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--surface-2); font-size: 0.8125rem; font-weight: 700; color: var(--text); max-width: 100%; }
+.asset-chip-net { min-height: 30px; font-size: 0.75rem; font-weight: 600; color: var(--text-soft); }
+.asset-chip span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pay-cta { position: relative; overflow: hidden; }
+.pay-cta:not(:disabled)::after { content: ""; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.28) 50%, transparent 65%); transform: translateX(-120%); animation: pay-cta-shine 3.2s var(--ease-out) 1.2s infinite; pointer-events: none; }
+@keyframes pay-cta-shine { 60%, 100% { transform: translateX(120%); } }
+.express-rail { position: relative; border-radius: var(--r-lg, 20px); padding: 2px; background: linear-gradient(120deg, var(--brand), var(--warm), var(--up), var(--brand)); background-size: 300% 300%; animation: express-border 7s linear infinite; }
+.express-rail-inner { position: relative; border-radius: calc(var(--r-lg, 20px) - 2px); background: var(--surface-1); overflow: hidden; }
+.express-rail-inner::before { content: ""; position: absolute; inset: 0; background: radial-gradient(60% 120% at 0% 0%, color-mix(in srgb, var(--brand) 16%, transparent), transparent 70%); pointer-events: none; }
+.express-rail-inner > * { position: relative; }
+.express-bolt { background: linear-gradient(135deg, var(--brand), var(--brand-2, var(--brand))); box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 55%, transparent); animation: express-pulse 2.4s ease-out infinite; }
+@keyframes express-border { 0% { background-position: 0% 50%; } 100% { background-position: 300% 50%; } }
+@keyframes express-pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 55%, transparent); } 70%, 100% { box-shadow: 0 0 0 14px transparent; } }
+@media (prefers-reduced-motion: reduce) { .express-rail, .express-bolt, .pay-cta::after { animation: none; } .pay-cta::after { display: none; } }
+.admin-addr { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.admin-addr code { min-width: 0; flex: 1; overflow-wrap: anywhere; font-size: 0.75rem; }
