@@ -45,7 +45,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
 
   let body: ReactNode;
   if (!configured) {
-    body = <Notice>Sign-in is not configured in this environment (Privy app id missing), so the admin area cannot sign anyone in.</Notice>;
+    body = <Notice>CryptoGemCN has no accounts. Paid boosts and banners are managed in src/data/sponsored.ts and go live on the next deploy.</Notice>;
   } else if (me.loading) {
     body = <Loading />;
   } else if (me.status === 401) {

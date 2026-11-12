@@ -15,7 +15,7 @@ export default function PrivacyPage() {
       sections={[
         { id: "collect", title: "What we collect", body: (
           <>
-            <p>Account data. Sign-in is handled by Privy. We receive and store your Privy user id and the email address or wallet address you gave Privy to sign in.</p>
+            <p>Account data. There are no accounts. You never sign in, and we do not collect an email address or link a wallet to you.</p>
             <ul>
               <li>Listing and campaign data: project name, ticker, description, links, logo, contract address, contact email, chosen package and ad creative text and images.</li>
               <li>Payment records: the payment provider&apos;s payment id, amounts, currency, status and on-chain transaction hashes. We never see or store your private keys or seed phrase.</li>
@@ -33,12 +33,11 @@ export default function PrivacyPage() {
             <li>To prevent abuse and fraud, to rate-limit requests, and to meet legal obligations.</li>
           </ul>
         ) },
-        { id: "cookies", title: "Cookies and local storage", body: <p>We use browser storage only to remember your theme and language. We do not use advertising cookies or cross-site tracking. Privy may keep its own session storage to keep you signed in.</p> },
+        { id: "cookies", title: "Cookies and local storage", body: <p>We use browser storage only to remember your theme and language. We do not use advertising cookies or cross-site tracking.</p> },
         { id: "processors", title: "Who we share data with", body: (
           <>
             <p>We use these providers to run the service. Each receives only what its function needs.</p>
             <ul>
-              <li>Privy: sign-in and wallet authentication.</li>
               <li>Supabase: database host for application data and public image storage for logos.</li>
               <li>NOWPayments: payment processing for listings and campaigns.</li>
               <li>GeckoTerminal, CoinGecko and CoinMarketCap: market data lookups. These requests carry contract addresses and search terms, not your account identity.</li>

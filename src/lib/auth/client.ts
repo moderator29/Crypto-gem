@@ -1,17 +1,8 @@
 "use client";
 
-/**
- * Bridge so plain event handlers can fetch a fresh Privy access token without being
- * React hooks. AuthProvider registers the getter once Privy is ready.
- */
-let getter: (() => Promise<string | null>) | null = null;
-
-export function registerTokenGetter(fn: (() => Promise<string | null>) | null): void {
-  getter = fn;
-}
-
+/** No accounts exist on CryptoGemCN, so sign-in is never configured. */
 export function authConfigured(): boolean {
-  return Boolean(process.env.NEXT_PUBLIC_PRIVY_APP_ID);
+  return false;
 }
 
 const GUEST_KEY = "cg:guest-key";
@@ -39,13 +30,7 @@ export function guestToken(): string | null {
   return guestCache;
 }
 
-/** Credential for API calls: the Privy token when someone has signed in, otherwise the guest key. */
+/** Credential for API calls: this browser's guest key. */
 export async function accessToken(): Promise<string | null> {
-  try {
-    const t = await getter?.();
-    if (t) return t;
-  } catch {
-    /* fall back to the guest key */
-  }
   return guestToken();
 }

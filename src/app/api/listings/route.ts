@@ -11,10 +11,7 @@ const listingBody = listingInput.omit({ payCurrency: true });
 
 /** Creates a submission and its pending order. The buyer picks the asset on the payment page. Price is decided here, never by the client. */
 export async function POST(req: Request) {
-  const missing = ["NEXT_PUBLIC_PRIVY_APP_ID", "NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SECRET_KEY"].filter((k) => !process.env[k]);
-  if (missing.length > 0 || !supabaseConfigured()) {
-    return Response.json({ error: `Checkout is not live yet. Missing server configuration: ${missing.join(", ")}. See SETUP.md.` }, { status: 503 });
-  }
+  if (!supabaseConfigured()) return Response.json({ error: "Listings are paid on the checkout page.", checkout: "/checkout?kind=listing" }, { status: 410 });
   const rl = rateLimit(`listing:${clientKey(req)}`, 10, 60_000);
   if (!rl.ok) return Response.json({ error: "Too many requests" }, { status: 429, headers: { "Retry-After": String(rl.retryAfterSec) } });
 
