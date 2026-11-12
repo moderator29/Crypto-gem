@@ -5,6 +5,7 @@ export interface PageJump { href: string; label: string; hint: string; icon: Nav
 /** Pages reachable from the command palette. `keys` holds extra words people might type. */
 export const PAGE_JUMPS: PageJump[] = [
   { href: "/", label: "Discover", hint: "Home", icon: "home", keys: "home start" },
+  { href: "/trending", label: "Trending coins", hint: "Ranked coins, gainers, losers", icon: "heating", keys: "top gainers losers coins rank votes" },
   { href: "/markets", label: "Markets", hint: "Trending coins", icon: "markets", keys: "trending prices coins" },
   { href: "/markets/new", label: "New pairs", hint: "Fresh pools", icon: "fresh", keys: "new launches pools" },
   { href: "/markets/heating", label: "Heating up", hint: "Volume surges", icon: "heating", keys: "hot volume" },

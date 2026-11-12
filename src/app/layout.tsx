@@ -20,15 +20,17 @@ import { WelcomeTour } from "@/components/fx/WelcomeTour";
 import { SoundTaps } from "@/components/fx/SoundTaps";
 
 export const metadata: Metadata = {
-  title: { default: "Crypto Gems | Discover, analyse and promote crypto projects", template: "%s | Crypto Gems" },
+  title: { default: "CryptoGemCN | Discover, analyse and promote crypto projects", template: "%s | CryptoGemCN" },
   description: "Multi-chain token discovery, market intelligence, listings and promotion.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  openGraph: { siteName: "CryptoGemCN", images: [{ url: "/og.jpg", width: 1200, height: 630, alt: "CryptoGemCN" }] },
+  twitter: { card: "summary_large_image", images: ["/og.jpg"] },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#040612",
+  themeColor: "#08080a",
   colorScheme: "dark",
 };
 

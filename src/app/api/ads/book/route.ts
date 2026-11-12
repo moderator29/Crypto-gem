@@ -3,8 +3,6 @@ import { PLACEMENTS, getPlacement } from "@/lib/ads/catalog";
 import { priceFor } from "@/lib/ads/availability";
 import { findSlot, loadPlacement } from "@/lib/ads/booking";
 import { checkCreative, inspectImage } from "@/lib/ads/image";
-import { CheckoutError, createPaymentForOrder } from "@/lib/payments/checkout";
-import { isConfigured } from "@/lib/payments/nowpayments";
 import { supabaseAdmin, supabaseConfigured, userFromRequest } from "@/lib/supabase/admin";
 import { clientKey, rateLimit } from "@/lib/utils/rateLimit";
 
@@ -19,11 +17,11 @@ function fail(error: string, status = 422) {
 
 /**
  * Books an ad campaign. Multipart: placement, days, start (ISO date),
- * destination (https), headline, payCurrency, desktop file, optional mobile file.
+ * destination (https), headline, desktop file, optional mobile file.
  * Price, availability, creative checks and slot allocation are all decided here.
  */
 export async function POST(req: Request) {
-  if (!supabaseConfigured() || !isConfigured()) return fail("Booking is not live yet. See SETUP.md.", 503);
+  if (!supabaseConfigured()) return fail("Booking is not live yet. See SETUP.md.", 503);
   if (!rateLimit(`book:${clientKey(req)}`, 8, 60_000).ok) return fail("Too many requests", 429);
   const user = await userFromRequest(req);
   if (!user) return fail("Sign in to continue.", 401);
@@ -36,7 +34,6 @@ export async function POST(req: Request) {
   const start = Date.parse(text("start"));
   const destination = text("destination");
   const headline = text("headline").slice(0, 80);
-  const payCurrency = text("payCurrency");
   const desktop = form.get("desktop");
   const mobile = form.get("mobile");
 
@@ -49,7 +46,6 @@ export async function POST(req: Request) {
   } catch {
     return fail("Destination must be a valid https URL");
   }
-  if (!/^[a-z0-9]{2,20}$/.test(payCurrency)) return fail("Choose a payment option");
   if (!(desktop instanceof File)) return fail("Upload a desktop creative");
 
   const db = supabaseAdmin();
@@ -91,10 +87,5 @@ export async function POST(req: Request) {
   }
   const { data: order, error: oErr } = await db.from("orders").insert({ user_id: user.id, kind: "ad_campaign", ref_id: campaignId, price_usd: price }).select("id").single();
   if (oErr) return fail("Could not create the order", 500);
-  try {
-    await createPaymentForOrder(user.id, order.id, payCurrency);
-  } catch (e) {
-    return Response.json({ orderId: order.id, warning: e instanceof CheckoutError ? e.message : "Payment could not be created yet. Retry from the payment page." });
-  }
   return Response.json({ orderId: order.id });
 }

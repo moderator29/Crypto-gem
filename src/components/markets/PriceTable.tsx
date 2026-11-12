@@ -19,9 +19,10 @@ import { useListQuery } from "./listFilter";
 import { RowPreview, type PreviewAt } from "./RowPreview";
 import { Sparkline } from "./Sparkline";
 import { QuickAlert } from "@/components/account/QuickAlert";
+import { TokenVote } from "@/components/votes/TokenVote";
 import { WatchStar } from "./WatchStar";
 
-const COLS = "grid-cols-[32px_minmax(0,1fr)_auto_68px] md:grid-cols-[108px_32px_minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_132px]";
+const COLS = "grid-cols-[32px_minmax(0,1fr)_auto_84px] md:grid-cols-[108px_32px_minmax(0,1.7fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_190px]";
 
 /** Price that flashes green or red when a refresh changes it, with the change arrow bouncing in the new direction. */
 function LivePrice({ value }: { value: number | null }) {
@@ -177,7 +178,7 @@ export function PriceTable({ pools, startRank = 1, sorting, boosted }: { pools: 
         <span className="flex items-center justify-end gap-2 md:justify-start"><Head k="price" label="Price" sp={sorting} /><Head k="h24" label="24h" sp={sorting} /></span>
         <span className="hidden md:block"><Head k="cap" label="Cap / FDV" sp={sorting} /></span>
         <span className="hidden md:block"><Head k="volume" label="24h volume" sp={sorting} /></span>
-        <span className="text-right md:text-left">7d trend</span>
+        <span className="text-right">7d trend, votes</span>
       </div>
       {rows.length === 0 ? (
         <p className="flex items-center justify-center gap-2 px-4 py-12 text-sm text-muted"><SearchX size={16} aria-hidden="true" /> Nothing on this page matches &ldquo;{query}&rdquo;.</p>
@@ -217,7 +218,7 @@ export function PriceTable({ pools, startRank = 1, sorting, boosted }: { pools: 
                   <span className="text-xs text-muted">{p.fdvUsd && p.fdvUsd !== cap ? usdCompact(p.fdvUsd) : ""}</span>
                 </span>
                 <span className="num hidden text-sm font-semibold md:block">{usdCompact(p.volumeUsd.h24)}</span>
-                <span className="flex justify-end md:justify-start">{prefs.charts && <Sparkline network={p.networkId} pool={p.address} width={68} height={28} />}</span>
+                <span className="flex items-center justify-end gap-3">{prefs.charts && <span className="hidden md:block"><Sparkline network={p.networkId} pool={p.address} width={68} height={28} /></span>}<TokenVote network={p.networkId} address={t.address} /></span>
               </li>
             );
           })}

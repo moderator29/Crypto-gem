@@ -5,7 +5,7 @@ import { HelpCenter } from "@/components/learn/HelpCenter";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { FAQS } from "@/lib/content/help";
 
-export const metadata: Metadata = { title: "Help", description: "Answers about listings, Boost, banners, payments, accounts and data on Crypto Gems." };
+export const metadata: Metadata = { title: "Help", description: "Answers about listings, Boost, banners, payments, accounts and data on CryptoGemCN." };
 
 const OPTIONS = [
   { href: "/contact", icon: Mail, title: "Contact us", text: "Send a message by email and include your order number if you have one." },

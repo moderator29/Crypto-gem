@@ -4,7 +4,7 @@ import { BOOST_PACKS, LISTING_PACKAGES, PLACEMENTS } from "@/lib/ads/catalog";
 
 const minAd = Math.min(...PLACEMENTS.flatMap((p) => Object.values(p.prices).filter((v): v is number => typeof v === "number")));
 
-/** The three ways a project works with Crypto Gems, each leading to its own page. */
+/** The three ways a project works with CryptoGemCN, each leading to its own page. */
 export function ProjectsBand() {
   const items = [
     { href: "/add-coin", icon: PlusCircle, eyebrow: "List", title: "Get listed", text: "Paste your contract and we detect the chain, logo and market data. Review, pay, and track your application.", meta: `From $${LISTING_PACKAGES[0]?.priceUsd}`, cta: "Start a listing" },

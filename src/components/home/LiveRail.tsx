@@ -66,7 +66,7 @@ function SponsoredCard({ item, tab }: { item: RailItem; tab: number }) {
   );
 }
 
-/** Platform announcement: what Crypto Gems offers. Brand-tinted so it reads as ours, not market data and not an ad. */
+/** Platform announcement: what CryptoGemCN offers. Brand-tinted so it reads as ours, not market data and not an ad. */
 function PlatformCard({ item, tab }: { item: RailItem; tab: number }) {
   return (
     <Link href={item.href} tabIndex={tab} className="card card-lit hover-lift group relative flex h-full flex-col justify-between overflow-hidden p-4">

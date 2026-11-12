@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Crypto Gems",
-    short_name: "Crypto Gems",
+    name: "CryptoGemCN",
+    short_name: "CryptoGemCN",
     description: "Multi-chain token discovery, market intelligence, listings and promotion.",
     start_url: "/",
     display: "standalone",
@@ -11,8 +11,8 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#08080a",
     categories: ["finance", "news"],
     icons: [
-      { src: "/icon", sizes: "512x512", type: "image/png", purpose: "any" },
-      { src: "/icon", sizes: "512x512", type: "image/png", purpose: "maskable" },
+      { src: "/logo.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
     ],
     shortcuts: [
       { name: "Markets", url: "/markets" },

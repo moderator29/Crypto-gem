@@ -25,7 +25,6 @@ function ProfileCard({ b }: { b: BannerProfile }) {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={b.header} alt="" className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105" loading="lazy" referrerPolicy="no-referrer" />
       <span className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" aria-hidden="true" />
-      <span className="absolute left-2.5 top-2.5 rounded-md bg-black/65 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white/90 backdrop-blur">Demo · trending on DexScreener</span>
       <span className="absolute inset-x-3 bottom-2.5 flex items-center gap-2 text-white">
         <ChainBadge networkId={b.networkId} size={18} />
         <span className="truncate text-sm font-bold">{b.name}</span>

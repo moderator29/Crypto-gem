@@ -17,12 +17,16 @@ export function GemMark({ size = 28 }: { size?: number }) {
   );
 }
 
-export function Logo() {
+/** Brand logo (the supplied artwork) with the wordmark. */
+export function Logo({ mark = true }: { mark?: boolean }) {
   return (
     <span className="inline-flex items-center gap-2.5">
-      <GemMark />
+      {mark && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src="/logo-128.webp" alt="" width={36} height={36} className="h-9 w-9 shrink-0 rounded-xl object-cover shadow-[0_0_14px_var(--neon-glow)]" />
+      )}
       <span className="font-display text-[17px] font-bold tracking-tight">
-        Crypto<span className="neon-text">Gems</span>
+        CryptoGem<span className="neon-text">CN</span>
       </span>
     </span>
   );

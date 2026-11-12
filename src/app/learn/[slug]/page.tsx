@@ -37,8 +37,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
     dateModified: a.updated,
     datePublished: a.updated,
     mainEntityOfPage: `${site}/learn/${a.slug}`,
-    author: { "@type": "Organization", name: process.env.NEXT_PUBLIC_COMPANY_NAME?.trim() || "Crypto Gems" },
-    publisher: { "@type": "Organization", name: process.env.NEXT_PUBLIC_COMPANY_NAME?.trim() || "Crypto Gems" },
+    author: { "@type": "Organization", name: process.env.NEXT_PUBLIC_COMPANY_NAME?.trim() || "CryptoGemCN" },
+    publisher: { "@type": "Organization", name: process.env.NEXT_PUBLIC_COMPANY_NAME?.trim() || "CryptoGemCN" },
   };
   return (
     <div className="mx-auto w-full max-w-5xl">

@@ -61,7 +61,105 @@ interface RawCoin {
   };
 }
 
+export interface CoinRow {
+  id: string;
+  symbol: string;
+  name: string;
+  image: string | null;
+  rank: number | null;
+  priceUsd: number | null;
+  marketCapUsd: number | null;
+  volume24hUsd: number | null;
+  change1h: number | null;
+  change24h: number | null;
+  change7d: number | null;
+  spark: number[];
+}
+
+interface RawMarket {
+  id: string;
+  symbol: string;
+  name: string;
+  image?: string;
+  market_cap_rank?: number | null;
+  current_price?: number | null;
+  market_cap?: number | null;
+  total_volume?: number | null;
+  price_change_percentage_1h_in_currency?: number | null;
+  price_change_percentage_24h_in_currency?: number | null;
+  price_change_percentage_7d_in_currency?: number | null;
+  sparkline_in_7d?: { price?: number[] };
+}
+
+const toRow = (c: RawMarket): CoinRow => ({
+  id: c.id,
+  symbol: c.symbol.toUpperCase(),
+  name: c.name,
+  image: str(c.image),
+  rank: c.market_cap_rank ?? null,
+  priceUsd: num(c.current_price),
+  marketCapUsd: num(c.market_cap),
+  volume24hUsd: num(c.total_volume),
+  change1h: num(c.price_change_percentage_1h_in_currency),
+  change24h: num(c.price_change_percentage_24h_in_currency),
+  change7d: num(c.price_change_percentage_7d_in_currency),
+  spark: (c.sparkline_in_7d?.price ?? []).filter((n, i) => i % 4 === 0 && Number.isFinite(n)),
+});
+
 export const coingecko = {
+  /** Ranked coin list with 7 day sparklines in one call. `order` is market_cap_desc or volume_desc. */
+  async markets(order: "market_cap_desc" | "volume_desc", page: number, perPage: number): Promise<CoinRow[]> {
+    const raw = await cg<RawMarket[]>(`/coins/markets?vs_currency=usd&order=${order}&per_page=${perPage}&page=${page}&sparkline=true&price_change_percentage=1h,24h,7d`, 3 * 60_000);
+    return raw.map(toRow);
+  },
+
+  /** Coins CoinGecko users are searching for right now (about 15). Ids only; rows come from markets(). */
+  async trendingIds(): Promise<string[]> {
+    const raw = await cg<{ coins?: Array<{ item: { id: string } }> }>("/search/trending", 5 * 60_000);
+    return (raw.coins ?? []).map((c) => c.item.id);
+  },
+
+  async marketsByIds(ids: string[]): Promise<CoinRow[]> {
+    if (ids.length === 0) return [];
+    const raw = await cg<RawMarket[]>(`/coins/markets?vs_currency=usd&ids=${ids.map(encodeURIComponent).join(",")}&order=market_cap_desc&per_page=${Math.min(250, ids.length)}&page=1&sparkline=true&price_change_percentage=1h,24h,7d`, 3 * 60_000);
+    return raw.map(toRow);
+  },
+
+  /** Total number of active coins CoinGecko tracks, for the "N coins" counter. */
+  async activeCoins(): Promise<number | null> {
+    const raw = await cg<{ data?: { active_cryptocurrencies?: number } }>("/global", 10 * 60_000);
+    return num(raw.data?.active_cryptocurrencies);
+  },
+
+  /** Full detail for one coin: links, platforms (contracts) and market data. Null when CoinGecko has no such id. */
+  async coin(id: string) {
+    try {
+      const c = await cg<{
+        id: string; symbol: string; name: string; image?: { large?: string }; market_cap_rank?: number | null; categories?: string[];
+        description?: { en?: string }; links?: { homepage?: string[]; twitter_screen_name?: string; telegram_channel_identifier?: string; subreddit_url?: string; repos_url?: { github?: string[] } };
+        platforms?: Record<string, string>; genesis_date?: string | null;
+        market_data?: { current_price?: { usd?: number }; market_cap?: { usd?: number }; fully_diluted_valuation?: { usd?: number }; total_volume?: { usd?: number }; high_24h?: { usd?: number }; low_24h?: { usd?: number }; ath?: { usd?: number }; atl?: { usd?: number }; circulating_supply?: number; total_supply?: number; max_supply?: number; price_change_percentage_24h?: number; price_change_percentage_7d?: number; price_change_percentage_30d?: number; sparkline_7d?: { price?: number[] } };
+      }>(`/coins/${encodeURIComponent(id)}?localization=false&tickers=false&community_data=false&developer_data=false&sparkline=true`, 5 * 60_000);
+      const md = c.market_data;
+      return {
+        id: c.id, symbol: c.symbol.toUpperCase(), name: c.name, image: str(c.image?.large), rank: c.market_cap_rank ?? null, categories: (c.categories ?? []).slice(0, 5),
+        description: str(c.description?.en), website: str(c.links?.homepage?.[0]),
+        twitter: c.links?.twitter_screen_name ? `https://x.com/${c.links.twitter_screen_name}` : null,
+        telegram: c.links?.telegram_channel_identifier ? `https://t.me/${c.links.telegram_channel_identifier}` : null,
+        github: str(c.links?.repos_url?.github?.[0]), platforms: Object.fromEntries(Object.entries(c.platforms ?? {}).filter(([k, v]) => k && v)),
+        genesisDate: str(c.genesis_date),
+        priceUsd: num(md?.current_price?.usd), marketCapUsd: num(md?.market_cap?.usd), fdvUsd: num(md?.fully_diluted_valuation?.usd), volume24hUsd: num(md?.total_volume?.usd),
+        high24h: num(md?.high_24h?.usd), low24h: num(md?.low_24h?.usd), ath: num(md?.ath?.usd), atl: num(md?.atl?.usd),
+        circulating: num(md?.circulating_supply), totalSupply: num(md?.total_supply), maxSupply: num(md?.max_supply),
+        change24h: num(md?.price_change_percentage_24h), change7d: num(md?.price_change_percentage_7d), change30d: num(md?.price_change_percentage_30d),
+        spark: (md?.sparkline_7d?.price ?? []).filter((n, i) => i % 3 === 0 && Number.isFinite(n)),
+      };
+    } catch (err) {
+      if (err instanceof ProviderError && err.kind === "not_found") return null;
+      throw err;
+    }
+  },
+
   isKeyed: () => Boolean(process.env.COINGECKO_API_KEY),
 
   /** Look up a coin by asset-platform id and contract address. Returns null if CoinGecko does not list it. */

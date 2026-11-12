@@ -40,7 +40,7 @@ export function WelcomeTour() {
   const s = STEPS[i] as (typeof STEPS)[number];
   const last = i === STEPS.length - 1;
   return (
-    <Dialog open={open} onClose={close} variant="sheet" title="Welcome to Crypto Gems" description="A 30 second look at what you can do here." footer={<><button type="button" className="btn" onClick={close}>Skip</button>{i > 0 && <button type="button" className="btn" onClick={() => setI(i - 1)}>Back</button>}<button type="button" className="btn btn-primary" onClick={() => (last ? close() : setI(i + 1))}>{last ? "Start exploring" : "Next"}</button></>}>
+    <Dialog open={open} onClose={close} variant="sheet" title="Welcome to CryptoGemCN" description="A 30 second look at what you can do here." footer={<><button type="button" className="btn" onClick={close}>Skip</button>{i > 0 && <button type="button" className="btn" onClick={() => setI(i - 1)}>Back</button>}<button type="button" className="btn btn-primary" onClick={() => (last ? close() : setI(i + 1))}>{last ? "Start exploring" : "Next"}</button></>}>
       <div className="space-y-5">
         <Stepper steps={["Explore", "Alerts", "Check", "Launch"]} current={i} />
         <div key={i} className="fx-pop flex gap-4">

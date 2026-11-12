@@ -4,7 +4,7 @@ import { TocNav } from "@/components/learn/TocNav";
 export const LAST_UPDATED = "3 November 2026";
 
 export function companyName(): string {
-  return process.env.NEXT_PUBLIC_COMPANY_NAME?.trim() || "Crypto Gems";
+  return process.env.NEXT_PUBLIC_COMPANY_NAME?.trim() || "CryptoGemCN";
 }
 
 /** Contact email from env, or null so the page falls back to in-product support instead of a made-up address. */

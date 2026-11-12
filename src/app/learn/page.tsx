@@ -3,7 +3,7 @@ import { LearnIndex } from "@/components/learn/LearnIndex";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ARTICLES, readingMinutes } from "@/lib/content/learn";
 
-export const metadata: Metadata = { title: "Learn", description: "Plain-language guides to rug pulls, liquidity, slippage, wallet safety and how rankings and sponsored placements work on Crypto Gems." };
+export const metadata: Metadata = { title: "Learn", description: "Plain-language guides to rug pulls, liquidity, slippage, wallet safety and how rankings and sponsored placements work on CryptoGemCN." };
 
 export default function LearnPage() {
   const cards = ARTICLES.map((a) => ({ slug: a.slug, title: a.title, summary: a.summary, category: a.category, minutes: readingMinutes(a), text: `${a.title} ${a.summary}`.toLowerCase() + " " + a.blocks.map((b) => ("text" in b ? b.text : "items" in b ? b.items.join(" ") : "")).join(" ").toLowerCase() }));

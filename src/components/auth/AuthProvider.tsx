@@ -58,7 +58,7 @@ function Bridge({ children }: { children: React.ReactNode }) {
 
 /**
  * Privy handles sign-in (email code, wallet, Google). Embedded wallets are switched off:
- * Crypto Gems never creates or holds wallets for users. Without an app id the app runs
+ * CryptoGemCN never creates or holds wallets for users. Without an app id the app runs
  * signed-out and every protected action explains that sign-in is not configured.
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {

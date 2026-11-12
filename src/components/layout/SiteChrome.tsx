@@ -22,6 +22,7 @@ const GROUPS: NavGroup[] = [
   {
     title: "Markets",
     items: [
+      { href: "/trending", label: "Trending", icon: "heating", match: (p) => p.startsWith("/trending") || p.startsWith("/coin/") },
       { href: "/markets", label: "Markets", icon: "markets", match: (p) => p === "/markets" },
       { href: "/markets/new", label: "New pairs", icon: "fresh", match: (p) => p.startsWith("/markets/new") },
       { href: "/markets/heating", label: "Heating up", icon: "heating", match: (p) => p.startsWith("/markets/heating") },
@@ -181,7 +182,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
           <button type="button" className="btn btn-icon xl:hidden" aria-label={t("menu.open")} aria-expanded={drawer} onClick={() => setDrawer(true)}>
             <Menu size={20} />
           </button>
-          <Link href="/" aria-label="Crypto Gems home" className="mr-2 xl:w-56">
+          <Link href="/" aria-label="CryptoGemCN home" className="mr-2 xl:w-56">
             <Logo />
           </Link>
           <button type="button" onClick={() => setSearchOpen(true)} className="btn hidden !justify-start gap-3 text-muted sm:inline-flex sm:w-64 lg:w-96" aria-label="Search">

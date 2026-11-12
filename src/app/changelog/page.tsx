@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { RELEASES, type ChangeTag } from "@/lib/content/changelog";
 
-export const metadata: Metadata = { title: "Changelog", description: "What has changed on Crypto Gems, newest first." };
+export const metadata: Metadata = { title: "Changelog", description: "What has changed on CryptoGemCN, newest first." };
 
 const TONE: Record<ChangeTag, string> = { New: "badge-brand", Improved: "badge-up", Security: "badge-warn", Data: "" };
 const fmt = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });

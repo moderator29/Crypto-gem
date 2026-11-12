@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/ui/Logo";
+import { SITE } from "@/lib/site";
 import { getT } from "@/lib/i18n/server";
 
 export async function Footer() {
@@ -10,6 +11,11 @@ export async function Footer() {
         <div className="space-y-3">
           <Logo />
           <p className="max-w-sm text-sm text-soft">{t("footer.tagline")}</p>
+          <div className="flex flex-wrap gap-2 pt-1">
+            <a href={SITE.telegramChannel} target="_blank" rel="noopener noreferrer" className="btn btn-sm">Telegram channel</a>
+            <a href={SITE.weibo} target="_blank" rel="noopener noreferrer" className="btn btn-sm">Weibo</a>
+          </div>
+          <p className="pt-1 text-xs text-muted">Contact the team on Telegram: {SITE.admins.map((a, i) => <span key={a.handle}>{i > 0 && " · "}<a href={a.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-soft hover:text-text">{a.label}</a></span>)}</p>
           <p className="text-xs text-muted">Data from GeckoTerminal and CoinGecko. Not financial advice. Trades happen on external venues with your own wallet.</p>
         </div>
         <nav aria-label="Explore" className="space-y-2 text-sm">
@@ -38,7 +44,7 @@ export async function Footer() {
         </nav>
       </div>
       <p className="flex flex-wrap items-center justify-center gap-x-4 pt-6 text-xs text-muted"><Link href="/about" className="hover:text-text">About</Link><Link href="/privacy" className="hover:text-text">Privacy</Link><Link href="/terms" className="hover:text-text">Terms</Link></p>
-      <p className="pb-6 pt-2 text-center text-xs text-muted">©{new Date().getFullYear()} Crypto Gems</p>
+      <p className="pb-6 pt-2 text-center text-xs text-muted">©{new Date().getFullYear()} CryptoGemCN</p>
     </footer>
   );
 }

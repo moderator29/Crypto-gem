@@ -143,7 +143,7 @@ function Account() {
           <Button size="sm" loading={busy === "l-wallet"} onClick={() => run("l-wallet", () => linkWallet(), "Wallet linked")}><Wallet size={14} /> Link wallet</Button>
           <Button size="sm" loading={busy === "l-google"} onClick={() => run("l-google", () => linkGoogle(), "Google linked")}>Link Google</Button>
         </div>
-        <p className="mt-3 text-xs text-muted">Linking a wallet here proves you control it. Crypto Gems never holds your keys or funds.</p>
+        <p className="mt-3 text-xs text-muted">Linking a wallet here proves you control it. CryptoGemCN never holds your keys or funds.</p>
       </Section>
 
       <div id="preferences" className="scroll-mt-24"><PreferencesGroups /></div>

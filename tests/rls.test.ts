@@ -52,7 +52,7 @@ beforeAll(async () => {
 });
 
 describe("private data without a signed-in identity", () => {
-  const PRIVATE = ["watchlists", "watchlist_items", "saved_searches", "price_alerts", "notifications", "profiles", "user_roles", "orders", "payments", "payment_events", "exclusive_reservations", "ad_events", "community_votes", "ai_conversations", "ai_messages", "platform_settings", "admin_audit_logs", "moderation_notes"];
+  const PRIVATE = ["watchlists", "watchlist_items", "saved_searches", "price_alerts", "notifications", "profiles", "user_roles", "orders", "payments", "payment_events", "exclusive_reservations", "ad_events", "community_votes", "token_votes", "ai_conversations", "ai_messages", "platform_settings", "admin_audit_logs", "moderation_notes"];
 
   it("returns nothing to anonymous clients or to a token with no subject, even when rows exist", async () => {
     for (const t of PRIVATE) {

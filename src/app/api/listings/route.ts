@@ -1,6 +1,4 @@
 import { supabaseAdmin, supabaseConfigured, userFromRequest } from "@/lib/supabase/admin";
-import { CheckoutError, createPaymentForOrder } from "@/lib/payments/checkout";
-import { isConfigured as nowConfigured } from "@/lib/payments/nowpayments";
 import { detectToken } from "@/lib/detect/engine";
 import type { DetectedToken } from "@/lib/detect/types";
 import { checkContract, logoUrlAllowed, listingInput, packagePriceUsd } from "@/lib/listings";
@@ -8,10 +6,13 @@ import { clientKey, rateLimit } from "@/lib/utils/rateLimit";
 
 export const dynamic = "force-dynamic";
 
-/** Creates a submission, its order and a provider payment. Price is decided here, never by the client. */
+/** The shared listing schema without the retired payCurrency field. A client that still sends it is ignored. */
+const listingBody = listingInput.omit({ payCurrency: true });
+
+/** Creates a submission and its pending order. The buyer picks the asset on the payment page. Price is decided here, never by the client. */
 export async function POST(req: Request) {
-  const missing = ["NEXT_PUBLIC_PRIVY_APP_ID", "NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SECRET_KEY", "NOWPAYMENTS_API_KEY", "NOWPAYMENTS_IPN_SECRET"].filter((k) => !process.env[k]);
-  if (missing.length > 0 || !supabaseConfigured() || !nowConfigured()) {
+  const missing = ["NEXT_PUBLIC_PRIVY_APP_ID", "NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SECRET_KEY"].filter((k) => !process.env[k]);
+  if (missing.length > 0 || !supabaseConfigured()) {
     return Response.json({ error: `Checkout is not live yet. Missing server configuration: ${missing.join(", ")}. See SETUP.md.` }, { status: 503 });
   }
   const rl = rateLimit(`listing:${clientKey(req)}`, 10, 60_000);
@@ -20,10 +21,10 @@ export async function POST(req: Request) {
   const user = await userFromRequest(req);
   if (!user) return Response.json({ error: "Sign in to continue." }, { status: 401 });
 
-  const parsed = listingInput.safeParse(await req.json().catch(() => null));
+  const parsed = listingBody.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Check the form: " + parsed.error.issues.map((i) => i.path.join(".")).join(", ") }, { status: 422 });
   const input = parsed.data;
-  if (!logoUrlAllowed(input.form.logoUrl, user.id)) return Response.json({ error: "Logo must be uploaded through Crypto Gems or come from a detected provider." }, { status: 422 });
+  if (!logoUrlAllowed(input.form.logoUrl, user.id)) return Response.json({ error: "Logo must be uploaded through CryptoGemCN or come from a detected provider." }, { status: 422 });
   const contract = checkContract(input.network, input.address);
   if (!contract.ok) return Response.json({ error: contract.error }, { status: 422 });
 
@@ -57,12 +58,5 @@ export async function POST(req: Request) {
   const { data: order, error: orderErr } = await db.from("orders").insert({ user_id: user.id, kind: "listing", ref_id: sub.id, price_usd: price }).select("id").single();
   if (orderErr) return Response.json({ error: "Could not create the order." }, { status: 500 });
 
-  try {
-    await createPaymentForOrder(user.id, order.id, input.payCurrency);
-  } catch (e) {
-    // The order exists; the user can retry payment from the payment page.
-    if (!(e instanceof CheckoutError)) return Response.json({ orderId: order.id, warning: "Payment could not be created yet. Retry from the payment page." });
-    return Response.json({ orderId: order.id, warning: e.message });
-  }
   return Response.json({ orderId: order.id });
 }

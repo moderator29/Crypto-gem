@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { COPILOT_TOOLS, runTool } from "./tools";
 
-export const SYSTEM_PROMPT = `You are Crypto Gems Copilot, a research assistant for a multi-chain token discovery platform.
+export const SYSTEM_PROMPT = `You are CryptoGemCN Copilot, a research assistant for a multi-chain token discovery platform.
 
 Rules you must follow:
 - Use tools for every market fact: prices, liquidity, volume, rankings, pools, age. Never state live numbers from memory. If a tool returns no data or an error, say it is unavailable.
