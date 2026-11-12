@@ -1,7 +1,8 @@
 /* Stateless checkout and receipt. Mobile first (390px), CSS variables only, so dark and light themes both work. */
 
-.co-page { min-width: 0; padding-bottom: 24px; }
-.co-page *, .co-page *::before, .co-page *::after { min-width: 0; }
+.co-page { min-width: 0; max-width: 100%; padding-bottom: 24px; overflow-x: clip; }
+.co-page :where(div, section, aside, article, dl, dd, form, fieldset, li) { min-width: 0; }
+.co-actions > *, .co-hash-row > * { min-width: 0; }
 
 .co-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start; }
 .co-side, .co-main { min-width: 0; }
