@@ -1,16 +1,17 @@
 "use client";
 
-import { Check, ChevronDown, Clock, Loader2, ShieldCheck, Zap } from "lucide-react";
+import { ArrowRight, Check, ChevronDown, Clock, Loader2, ShieldCheck, Zap } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { CountUp } from "@/components/fx/CountUp";
 import { ChainBadge } from "@/components/ui/ChainBadge";
+import { ContactCard } from "@/components/ui/ContactCard";
 import { TokenLogo } from "@/components/ui/TokenLogo";
 import type { BoostPack } from "@/lib/ads/catalog";
 import { accessToken } from "@/lib/auth/client";
+import { AcceptedAssets } from "./AcceptedAssets";
 
-interface Method { id: string; label: string; provider_currency: string; network: string }
 interface Project { name: string; symbol: string; logo: string | null; network: string | null; networkId: string | null; address: string | null }
 
 const duration = (h: number) => (h >= 48 ? `${h / 24} days` : h === 24 ? "1 day" : `${h} hours`);
@@ -49,32 +50,33 @@ function StripPreview({ project, pack }: { project: Project; pack: BoostPack }) 
 export function BoostConfigurator({ submissionId, project, packs }: { submissionId: string; project: Project; packs: BoostPack[] }) {
   const router = useRouter();
   const [packId, setPackId] = useState(packs.find((p) => p.label === "Popular")?.id ?? packs[0]?.id ?? "");
-  const [methods, setMethods] = useState<Method[]>([]);
-  const [methodsState, setMethodsState] = useState<"loading" | "ok">("loading");
-  const [busy, setBusy] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "error" | "signin"; text: string } | null>(null);
   const [open, setOpen] = useState<number | null>(0);
   const pack = packs.find((p) => p.id === packId);
-  const payRef = useRef<HTMLDivElement>(null);
-  const toPay = () => payRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
 
-  useEffect(() => {
-    fetch("/api/payment-methods").then((r) => r.json()).then((j: { methods?: Method[] }) => { setMethods(j.methods ?? []); setMethodsState("ok"); }, () => setMethodsState("ok"));
-  }, []);
-
-  async function pay(currency: string) {
+  /** Creates the pending order for the chosen pack, then hands over to the payment page where the buyer picks the asset. */
+  async function pay() {
+    if (busy || !pack) return;
     setMsg(null);
-    setBusy(currency);
-    const jwt = await accessToken();
-    const res = await fetch("/api/boost/orders", { method: "POST", headers: { "content-type": "application/json", ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}) }, body: JSON.stringify({ submissionId, packId, payCurrency: currency }) });
-    const j = await res.json().catch(() => ({}));
-    setBusy(null);
-    if (res.status === 401) return setMsg({ kind: "signin", text: "Sign in so the boost is tied to your account." });
-    if (!res.ok) return setMsg({ kind: "error", text: j.error ?? "Could not start the payment." });
-    router.push(`/pay/${j.orderId}`);
+    setBusy(true);
+    try {
+      const jwt = await accessToken();
+      const res = await fetch("/api/boost/orders", { method: "POST", headers: { "content-type": "application/json", ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}) }, body: JSON.stringify({ submissionId, packId }) });
+      const j = (await res.json().catch(() => ({}))) as { orderId?: string; error?: string };
+      if (res.status === 401) {
+        setMsg({ kind: "signin", text: "Sign in so the boost is tied to your account." });
+      } else if (!res.ok || !j.orderId) {
+        setMsg({ kind: "error", text: j.error ?? "Could not start the payment. Try again." });
+      } else {
+        router.push(`/pay/${j.orderId}`);
+        return;
+      }
+    } catch {
+      setMsg({ kind: "error", text: "Network error. Check your connection and try again." });
+    }
+    setBusy(false);
   }
-
-  const groups = [...new Set(methods.map((m) => m.label))];
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-6 pb-24 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start lg:pb-0">
@@ -135,29 +137,21 @@ export function BoostConfigurator({ submissionId, project, packs }: { submission
           </dl>
         )}
 
-        <div ref={payRef} id="boost-pay" className="scroll-mt-24 space-y-3 border-t border-line pt-4">
+        <div id="boost-pay" className="scroll-mt-24 space-y-3 border-t border-line pt-4">
           <h3 className="eyebrow">Pay with crypto</h3>
-          {methodsState === "loading" && <div className="skeleton h-24" />}
-          {methodsState === "ok" && methods.length === 0 && <p className="card-flat p-3 text-sm text-soft">No payment options are enabled right now. They appear here once payments are configured and verified by an administrator.</p>}
-          {groups.map((g) => (
-            <div key={g} className="space-y-1.5">
-              <p className="text-xs font-semibold text-muted">{g}</p>
-              {methods.filter((m) => m.label === g).map((m) => (
-                <button key={m.id} type="button" disabled={busy !== null || !pack} onClick={() => void pay(m.provider_currency)} className="card-flat hover-lift flex min-h-12 w-full items-center justify-between px-4 text-left text-sm font-semibold disabled:opacity-60">
-                  <span>{m.label} · {m.network}</span>
-                  <span className="inline-flex items-center gap-1 text-brand">{busy === m.provider_currency && <Loader2 size={15} className="animate-spin" />} Pay →</span>
-                </button>
-              ))}
-            </div>
-          ))}
+          <AcceptedAssets />
+          <button type="button" className="btn btn-primary btn-lg pay-cta w-full" disabled={busy || !pack} onClick={() => void pay()}>
+            {busy ? <Loader2 size={18} className="animate-spin" aria-hidden="true" /> : <ArrowRight size={18} aria-hidden="true" />} Continue to payment{pack ? ` · ${usd(pack.priceUsd)}` : ""}
+          </button>
           {msg && <p className="card-flat p-3 text-sm" role={msg.kind === "error" ? "alert" : "status"}>{msg.text} {msg.kind === "signin" && <Link href={`/login?next=${encodeURIComponent(typeof location === "undefined" ? "/boost" : location.pathname)}`} className="font-semibold text-brand">Sign in</Link>}</p>}
-          <p className="flex items-center justify-center gap-2 text-center text-xs text-muted"><ShieldCheck size={14} aria-hidden="true" /> Activates only after the payment is verified by our server.</p>
+          <p className="flex items-center justify-center gap-2 text-center text-xs text-muted"><ShieldCheck size={14} aria-hidden="true" /> Activates only after the payment is verified on chain.</p>
+          <ContactCard variant="inline" title="Need help?" />
         </div>
       </aside>
       {pack && (
         <div className="boost-bar glass-float !rounded-2xl" role="region" aria-label="Selected pack">
           <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{pack.name} · {duration(pack.hours)}</span><span className="num block text-lg font-bold text-warm">$<CountUp value={pack.priceUsd} duration={500} /></span></span>
-          <button type="button" className="btn btn-primary" onClick={toPay}>Pay</button>
+          <button type="button" className="btn btn-primary pay-cta shrink-0" disabled={busy} onClick={() => void pay()}>{busy ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : null} Continue</button>
         </div>
       )}
     </div>

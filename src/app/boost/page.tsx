@@ -1,7 +1,9 @@
 import { Check, Clock, ShieldCheck, Zap } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ExpressRail } from "@/components/boost/ExpressRail";
 import { BoostProjects } from "@/components/boost/BoostProjects";
+import { ContactCard } from "@/components/ui/ContactCard";
 import { NavIcon } from "@/components/ui/NavIcon";
 import { BOOST_PACKS } from "@/lib/ads/catalog";
 
@@ -10,7 +12,7 @@ export const metadata: Metadata = { title: "Boost", description: "Sponsored visi
 const STEPS = [
   { n: "01", title: "Pick your coin", text: "Search the projects already listed on Crypto Gems." },
   { n: "02", title: "Choose a pack", text: "Six packs from $100. Longer packs rotate with higher priority." },
-  { n: "03", title: "Pay in crypto", text: "USDT or USDC through NOWPayments. Live after verified payment." },
+  { n: "03", title: "Pay in crypto", text: "USDT, USDC, ETH or BNB from your own wallet. Live after verified payment." },
 ] as const;
 
 const duration = (h: number) => (h >= 48 ? `${h / 24} days` : h === 24 ? "1 day" : `${h} hours`);
@@ -18,11 +20,12 @@ const duration = (h: number) => (h >= 48 ? `${h / 24} days` : h === 24 ? "1 day"
 export default function BoostPage() {
   return (
     <div className="space-y-8 md:space-y-12">
+      <ExpressRail />
       <header className="card card-lit relative overflow-hidden p-6 md:p-10">
         <span className="grid h-14 w-14 place-items-center rounded-2xl bg-[color-mix(in_srgb,var(--brand)_16%,transparent)]"><NavIcon name="boost" size={28} /></span>
         <p className="eyebrow mt-5">Trending promotion</p>
         <h1 className="h-display mt-3 max-w-[18ch]">Boost your project to the top</h1>
-        <p className="mt-4 max-w-2xl text-soft md:text-lg">Select a listed coin, choose a Boost pack and pay with USDT or USDC. Your boost starts automatically after payment is verified.</p>
+        <p className="mt-4 max-w-2xl text-soft md:text-lg">Select a listed coin, choose a Boost pack and pay in crypto. Your boost starts automatically after payment is verified.</p>
         <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-soft">
           <li className="flex items-center gap-2"><ShieldCheck size={16} className="text-up" aria-hidden="true" /> Clearly labelled as sponsored</li>
           <li className="flex items-center gap-2"><Clock size={16} className="text-up" aria-hidden="true" /> From 12 hours to 7 days</li>
@@ -40,6 +43,8 @@ export default function BoostPage() {
       </ol>
 
       <BoostProjects />
+
+      <ContactCard note="Want a custom boost, a bigger package or help choosing a coin? Message an admin directly on Telegram." />
 
       <section aria-label="Compare packs" className="reveal space-y-4">
         <div><p className="eyebrow">Compare</p><h2 className="h2 mt-2">Every pack side by side</h2></div>
@@ -77,7 +82,7 @@ export default function BoostPage() {
               </div>
               <div className="flex items-center gap-1.5 text-sm font-semibold text-soft"><Clock size={14} aria-hidden="true" /> {duration(b.hours)}</div>
               <ul className="flex-1 space-y-1.5 text-[13px] text-soft">{b.allocations.map((a) => <li key={a} className="flex gap-2"><Check size={13} className="mt-0.5 shrink-0 text-up" aria-hidden="true" /> {a}</li>)}</ul>
-              <div className="num text-3xl font-bold">${b.priceUsd.toLocaleString("en-US")}</div>
+              <div className="flex items-end justify-between gap-2"><span className="num text-3xl font-bold">${b.priceUsd.toLocaleString("en-US")}</span><a href="#boost-projects" className="btn btn-sm btn-primary">Boost a coin</a></div>
             </article>
           ))}
         </div>

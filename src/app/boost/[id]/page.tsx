@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BoostConfigurator } from "@/components/boost/BoostConfigurator";
+import { ContactCard } from "@/components/ui/ContactCard";
 import { TokenLogo } from "@/components/ui/TokenLogo";
 import { BOOST_PACKS, type BoostPack } from "@/lib/ads/catalog";
 import { getNetwork } from "@/lib/market-data/networks";
@@ -29,7 +30,7 @@ export default async function BoostProjectPage({ params }: { params: Promise<{ i
       <header className="card space-y-4 p-5">
         <div>
           <h1 className="font-display text-2xl font-bold">Boost Packs</h1>
-          <p className="text-sm text-soft">Pick a pack, choose a payment network and go live automatically after confirmation.</p>
+          <p className="text-sm text-soft">Pick a pack, continue to payment and go live automatically after on-chain confirmation.</p>
         </div>
         <div className="card-flat flex items-center gap-3 p-3">
           <TokenLogo src={p.logo_url} symbol={p.symbol} size={48} />
@@ -39,6 +40,7 @@ export default async function BoostProjectPage({ params }: { params: Promise<{ i
           </div>
         </div>
       </header>
+      <ContactCard variant="inline" title="Questions about this boost?" />
       <BoostConfigurator submissionId={p.id} project={{ name: p.name, symbol: p.symbol, logo: p.logo_url, network: getNetwork(p.network_id ?? "")?.name ?? null, networkId: p.network_id ?? null, address: p.address ?? null }} packs={packs} />
     </div>
   );

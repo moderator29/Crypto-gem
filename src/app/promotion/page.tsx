@@ -2,6 +2,8 @@ import { Check, Info, Layers, MousePointerClick, ShieldCheck, Timer } from "luci
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PlacementPreview } from "@/components/promotion/PlacementPreview";
+import { ExpressRail } from "@/components/boost/ExpressRail";
+import { ContactCard } from "@/components/ui/ContactCard";
 import { NavIcon } from "@/components/ui/NavIcon";
 import { discount, PLACEMENTS } from "@/lib/ads/catalog";
 
@@ -18,6 +20,7 @@ export default async function PromotionPage({ searchParams }: { searchParams: Pr
   const { placement } = await searchParams;
   return (
     <div className="space-y-8 md:space-y-12">
+      <ExpressRail />
       <header className="card card-lit relative overflow-hidden p-6 md:p-10">
         <span className="inline-flex items-center gap-2 rounded-full border border-[var(--line-2)] px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-brand"><NavIcon name="promo" size={16} /> Banner promotion</span>
         <h1 className="h-display mt-5 max-w-[20ch]">Put your project in front of active traders</h1>
@@ -29,6 +32,8 @@ export default async function PromotionPage({ searchParams }: { searchParams: Pr
         </ul>
         <Link href="/promotion/book?placement=hero" className="btn btn-primary btn-lg mt-6 w-full sm:w-auto">Book a banner</Link>
       </header>
+
+      <ContactCard note="Banner listings, custom campaigns or bundles with a boost? Message an admin on Telegram and we will set it up with you." />
 
       <ol aria-label="How it works" className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-3">
         {STEPS.map((s, i) => (

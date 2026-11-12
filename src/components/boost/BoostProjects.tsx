@@ -45,7 +45,7 @@ export function BoostProjects() {
   };
 
   return (
-    <section aria-label="Choose a project to boost" className="space-y-4">
+    <section id="boost-projects" aria-label="Choose a project to boost" className="scroll-mt-24 space-y-4">
       <div className="relative">
         <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
         <input className="input !pl-11" value={q} onChange={(e) => change(() => { setQ(e.target.value); setPage(1); })} placeholder="Search coin name, symbol or contract" aria-label="Search listed projects" />
@@ -85,7 +85,7 @@ export function BoostProjects() {
                   <span className="block truncate text-xs text-muted">{p.symbol} · {getNetwork(p.network_id ?? "")?.name ?? "Network not set"}{p.address ? ` · ${shortAddress(p.address)}` : ""}</span>
                 </span>
                 {p.boostEndsAt && <span className="chip !min-h-7 !px-2 text-[11px]"><Zap size={11} /> Boosted</span>}
-                <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--border)] text-warm"><ArrowRight size={18} /></span>
+                <span className="btn btn-sm btn-primary shrink-0"><Zap size={14} aria-hidden="true" /> Boost <ArrowRight size={14} aria-hidden="true" /></span>
               </Link>
             </li>
           ))}
