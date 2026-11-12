@@ -15,10 +15,12 @@ import "@/styles/pages.css";
 import "@/styles/markets.css";
 import "@/styles/pay.css";
 import "@/styles/token.css";
+import "@/styles/checkout.css";
 import { RouteProgress } from "@/components/fx/RouteProgress";
 import { BackToTop } from "@/components/fx/BackToTop";
 import { KeyboardShortcuts } from "@/components/fx/KeyboardShortcuts";
 import { LocalAlertsRunner } from "@/lib/local/alerts";
+import { AutoTranslate } from "@/components/i18n/AutoTranslate";
 import { WelcomeTour } from "@/components/fx/WelcomeTour";
 import { SoundTaps } from "@/components/fx/SoundTaps";
 
@@ -48,6 +50,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <I18nProvider locale={locale} messages={messagesFor(locale)}>
+          <AutoTranslate locale={locale} />
           <AuthProvider>
             <ToastProvider>
               <RouteProgress />

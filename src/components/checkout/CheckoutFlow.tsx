@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ShoppingBag } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { fireConfetti } from "@/components/fx/confetti";
 import { playSound } from "@/components/fx/sound";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -74,16 +74,34 @@ function store(s: Saved | null): void {
  * The whole checkout: method, send, confirm, done. State lives in this component and in localStorage so a
  * reload resumes the open checkout. The server signs every quote and receipt; nothing here sets a price.
  */
+const noopSubscribe = () => () => undefined;
+
+/** Picks the saved checkout to resume: the one for the same item, or the last one when the URL names no item. */
+function resumeFor(initialItem: CheckoutItem | null): Saved | null {
+  const saved = loadSaved();
+  const target = initialItem ?? saved?.item ?? null;
+  return saved && target && saved.itemKey === keyOf(target) ? saved : null;
+}
+
+/** Renders the flow only after hydration, so the saved checkout can be read from localStorage in state initialisers. */
 export function CheckoutFlow({ initialItem, itemError }: { initialItem: CheckoutItem | null; itemError: string | null }) {
+  const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
+  if (!hydrated) {
+    return <div className="skeleton h-[28rem] rounded-[var(--r-xl)]" aria-busy="true" aria-label="Loading checkout" />;
+  }
+  return <Flow initialItem={initialItem} itemError={itemError} />;
+}
+
+function Flow({ initialItem, itemError }: { initialItem: CheckoutItem | null; itemError: string | null }) {
   const reduce = useReducedMotion();
-  const [ready, setReady] = useState(false);
-  const [item, setItem] = useState<CheckoutItem | null>(initialItem);
-  const [step, setStep] = useState<Step>("method");
-  const [methodId, setMethodId] = useState<string | null>(null);
-  const [quote, setQuote] = useState<QuoteResponse | null>(null);
-  const [submitted, setSubmitted] = useState<string | null>(null);
-  const [receipt, setReceipt] = useState<Receipt | null>(null);
-  const [celebrated, setCelebrated] = useState(false);
+  const [resume] = useState(() => resumeFor(initialItem));
+  const [item] = useState<CheckoutItem | null>(resume?.item ?? initialItem);
+  const [step, setStep] = useState<Step>(resume?.step ?? "method");
+  const [methodId, setMethodId] = useState<string | null>(resume?.methodId ?? null);
+  const [quote, setQuote] = useState<QuoteResponse | null>(resume?.quote ?? null);
+  const [submitted, setSubmitted] = useState<string | null>(resume?.submitted ?? null);
+  const [receipt, setReceipt] = useState<Receipt | null>(resume?.receipt ?? null);
+  const [celebrated, setCelebrated] = useState(resume?.celebrated ?? false);
 
   const [methods, setMethods] = useState<PublicMethod[] | null>(null);
   const [methodsError, setMethodsError] = useState<string | null>(null);
@@ -96,26 +114,10 @@ export function CheckoutFlow({ initialItem, itemError }: { initialItem: Checkout
   const inFlight = useRef(false);
   const topRef = useRef<HTMLDivElement>(null);
 
-  /* Resume a saved checkout for the same item, or the last one when the URL names no item. */
   useEffect(() => {
-    const saved = loadSaved();
-    const target = initialItem ?? saved?.item ?? null;
-    if (saved && target && saved.itemKey === keyOf(target)) {
-      setItem(saved.item);
-      setStep(saved.step);
-      setMethodId(saved.methodId);
-      setQuote(saved.quote);
-      setSubmitted(saved.submitted);
-      setReceipt(saved.receipt);
-      setCelebrated(saved.celebrated);
-    }
-    setReady(true);
-  }, [initialItem]);
-
-  useEffect(() => {
-    if (!ready || !item) return;
+    if (!item) return;
     store({ v: 1, itemKey: keyOf(item), item, step, methodId, quote, submitted, receipt, celebrated, savedAt: Date.now() });
-  }, [ready, item, step, methodId, quote, submitted, receipt, celebrated]);
+  }, [item, step, methodId, quote, submitted, receipt, celebrated]);
 
   useEffect(() => {
     let live = true;
@@ -164,6 +166,18 @@ export function CheckoutFlow({ initialItem, itemError }: { initialItem: Checkout
     [item, go],
   );
 
+  /* Celebrate once per receipt, and keep a copy of it on this device. */
+  const celebratedRef = useRef(celebrated);
+  const celebrate = useCallback((r: Receipt) => {
+    if (celebratedRef.current) return;
+    celebratedRef.current = true;
+    setCelebrated(true);
+    fireConfetti();
+    const href = receiptHref(r.token);
+    saveLocalReceipt({ number: r.number, href, title: r.title, amount: r.received, asset: r.asset, at: r.paidAt });
+    pushLocalNotification({ kind: "payment", title: "Payment verified", body: `${r.title}. Receipt ${r.number}.`, href });
+  }, []);
+
   const verify = useCallback(
     async (hash: string) => {
       if (!quote || inFlight.current) return;
@@ -173,20 +187,25 @@ export function CheckoutFlow({ initialItem, itemError }: { initialItem: Checkout
       inFlight.current = false;
       setChecking(false);
       if (!r.ok) {
-        setVerifyError(r.status === 0 || r.status === 429 || r.status >= 500 ? `${r.error} We will keep trying.` : r.error);
-        if (r.status === 400) setStatus({ status: "rejected", confirmations: 0, required: quote.minConfirmations, message: r.error });
+        if (r.status === 400) {
+          setVerifyError(null);
+          setStatus({ status: "rejected", confirmations: 0, required: quote.minConfirmations, message: r.error });
+        } else {
+          setVerifyError(r.status === 0 || r.status === 429 || r.status >= 500 ? `${r.error} We will keep trying.` : r.error);
+        }
         return;
       }
       setVerifyError(null);
       setStatus(r.data);
       if (r.data.status === "paid" && r.data.receipt) {
+        celebrate(r.data.receipt);
         setReceipt(r.data.receipt);
         go("done");
       } else if (r.data.status === "rejected") {
         playSound("error");
       }
     },
-    [quote, go],
+    [quote, go, celebrate],
   );
 
   /* Poll every 6 seconds while the page is visible, and right away when it becomes visible again. */
@@ -196,23 +215,15 @@ export function CheckoutFlow({ initialItem, itemError }: { initialItem: Checkout
     const tick = () => {
       if (document.visibilityState === "visible") void verify(submitted);
     };
+    const first = status === null ? setTimeout(tick, 400) : undefined;
     const t = setInterval(tick, POLL_MS);
     document.addEventListener("visibilitychange", tick);
     return () => {
+      clearTimeout(first);
       clearInterval(t);
       document.removeEventListener("visibilitychange", tick);
     };
-  }, [step, submitted, status?.status, verify]);
-
-  /* Celebrate once per receipt, and keep a copy of it on this device. */
-  useEffect(() => {
-    if (step !== "done" || !receipt || celebrated) return;
-    setCelebrated(true);
-    fireConfetti();
-    const href = receiptHref(receipt.token);
-    saveLocalReceipt({ number: receipt.number, href, title: receipt.title, amount: receipt.received, asset: receipt.asset, at: receipt.paidAt });
-    pushLocalNotification({ kind: "payment", title: "Payment verified", body: `${receipt.title}. Receipt ${receipt.number}.`, href });
-  }, [step, receipt, celebrated]);
+  }, [step, submitted, status, verify]);
 
   const desc = useMemo(() => {
     if (!item) return null;
@@ -260,10 +271,7 @@ export function CheckoutFlow({ initialItem, itemError }: { initialItem: Checkout
           {heading}
         </h1>
 
-        {!ready ? (
-          <div className="skeleton h-64 rounded-[var(--r-lg)]" aria-busy="true" aria-label="Loading checkout" />
-        ) : (
-          <AnimatePresence mode="wait" initial={false}>
+        <AnimatePresence mode="wait" initial={false}>
             <motion.div key={step} initial={reduce ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={reduce ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.22 }} className="min-w-0">
               {step === "method" &&
                 (methods ? (
@@ -323,6 +331,7 @@ export function CheckoutFlow({ initialItem, itemError }: { initialItem: Checkout
                     setReceipt(null);
                     setStatus(null);
                     setCelebrated(false);
+                    celebratedRef.current = false;
                     setMethodId(null);
                     go("method");
                   }}
@@ -337,8 +346,7 @@ export function CheckoutFlow({ initialItem, itemError }: { initialItem: Checkout
                 </Callout>
               )}
             </motion.div>
-          </AnimatePresence>
-        )}
+        </AnimatePresence>
       </section>
     </div>
   );

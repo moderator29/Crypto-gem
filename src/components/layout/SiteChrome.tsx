@@ -188,7 +188,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
             <Search size={16} aria-hidden="true" /> <span className="text-sm font-medium normal-case tracking-normal">{t("search.tokens")}</span>
             <kbd className="ml-auto rounded-md border border-line px-1.5 text-[11px]">/</kbd>
           </button>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
             <button type="button" onClick={() => setSearchOpen(true)} className="btn btn-icon sm:hidden" aria-label="Search">
               <Search size={18} />
             </button>
@@ -202,7 +202,7 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
             <Link href="/add-coin" className="btn btn-primary hidden sm:inline-flex">
               <NavIcon name="add" size={18} className="[&_.acc]:!stroke-current" /> {t("nav.addCoin")}
             </Link>
-            <LanguageSwitcher className="hidden sm:inline-flex" />
+            <LanguageSwitcher />
           </div>
         </div>
       </header>

@@ -12,7 +12,6 @@ import { getNetwork } from "@/lib/market-data/networks";
 export const BANNER_DAYS = [1, 3, 7] as const;
 export type BannerDays = (typeof BANNER_DAYS)[number];
 
-// eslint-disable-next-line no-control-regex
 const CONTROL = /[\u0000-\u001F\u007F-\u009F\u200B-\u200F\u2028-\u202E\u2066-\u2069\uFEFF]/g;
 
 /** Strips control and bidi characters, collapses whitespace and bounds the length. */

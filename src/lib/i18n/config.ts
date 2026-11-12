@@ -16,7 +16,7 @@ export const LOCALES = [
 ] as const;
 
 export type LocaleCode = (typeof LOCALES)[number]["code"];
-export const DEFAULT_LOCALE: LocaleCode = "en";
+export const DEFAULT_LOCALE: LocaleCode = "zh-CN";
 export const LOCALE_COOKIE = "cg-locale";
 
 export function isLocale(v: string | undefined | null): v is LocaleCode {

@@ -10,7 +10,7 @@ export function LanguageSwitcher({ className = "" }: { className?: string }) {
   const { locale } = useT();
   const router = useRouter();
   return (
-    <label className={`btn relative !gap-1.5 !px-3 ${className}`} aria-label="Language">
+    <label className={`btn relative !gap-1 !px-2 sm:!gap-1.5 sm:!px-3 ${className}`} aria-label="Language">
       <Globe size={16} aria-hidden="true" />
       <span className="text-xs font-bold uppercase">{locale.split("-")[0]}</span>
       <select

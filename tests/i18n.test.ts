@@ -29,8 +29,8 @@ describe("i18n", () => {
     expect(negotiate("fr-CH,fr;q=0.9,en;q=0.8")).toBe("fr");
     expect(negotiate("zh-TW,zh;q=0.9")).toBe("zh-TW");
     expect(negotiate("zh-CN")).toBe("zh-CN");
-    expect(negotiate("xx-YY")).toBe("en");
-    expect(negotiate(null)).toBe("en");
+    expect(negotiate("xx-YY")).toBe("zh-CN");
+    expect(negotiate(null)).toBe("zh-CN");
     expect(dirOf("ar")).toBe("rtl");
     expect(dirOf("en")).toBe("ltr");
   });
