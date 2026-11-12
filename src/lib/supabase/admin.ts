@@ -15,10 +15,22 @@ export function supabaseAdmin(): SupabaseClient {
   return client;
 }
 
+const GUEST = /^guest\.([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i;
+
+/** Owner id for a no-account visitor: `guest_<uuid>`, from a random 122-bit key that only that browser holds. */
+export function guestIdFromRequest(req: Request): string | null {
+  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") ?? "";
+  const m = GUEST.exec(token);
+  return m ? `guest_${(m[1] as string).toLowerCase()}` : null;
+}
+
 /**
- * Resolve the signed-in user. Identity comes from Privy; Supabase is used only as the database.
- * The returned id is the Privy DID and is what every owner column stores.
+ * Resolve who is calling. No account is needed: a verified Privy user wins when present, otherwise the
+ * browser's own guest key identifies the visitor. Admin access is never granted to guests (roles are keyed by Privy id).
  */
-export async function userFromRequest(req: Request): Promise<{ id: string; email: string | null } | null> {
-  return privyUserFromRequest(req);
+export async function userFromRequest(req: Request): Promise<{ id: string; email: string | null; guest?: boolean } | null> {
+  const privy = await privyUserFromRequest(req);
+  if (privy) return privy;
+  const guest = guestIdFromRequest(req);
+  return guest ? { id: guest, email: null, guest: true } : null;
 }

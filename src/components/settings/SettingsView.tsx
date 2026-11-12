@@ -156,24 +156,13 @@ function Account() {
   );
 }
 
+/** Settings work without an account. Signed-in admins also see their sign-in methods. */
 export function SettingsView() {
-  const { configured, ready, authenticated, login } = useAuth();
-  if (!configured) {
-    return (
-      <div className="mx-auto max-w-3xl space-y-4">
-        <EmptyState title="Sign-in is not configured here" description="Account settings appear once sign-in is connected for this site." />
-        <PreferencesGroups />
-      </div>
-    );
-  }
-  if (!ready) return <div className="skeleton h-56" aria-busy="true" />;
-  if (!authenticated) {
-    return (
-      <div className="mx-auto max-w-3xl space-y-4">
-        <EmptyState icon={LogIn} title="Sign in to manage your account" description="Use an email code, a wallet or Google." action={<Button variant="primary" onClick={login}>Sign in</Button>} />
-        <PreferencesGroups />
-      </div>
-    );
-  }
-  return <Account />;
+  const { configured, ready, authenticated } = useAuth();
+  if (configured && ready && authenticated) return <Account />;
+  return (
+    <div className="mx-auto max-w-3xl space-y-4">
+      <PreferencesGroups />
+    </div>
+  );
 }

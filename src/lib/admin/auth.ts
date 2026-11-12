@@ -14,7 +14,9 @@ const deny = (status: number, error: string): AuthResult => ({ ok: false, respon
 /** Resolve the caller and read their staff roles from `public.user_roles` through the secret-key client. */
 export async function resolveActor(req: Request): Promise<AuthResult> {
   if (!supabaseConfigured()) return deny(503, "Supabase is not configured on the server.");
-  const user = await userFromRequest(req);
+  const found = await userFromRequest(req);
+  // Guests never get staff access, whatever the database says.
+  const user = found && !found.id.startsWith("guest_") ? found : null;
   if (!user) return deny(401, "Sign in to continue.");
   const { data, error } = await supabaseAdmin().from("user_roles").select("role").eq("user_id", user.id);
   if (error) return deny(500, "Could not verify your access.");

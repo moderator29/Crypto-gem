@@ -5,7 +5,6 @@ import { Menu, PanelLeftClose, Search, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { AuthButton } from "@/components/auth/AuthButton";
 import { useT } from "@/components/i18n/I18nProvider";
 import { LanguageSwitcher } from "@/components/i18n/LanguageSwitcher";
 import { Logo } from "@/components/ui/Logo";
@@ -204,7 +203,6 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
               <NavIcon name="add" size={18} className="[&_.acc]:!stroke-current" /> {t("nav.addCoin")}
             </Link>
             <LanguageSwitcher className="hidden sm:inline-flex" />
-            <AuthButton className="hidden sm:block" />
           </div>
         </div>
       </header>
@@ -219,7 +217,6 @@ export function SiteChrome({ children, footer }: { children: React.ReactNode; fo
                 <X size={18} />
               </button>
             </div>
-            <AuthButton className="w-full [&>button]:w-full" />
             <NavList path={path} id="drawer-nav" />
             <div className="mt-auto flex items-center justify-between gap-3 border-t border-line pt-4">
               <ThemeToggle />

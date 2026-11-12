@@ -27,16 +27,13 @@ const ACTIONS: Array<{ href: string; icon: NavIconName; label: string; hint: str
 
 /** Account home: identity, real counts from the user's own data, and the next useful actions. */
 export function ProfileView() {
-  const { configured, ready, authenticated, label, userId, login } = useAuth();
+  const { authenticated, label, userId: privyId } = useAuth();
+  const userId = authenticated ? privyId : null;
   const watch = useAccountFetch<{ items: unknown[] }>("/api/watchlist");
   const alerts = useAccountFetch<{ alerts: Array<{ triggered_at: string | null }> }>("/api/alerts");
   const notes = useAccountFetch<{ unread: number; items: Array<{ id: string; title: string; href: string | null; read_at: string | null; created_at: string }> }>("/api/notifications");
 
-  if (!configured) return <EmptyState title="Sign-in is not configured here" description="Your profile appears once sign-in is connected for this site." />;
-  if (!ready) return <div className="skeleton h-64" aria-busy="true" />;
-  if (!authenticated) return <EmptyState title="Sign in to see your profile" description="Use an email code, a wallet or Google." action={<button type="button" className="btn btn-primary" onClick={login}>Sign in</button>} />;
-
-  const name = label ?? "Account";
+  const name = authenticated && label ? label : "Your device";
   const recent = notes.state === "ok" ? notes.data.items.slice(0, 4) : [];
   return (
     <div className="stagger grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-3">

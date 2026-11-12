@@ -2,7 +2,6 @@
 
 import { ArrowUp } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useAuth } from "@/components/auth/AuthProvider";
 import { playSound } from "@/components/fx/sound";
 import { useToast } from "@/components/ui/Toast";
 import { accessToken } from "@/lib/auth/client";
@@ -33,7 +32,6 @@ function want(key: string) {
 
 /** Upvote box: the count beside an up arrow, like the lists people already know. One vote per token per day. */
 export function TokenVote({ network, address, className = "" }: { network: string; address: string; className?: string }) {
-  const { authenticated, login } = useAuth();
   const toast = useToast();
   const key = `${network}:${address}`;
   const [, bump] = useState(0);
@@ -50,7 +48,6 @@ export function TokenVote({ network, address, className = "" }: { network: strin
   async function vote(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    if (!authenticated) return login();
     setBusy(true);
     try {
       const jwt = await accessToken();

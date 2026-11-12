@@ -39,8 +39,8 @@ export default async function StatusPage() {
       <ul className="card divide-y divide-[var(--line-1)] overflow-hidden">
         <Row name="GeckoTerminal (markets, pools, candles)" detail={gt.ok ? `Responded in ${gt.ms} ms${gt.stale ? ", serving cached data" : ""}` : "Not responding or rate limited. Lists fall back to cache when available."} ok={gt.ok && !gt.stale} label={gt.ok ? (gt.stale ? "Cached" : "Operational") : "Down"} />
         <Row name="Provider circuit breakers" detail={open.length ? `Cooling down: ${open.map((o) => o.provider).join(", ")}` : "No provider is cooling down after failures."} ok={open.length === 0} label={open.length ? "Degraded" : "Clear"} />
-        <Row name="Accounts and database" detail="Sign in, watchlists, alerts, notifications and listings." ok={env("NEXT_PUBLIC_PRIVY_APP_ID") && supabaseConfigured()} label={env("NEXT_PUBLIC_PRIVY_APP_ID") && supabaseConfigured() ? "Connected" : "Not connected"} />
-        <Row name="Payments (NOWPayments)" detail="Listing, boost and advertising checkout." ok={env("NOWPAYMENTS_API_KEY") && env("NOWPAYMENTS_IPN_SECRET")} label={env("NOWPAYMENTS_API_KEY") && env("NOWPAYMENTS_IPN_SECRET") ? "Configured" : "Not configured"} />
+        <Row name="Accounts and database" detail="Watchlists, alerts, notifications, orders and listings." ok={supabaseConfigured()} label={supabaseConfigured() ? "Connected" : "Not connected"} />
+        <Row name="Payments (direct crypto)" detail="USDT, USDC, ETH and BNB on EVM chains and USDC on Solana, verified on chain." ok={supabaseConfigured()} label={supabaseConfigured() ? "Live" : "Needs database"} />
         <Row name="AI Copilot" detail="Answers use live market data when the model service is configured." ok={env("ANTHROPIC_API_KEY")} label={env("ANTHROPIC_API_KEY") ? "Configured" : "Offline"} />
         <Row name="Token security checks (GoPlus)" detail="Honeypot, tax and ownership flags for EVM tokens on token pages." ok={null} label="On demand" />
       </ul>
