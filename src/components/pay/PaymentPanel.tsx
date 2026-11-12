@@ -1,174 +1,315 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
-
-import { AlertTriangle, CheckCircle2, Loader2, RefreshCw } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Lock } from "lucide-react";
 import Link from "next/link";
-import QRCode from "qrcode";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fireConfetti } from "@/components/fx/confetti";
 import { playSound } from "@/components/fx/sound";
-import { CopyButton } from "@/components/ui/CopyButton";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Stepper } from "@/components/ui/Kit";
-import { accessToken } from "@/lib/auth/client";
+import { ConfirmStep } from "./ConfirmStep";
+import { DoneState } from "./DoneState";
+import { MethodPicker } from "./MethodPicker";
+import { OrderSummary } from "./OrderSummary";
+import { payFetch } from "./payApi";
+import { remainingSeconds } from "./payHelpers";
+import { TrustLine } from "./payParts";
+import { SendStep } from "./SendStep";
+import type { OrderPayload, PayIntent, PayMethod, PayPhase, PayStatus, Receipt, SubmitResult } from "./types";
 
-interface Payment { id: string; provider_payment_id: string; pay_currency: string; pay_network: string | null; pay_amount: number; pay_address: string; actually_paid: number | null; status: string; expires_at: string | null }
-interface Method { id: string; label: string; provider_currency: string; network: string }
-interface Data { order: { id: string; kind: string; price_usd: number; status: string }; payment: Payment | null; methods: Method[] }
+type Load = "loading" | "ok" | "signin" | "error" | "notfound";
+interface Stored { intent: PayIntent; submittedHash: string | null }
 
-const STATUS_TEXT: Record<string, string> = {
-  created: "Preparing payment", waiting: "Waiting for payment", confirming: "Payment detected, confirming on the network", confirmed: "Confirmed on the network, finalising",
-  sending: "Finalising with the payment provider", partially_paid: "Partial payment received. Send the remaining amount to the same address.",
-  finished: "Payment complete", failed: "Payment failed", expired: "Payment expired", refunded: "Payment refunded",
-};
+const STEPS = ["Choose", "Send", "Confirm", "Done"];
+const FINAL = ["finished", "failed", "expired"];
+const storeKey = (orderId: string) => `cg-pay:${orderId}`;
 
-const STEPS = ["Pay", "Confirm", "Live"];
-const CONFIRMING = ["confirming", "confirmed", "sending"];
-
-/** Ring that drains as the payment window closes. */
-function CountdownRing({ remaining, span }: { remaining: number; span: number }) {
-  const r = 22;
-  const c = 2 * Math.PI * r;
-  const frac = span > 0 ? Math.min(1, remaining / span) : 0;
-  const low = remaining < 120;
-  return (
-    <div className="relative grid h-14 w-14 shrink-0 place-items-center" role="timer" aria-label={`${Math.floor(remaining / 60)} minutes ${remaining % 60} seconds left`}>
-      <svg viewBox="0 0 56 56" className="absolute inset-0 -rotate-90" aria-hidden="true">
-        <circle cx="28" cy="28" r={r} fill="none" stroke="var(--surface-3)" strokeWidth="4" />
-        <circle cx="28" cy="28" r={r} fill="none" stroke={low ? "var(--down)" : "var(--brand)"} strokeWidth="4" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - frac)} style={{ transition: "stroke-dashoffset 1s linear, stroke 300ms ease" }} />
-      </svg>
-      <span className="num text-[11px] font-bold">{Math.floor(remaining / 60)}:{String(remaining % 60).padStart(2, "0")}</span>
-    </div>
-  );
+function readStored(orderId: string): Stored | null {
+  try {
+    const raw = localStorage.getItem(storeKey(orderId));
+    if (!raw) return null;
+    const v = JSON.parse(raw) as Partial<Stored>;
+    if (!v.intent || typeof v.intent.paymentId !== "string" || typeof v.intent.address !== "string" || typeof v.intent.amount !== "string") return null;
+    return { intent: v.intent, submittedHash: typeof v.submittedHash === "string" ? v.submittedHash : null };
+  } catch {
+    return null;
+  }
 }
 
-export function PaymentPanel({ orderId }: { orderId: string }) {
-  const [data, setData] = useState<Data | null>(null);
-  const [state, setState] = useState<"loading" | "ok" | "signin" | "error">("loading");
-  const [qr, setQr] = useState<string | null>(null);
-  const [now, setNow] = useState(() => Date.now());
-  const [busy, setBusy] = useState(false);
-  const [currency, setCurrency] = useState("");
-  const [span, setSpan] = useState<{ id: string; secs: number } | null>(null);
-  const wasDone = useRef<boolean | null>(null);
+function writeStored(orderId: string, value: Stored | null): void {
+  try {
+    if (value) localStorage.setItem(storeKey(orderId), JSON.stringify(value));
+    else localStorage.removeItem(storeKey(orderId));
+  } catch {
+    return;
+  }
+}
 
-  const load = useCallback(async () => {
-    const token = await accessToken();
-    if (!token) return setState("signin");
-    const res = await fetch(`/api/payments/${orderId}`, { headers: { Authorization: `Bearer ${token}` } });
-    if (res.status === 401) return setState("signin");
-    if (!res.ok) return setState("error");
-    const next = (await res.json()) as Data;
-    setData(next);
-    const pay = next.payment;
-    if (pay?.expires_at) {
-      const secs = Math.max(0, Math.floor((Date.parse(pay.expires_at) - Date.now()) / 1000));
-      setSpan((prev) => (prev?.id === pay.id ? prev : { id: pay.id, secs }));
-    }
-    setState("ok");
+function toStatus(intent: PayIntent, r: SubmitResult): PayStatus {
+  return { paymentId: intent.paymentId, orderId: r.orderId, status: r.status, message: null, txHash: r.txHash, confirmations: r.confirmations, required: r.required, paidAmount: r.paidAmount, receiptNo: r.receiptNo };
+}
+
+/**
+ * Whole payment flow for one order: choose an asset, send, confirm with a hash, and the success state.
+ * Quote, status and receipt always come from the server. The browser only remembers the open quote so a reload resumes it.
+ */
+export function PaymentPanel({ orderId }: { orderId: string }) {
+  const reduce = useReducedMotion();
+  const [load, setLoad] = useState<Load>("loading");
+  const [data, setData] = useState<OrderPayload | null>(null);
+  const [methods, setMethods] = useState<PayMethod[] | null>(null);
+  const [methodsError, setMethodsError] = useState<string | null>(null);
+  const [phase, setPhase] = useState<PayPhase>("choose");
+  const [intent, setIntent] = useState<PayIntent | null>(null);
+  const [status, setStatus] = useState<PayStatus | null>(null);
+  const [span, setSpan] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [pickError, setPickError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [submittedHash, setSubmittedHash] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [rejection, setRejection] = useState<string | null>(null);
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
+  const submitLock = useRef(false);
+  const confettiDone = useRef(false);
+  const intentId = useRef<string | null>(null);
+
+  const finish = useCallback(
+    async (live: boolean) => {
+      setPhase("done");
+      writeStored(orderId, null);
+      if (live && !confettiDone.current) {
+        confettiDone.current = true;
+        fireConfetti({ sound: false });
+        playSound("success");
+      }
+      const res = await payFetch<Receipt>(`/api/pay/receipt?orderId=${encodeURIComponent(orderId)}`);
+      if (res.ok) setReceipt(res.data);
+    },
+    [orderId],
+  );
+
+  const applyStatus = useCallback(
+    (s: PayStatus) => {
+      if (intentId.current && s.paymentId !== intentId.current) return;
+      setStatus(s);
+      if (s.status === "finished") void finish(true);
+      else if (s.status === "confirming") setPhase((p) => (p === "send" ? "confirm" : p));
+    },
+    [finish],
+  );
+
+  const loadMethods = useCallback(async () => {
+    setMethodsError(null);
+    const res = await payFetch<{ methods: PayMethod[] }>(`/api/pay/methods?orderId=${encodeURIComponent(orderId)}`);
+    if (res.ok) setMethods(res.data.methods);
+    else setMethodsError(res.error);
   }, [orderId]);
 
   useEffect(() => {
-    // Initial fetch from an external system; state is set after the awaited response.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
-    const t = setInterval(() => { setNow(Date.now()); }, 1000);
-    return () => clearInterval(t);
-  }, [load]);
-
-  const status = data?.payment?.status;
-  const active = data?.order.status === "pending" && status && !["finished", "failed", "expired", "refunded"].includes(status);
-  useEffect(() => {
-    if (!active) return;
-    const t = setInterval(load, 8000);
-    return () => clearInterval(t);
-  }, [active, load]);
-
-  const isDone = status === "finished" || data?.order.status === "paid";
-  useEffect(() => {
-    if (!data) return;
-    if (wasDone.current === false && isDone) {
-      fireConfetti({ sound: false });
-      playSound("success");
+    let live = true;
+    async function init() {
+      const res = await payFetch<OrderPayload>(`/api/payments/${orderId}`);
+      if (!live) return;
+      if (!res.ok) return setLoad(res.status === 401 ? "signin" : res.status === 404 ? "notfound" : "error");
+      setData(res.data);
+      setLoad("ok");
+      if (res.data.order.status === "paid" || res.data.payment?.status === "finished") {
+        confettiDone.current = true;
+        void finish(false);
+        return;
+      }
+      void loadMethods();
+      const saved = readStored(orderId);
+      if (!saved) return;
+      const st = await payFetch<PayStatus>(`/api/pay/status?paymentId=${encodeURIComponent(saved.intent.paymentId)}`);
+      if (!live) return;
+      if (!st.ok || st.data.status === "failed" || st.data.status === "expired") {
+        writeStored(orderId, null);
+        return;
+      }
+      intentId.current = saved.intent.paymentId;
+      setIntent(saved.intent);
+      setSpan(Math.max(remainingSeconds(saved.intent.expiresAt, Date.now()), 1));
+      setSubmittedHash(saved.submittedHash);
+      setStatus(st.data);
+      if (st.data.status === "finished") {
+        confettiDone.current = true;
+        void finish(false);
+      } else setPhase(saved.submittedHash || st.data.status === "confirming" ? "confirm" : "send");
     }
-    wasDone.current = isDone;
-  }, [data, isDone]);
+    void init();
+    return () => {
+      live = false;
+    };
+  }, [orderId, finish, loadMethods]);
 
-  const addr = data?.payment?.pay_address;
+  const isFinal = status ? FINAL.includes(status.status) : false;
+  const polling = Boolean(intent) && (phase === "send" || phase === "confirm") && !isFinal;
+
   useEffect(() => {
-    if (!addr) return;
-    QRCode.toDataURL(addr, { margin: 1, width: 220 }).then(setQr, () => setQr(null));
-  }, [addr]);
+    if (!intent) return;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, [intent]);
 
-  async function create() {
-    const token = await accessToken();
-    if (!token || !currency) return;
-    setBusy(true);
-    await fetch("/api/payments/create", { method: "POST", headers: { Authorization: `Bearer ${token}`, "content-type": "application/json" }, body: JSON.stringify({ orderId, payCurrency: currency }) });
-    setBusy(false);
-    load();
+  useEffect(() => {
+    if (!polling || !intent) return;
+    const pid = intent.paymentId;
+    const run = async () => {
+      if (document.visibilityState !== "visible") return;
+      const res = await payFetch<PayStatus>(`/api/pay/status?paymentId=${encodeURIComponent(pid)}`);
+      if (res.ok) applyStatus(res.data);
+    };
+    const t = setInterval(run, 5000);
+    document.addEventListener("visibilitychange", run);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener("visibilitychange", run);
+    };
+  }, [polling, intent, applyStatus]);
+
+  const startIntent = useCallback(
+    async (methodId: string) => {
+      const res = await payFetch<PayIntent>("/api/pay/intent", { orderId, methodId });
+      if (!res.ok) return res.error;
+      intentId.current = res.data.paymentId;
+      setIntent(res.data);
+      setSpan(Math.max(remainingSeconds(res.data.expiresAt, Date.now()), 1));
+      setNow(Date.now());
+      setStatus(null);
+      setSubmittedHash(null);
+      setRejection(null);
+      setPhase("send");
+      writeStored(orderId, { intent: res.data, submittedHash: null });
+      return null;
+    },
+    [orderId],
+  );
+
+  async function pick(m: PayMethod) {
+    if (pendingId) return;
+    setPendingId(m.id);
+    setPickError(null);
+    const err = await startIntent(m.id);
+    setPickError(err);
+    setPendingId(null);
   }
 
-  if (state === "loading") return <div className="skeleton h-72" aria-busy="true" />;
-  if (state === "signin") return <div className="card p-6"><p className="mb-3">Sign in to view this payment.</p><Link className="btn btn-primary" href={`/login?next=/pay/${orderId}`}>Sign in</Link></div>;
-  if (state === "error" || !data) return <div className="card p-6 text-down" role="alert">This order could not be loaded.</div>;
+  async function refreshQuote() {
+    if (!intent || refreshing) return;
+    setRefreshing(true);
+    setRefreshError(null);
+    const err = await startIntent(intent.methodId);
+    setRefreshError(err);
+    setRefreshing(false);
+  }
 
-  const p = data.payment;
-  const remaining = p?.expires_at ? Math.max(0, Math.floor((Date.parse(p.expires_at) - now) / 1000)) : null;
-  const done = isDone;
-  const needsNew = !p || ["expired", "failed"].includes(p.status);
-  const step = done ? 2 : p && !needsNew && status && CONFIRMING.includes(status) ? 1 : 0;
+  async function submit(hash: string) {
+    if (!intent || submitLock.current) return;
+    submitLock.current = true;
+    setSubmitting(true);
+    setRejection(null);
+    const res = await payFetch<SubmitResult>("/api/pay/submit", { paymentId: intent.paymentId, txHash: hash });
+    if (!res.ok) {
+      setRejection(res.error);
+    } else if (!res.data.accepted) {
+      setRejection(res.data.reason ?? "We could not match that hash to this payment.");
+      setStatus(toStatus(intent, res.data));
+    } else {
+      const sent = res.data.txHash ?? hash;
+      setSubmittedHash(sent);
+      writeStored(orderId, { intent, submittedHash: sent });
+      applyStatus(toStatus(intent, res.data));
+    }
+    setSubmitting(false);
+    submitLock.current = false;
+  }
+
+  function changeMethod() {
+    intentId.current = null;
+    writeStored(orderId, null);
+    setIntent(null);
+    setStatus(null);
+    setSubmittedHash(null);
+    setRejection(null);
+    setPickError(null);
+    setPhase("choose");
+  }
+
+  const method = useMemo(() => methods?.find((m) => m.id === intent?.methodId) ?? null, [methods, intent]);
+  const remaining = intent ? remainingSeconds(intent.expiresAt, now) : null;
+  const expired = Boolean(intent) && phase !== "done" && (status?.status === "expired" || (remaining === 0 && !submittedHash && (!status || status.status === "waiting")));
+  const stepIndex = phase === "choose" ? 0 : phase === "send" ? 1 : phase === "confirm" ? 2 : STEPS.length;
+
+  if (load === "loading") {
+    return (
+      <div className="pay-layout" aria-busy="true" aria-label="Loading payment">
+        <div className="pay-side"><div className="skeleton h-20 rounded-[var(--r-lg)] md:h-72" /></div>
+        <div className="pay-main"><div className="skeleton h-[28rem] rounded-[var(--r-lg)]" /></div>
+      </div>
+    );
+  }
+  if (load === "signin") {
+    return (
+      <EmptyState
+        icon={Lock}
+        title="Sign in to pay for this order"
+        description="Payments are tied to your account so only you can see them."
+        action={<Link className="btn btn-primary" href={`/login?next=/pay/${orderId}`}>Sign in</Link>}
+      />
+    );
+  }
+  if (load === "notfound") return <EmptyState tone="error" title="Order not found" description="This order does not exist or belongs to another account." action={<Link className="btn" href="/dashboard">Go to dashboard</Link>} />;
+  if (load === "error" || !data) return <EmptyState tone="error" title="This order could not be loaded" description="Check your connection and refresh the page." action={<button type="button" className="btn btn-primary" onClick={() => window.location.reload()}>Refresh</button>} />;
+
+  const order = data.order;
+  const paid = phase === "done";
+  if (!paid && order.status !== "pending") {
+    return <EmptyState title={`This order is ${order.status}`} description="It can no longer be paid. Start a new order from your dashboard." action={<Link className="btn" href="/dashboard">Go to dashboard</Link>} />;
+  }
+
+  const anim = reduce ? {} : { initial: { opacity: 0, y: 12 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -8 }, transition: { duration: 0.22 } };
 
   return (
-    <section className="card space-y-5 p-5 md:p-7" aria-label="Payment details">
-      <div className="flex items-center justify-between">
-        <h1 className="font-display text-2xl font-bold">Payment</h1>
-        <span className="num text-lg font-bold">${Number(data.order.price_usd).toLocaleString("en-US")}</span>
+    <div className="pay-layout">
+      <div className="pay-side">
+        <OrderSummary order={order} remaining={intent && !paid ? remaining : null} paid={paid} />
       </div>
-
-      <Stepper steps={STEPS} current={done ? 3 : step} />
-
-      {done && (
-        <div className="card-flat fx-pop flex items-start gap-3 p-4" role="status">
-          <CheckCircle2 className="mt-0.5 text-up" /> <div><p className="font-semibold">Payment confirmed</p><p className="text-sm text-soft">Your listing is now in review. We will notify you of the decision.</p></div>
-        </div>
-      )}
-
-      {!done && needsNew && (
-        <div className="space-y-3">
-          {p && <p className="flex items-center gap-2 text-sm text-warm"><AlertTriangle size={15} /> {STATUS_TEXT[p.status]}. Start a new payment below. Do not send funds to the old address.</p>}
-          <label className="block"><span className="mb-1 block text-sm font-semibold">Pay with</span>
-            <select className="input" value={currency} onChange={(e) => setCurrency(e.target.value)}>
-              <option value="">Select currency and network</option>
-              {data.methods.map((m) => <option key={m.id} value={m.provider_currency}>{m.label} ({m.network})</option>)}
-            </select>
-          </label>
-          {data.methods.length === 0 && <p className="text-sm text-muted">No payment options are enabled right now.</p>}
-          <button className="btn btn-primary" disabled={!currency || busy} onClick={create}>{busy && <Loader2 size={16} className="animate-spin" />} Create payment</button>
-        </div>
-      )}
-
-      {!done && p && !needsNew && (
-        <>
-          <dl className="space-y-3 text-sm">
-            <div><dt className="text-xs text-muted">Payment ID</dt><dd className="num break-all font-semibold">{p.provider_payment_id}</dd></div>
-            <div><dt className="text-xs text-muted">Amount due</dt><dd className="flex flex-wrap items-center gap-3"><span className="num text-xl font-bold">{p.pay_amount} <span className="uppercase">{p.pay_currency}</span></span><CopyButton value={String(p.pay_amount)} label="Copy amount" what="Amount copied" /></dd></div>
-            <div><dt className="text-xs text-muted">Network</dt><dd className="font-semibold">{p.pay_network ?? p.pay_currency.toUpperCase()}</dd></div>
-            <div><dt className="text-xs text-muted">Deposit address</dt><dd className="num break-all font-semibold">{p.pay_address}</dd></div>
-          </dl>
-          <div className="flex flex-wrap items-center gap-3">
-            <CopyButton value={p.pay_address} label="Copy address" />
-            {remaining !== null && span?.id === p.id && <span className="ml-auto inline-flex items-center gap-2 text-sm text-soft"><CountdownRing remaining={remaining} span={span.secs} /> left</span>}
-          </div>
-          {qr && <img src={qr} alt="Deposit address QR code" width={220} height={220} className="rounded-xl bg-white p-2" />}
-          <p className="flex items-center gap-2 text-sm" role="status" aria-live="polite">{status === "waiting" || status === "created" ? <Loader2 size={15} className="animate-spin text-brand" /> : <RefreshCw size={15} />} {STATUS_TEXT[status ?? "created"]}</p>
-          <ul className="space-y-1 text-xs text-muted">
-            <li>Send exactly the amount above, in this currency, on this network. Other networks can lose funds.</li>
-            <li>Sending a transaction does not complete the order. We wait for network and provider confirmation.</li>
-            <li>Keep this page open or return later; status updates automatically.</li>
-          </ul>
-        </>
-      )}
-    </section>
+      <div className="pay-main">
+        <section className="card pay-card" aria-label="Payment">
+          {!paid && (
+            <header className="space-y-4">
+              <div>
+                <p className="eyebrow">Secure checkout</p>
+                <h1 className="font-display mt-2 text-2xl font-bold sm:text-3xl">{phase === "choose" ? "Choose how to pay" : phase === "send" ? "Send your payment" : "Confirm your payment"}</h1>
+              </div>
+              <Stepper steps={STEPS} current={stepIndex} />
+              <p className="text-xs text-muted sm:hidden">Step {Math.min(stepIndex + 1, 4)} of 4: {STEPS[Math.min(stepIndex, 3)]}</p>
+            </header>
+          )}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div key={phase} {...anim} className="pay-phase">
+              {phase === "choose" && (
+                <>
+                  <MethodPicker methods={methods} methodsError={methodsError} pendingId={pendingId} error={pickError} onPick={pick} onRetry={loadMethods} />
+                  <TrustLine />
+                </>
+              )}
+              {phase === "send" && intent && (
+                <SendStep intent={intent} method={method} remaining={remaining ?? 0} span={span} expired={expired} refreshing={refreshing} refreshError={refreshError} onRefresh={refreshQuote} onSent={() => setPhase("confirm")} onChangeMethod={changeMethod} />
+              )}
+              {phase === "confirm" && intent && (
+                <ConfirmStep intent={intent} status={status} submittedHash={submittedHash} submitting={submitting} rejection={rejection} expired={expired} refreshing={refreshing} onSubmit={submit} onRefresh={refreshQuote} onBack={() => setPhase("send")} onChangeMethod={changeMethod} />
+              )}
+              {phase === "done" && <DoneState orderId={orderId} kind={order.kind} receipt={receipt} receiptNo={status?.receiptNo ?? null} intent={intent} txHash={submittedHash ?? status?.txHash ?? data.payment?.tx_hash ?? null} priceUsd={Number(order.price_usd)} />}
+            </motion.div>
+          </AnimatePresence>
+        </section>
+      </div>
+    </div>
   );
 }

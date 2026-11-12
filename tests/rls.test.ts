@@ -34,7 +34,7 @@ beforeAll(async () => {
     grant usage on schema auth to anon, authenticated;
     grant execute on function auth.jwt() to anon, authenticated;
   `);
-  for (const f of ["20261103000001_core_schema.sql", "20261103000002_seed_catalog.sql", "20261103000003_boost_allocations.sql", "20261103000010_admin_moderation.sql", "20261103000030_votes.sql", "20261103000040_rls_privy.sql"]) await db.exec(migration(f));
+  for (const f of ["20261103000001_core_schema.sql", "20261103000002_seed_catalog.sql", "20261103000003_boost_allocations.sql", "20261103000010_admin_moderation.sql", "20261103000030_votes.sql", "20261103000040_rls_privy.sql", "20261112000020_direct_payments.sql"]) await db.exec(migration(f));
   await db.exec(`
     grant usage on schema public to anon, authenticated;
     grant select, insert, update, delete on all tables in schema public to anon, authenticated;
@@ -52,7 +52,7 @@ beforeAll(async () => {
 });
 
 describe("private data without a signed-in identity", () => {
-  const PRIVATE = ["watchlists", "watchlist_items", "saved_searches", "price_alerts", "notifications", "profiles", "user_roles", "orders", "payments", "payment_events", "exclusive_reservations", "ad_events", "community_votes", "token_votes", "ai_conversations", "ai_messages", "platform_settings", "admin_audit_logs", "moderation_notes"];
+  const PRIVATE = ["watchlists", "watchlist_items", "saved_searches", "price_alerts", "notifications", "profiles", "user_roles", "orders", "payments", "payment_events", "payment_proofs", "exclusive_reservations", "ad_events", "community_votes", "token_votes", "ai_conversations", "ai_messages", "platform_settings", "admin_audit_logs", "moderation_notes"];
 
   it("returns nothing to anonymous clients or to a token with no subject, even when rows exist", async () => {
     for (const t of PRIVATE) {

@@ -1,6 +1,7 @@
 import { Check, Clock, ShieldCheck, Zap } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PackBoostButton } from "@/components/boost/PackBoostButton";
 import { ExpressRail } from "@/components/boost/ExpressRail";
 import { BoostProjects } from "@/components/boost/BoostProjects";
 import { ContactCard } from "@/components/ui/ContactCard";
@@ -42,7 +43,7 @@ export default function BoostPage() {
         ))}
       </ol>
 
-      <BoostProjects />
+      <BoostProjects packs={BOOST_PACKS.map((b) => ({ id: b.id, name: b.name }))} />
 
       <ContactCard note="Want a custom boost, a bigger package or help choosing a coin? Message an admin directly on Telegram." />
 
@@ -64,6 +65,7 @@ export default function BoostPage() {
               <tr><th scope="row" className="sticky left-0 bg-[var(--surface-1)] text-left font-medium text-muted">Rotation priority</th>{BOOST_PACKS.map((b) => <td key={b.id}><span className="inline-flex items-center gap-1.5"><span className="num font-semibold">{b.priority}</span><span className="flex gap-0.5" aria-hidden="true">{Array.from({ length: 6 }, (_, i) => <i key={i} className={`h-1.5 w-2 rounded-sm ${i < b.priority ? "bg-[var(--brand)]" : "bg-[var(--surface-3)]"}`} />)}</span></span></td>)}</tr>
               <tr><th scope="row" className="sticky left-0 bg-[var(--surface-1)] text-left font-medium text-muted">Strip card</th>{BOOST_PACKS.map((b) => <td key={b.id}>{b.priority >= 5 ? "Premium" : b.priority >= 4 ? "Wide highlight" : b.priority >= 3 ? "Highlight" : "Standard"}</td>)}</tr>
               <tr><th scope="row" className="sticky left-0 bg-[var(--surface-1)] text-left font-medium text-muted">Boosted badge</th>{BOOST_PACKS.map((b) => <td key={b.id}><Check size={16} className="text-up" aria-label="Included" /></td>)}</tr>
+              <tr><th scope="row" className="sticky left-0 bg-[var(--surface-1)] text-left font-medium text-muted">Boost</th>{BOOST_PACKS.map((b) => <td key={b.id}><PackBoostButton packId={b.id} label="Boost" full={false} /></td>)}</tr>
             </tbody>
           </table>
         </div>
@@ -82,7 +84,8 @@ export default function BoostPage() {
               </div>
               <div className="flex items-center gap-1.5 text-sm font-semibold text-soft"><Clock size={14} aria-hidden="true" /> {duration(b.hours)}</div>
               <ul className="flex-1 space-y-1.5 text-[13px] text-soft">{b.allocations.map((a) => <li key={a} className="flex gap-2"><Check size={13} className="mt-0.5 shrink-0 text-up" aria-hidden="true" /> {a}</li>)}</ul>
-              <div className="flex items-end justify-between gap-2"><span className="num text-3xl font-bold">${b.priceUsd.toLocaleString("en-US")}</span><a href="#boost-projects" className="btn btn-sm btn-primary">Boost a coin</a></div>
+              <div className="num text-3xl font-bold">${b.priceUsd.toLocaleString("en-US")}</div>
+              <PackBoostButton packId={b.id} />
             </article>
           ))}
         </div>

@@ -169,3 +169,6 @@ a.gloss-letter:hover { background: var(--surface-3); color: var(--text); }
 @media (prefers-reduced-motion: reduce) { .express-rail, .express-bolt, .pay-cta::after { animation: none; } .pay-cta::after { display: none; } }
 .admin-addr { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .admin-addr code { min-width: 0; flex: 1; overflow-wrap: anywhere; font-size: 0.75rem; }
+.pack-banner { animation: pack-banner-in 420ms var(--ease-out) both; border-color: var(--warm); }
+@keyframes pack-banner-in { 0% { opacity: 0; transform: translateY(-6px) scale(0.98); box-shadow: 0 0 0 0 color-mix(in srgb, var(--warm) 50%, transparent); } 60% { box-shadow: 0 0 0 10px transparent; } 100% { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .pack-banner { animation: none; } }

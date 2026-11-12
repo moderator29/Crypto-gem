@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { validPack } from "@/components/boost/packSelection";
 import { BoostConfigurator } from "@/components/boost/BoostConfigurator";
 import { ContactCard } from "@/components/ui/ContactCard";
 import { TokenLogo } from "@/components/ui/TokenLogo";
@@ -12,8 +13,9 @@ import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
 export const metadata: Metadata = { title: "Boost packs" };
 export const dynamic = "force-dynamic";
 
-export default async function BoostProjectPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function BoostProjectPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ pack?: string }> }) {
   const { id } = await params;
+  const { pack } = await searchParams;
   if (!/^[0-9a-f-]{36}$/i.test(id) || !supabaseConfigured()) notFound();
   const db = supabaseAdmin();
   const { data: p } = await db.from("token_submissions").select("id,name,symbol,network_id,address,logo_url").eq("id", id).eq("status", "published").maybeSingle();
@@ -41,7 +43,7 @@ export default async function BoostProjectPage({ params }: { params: Promise<{ i
         </div>
       </header>
       <ContactCard variant="inline" title="Questions about this boost?" />
-      <BoostConfigurator submissionId={p.id} project={{ name: p.name, symbol: p.symbol, logo: p.logo_url, network: getNetwork(p.network_id ?? "")?.name ?? null, networkId: p.network_id ?? null, address: p.address ?? null }} packs={packs} />
+      <BoostConfigurator initialPackId={validPack(pack, packs)} submissionId={p.id} project={{ name: p.name, symbol: p.symbol, logo: p.logo_url, network: getNetwork(p.network_id ?? "")?.name ?? null, networkId: p.network_id ?? null, address: p.address ?? null }} packs={packs} />
     </div>
   );
 }

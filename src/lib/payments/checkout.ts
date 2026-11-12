@@ -50,3 +50,6 @@ export async function createPaymentForOrder(userId: string, orderId: string, pay
   if (error) throw new CheckoutError("Could not record the payment", 500);
   return row;
 }
+
+/** Direct crypto payment path: the buyer pays our wallet and the server verifies the transfer on chain. */
+export { createIntent as createDirectPaymentForOrder } from "./direct/service";

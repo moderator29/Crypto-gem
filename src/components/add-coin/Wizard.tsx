@@ -2,6 +2,8 @@
 
 import { fireConfetti } from "@/components/fx/confetti";
 import { Meter, Stepper } from "@/components/ui/Kit";
+import { AcceptedAssets } from "@/components/boost/AcceptedAssets";
+import { ContactCard } from "@/components/ui/ContactCard";
 import { SummaryPanel } from "./SummaryPanel";
 import { TokenFinder } from "./TokenFinder";
 import { classifyAddress } from "@/lib/market-data/identifiers";
@@ -73,18 +75,11 @@ export function Wizard() {
   const [terms, setTerms] = useState(false);
   const [submit, setSubmit] = useState<{ state: "idle" | "busy" | "done" | "setup" | "error"; message?: string }>({ state: "idle" });
   const router = useRouter();
-  const [methods, setMethods] = useState<Array<{ id: string; label: string; provider_currency: string; network: string }>>([]);
-  const [payCurrency, setPayCurrency] = useState("");
   const [needSignin, setNeedSignin] = useState(false);
   const [logoBusy, setLogoBusy] = useState(false);
   const [logoError, setLogoError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const { state, retry } = useDetect(step === "identify" ? address : "", network);
-
-  useEffect(() => {
-    if (step !== "summary") return;
-    fetch("/api/payment-methods").then((r) => r.json()).then((j: { methods?: typeof methods }) => setMethods(j.methods ?? []), () => setMethods([]));
-  }, [step]);
 
   const token = state.token;
   const chosenPkg = LISTING_PACKAGES.find((p) => p.id === pkg)!;
@@ -155,7 +150,7 @@ export function Wizard() {
       const res = await fetch("/api/listings", {
         method: "POST",
         headers: { "content-type": "application/json", ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}) },
-        body: JSON.stringify({ mode, network: token?.networkId ?? network, address: token?.address ?? (address.trim() || null), package: pkg, payCurrency, form }),
+        body: JSON.stringify({ mode, network: token?.networkId ?? network, address: token?.address ?? (address.trim() || null), package: pkg, form }),
       });
       const j = await res.json().catch(() => ({}));
       if (res.status === 503) return setSubmit({ state: "setup", message: j.error });
@@ -396,19 +391,18 @@ export function Wizard() {
           )}
           <ul className="space-y-1 text-sm text-soft">{chosenPkg.perks.map((x) => <li key={x}>✓ {x}</li>)}</ul>
           <label className="flex items-start gap-3 text-sm"><input type="checkbox" className="mt-1 h-4 w-4" checked={terms} onChange={(e) => setTerms(e.target.checked)} /> I confirm the information is accurate and accept the listing terms.</label>
-          <label className="block"><span className="mb-1 block text-sm font-semibold">Pay with</span>
-            <select className="input" value={payCurrency} onChange={(e) => setPayCurrency(e.target.value)}>
-              <option value="">{methods.length ? "Select currency and network" : "No payment options available yet"}</option>
-              {methods.map((m) => <option key={m.id} value={m.provider_currency}>{m.label} ({m.network})</option>)}
-            </select>
-          </label>
+          <div className="space-y-3 border-t border-line pt-4">
+            <h3 className="eyebrow">Pay with crypto</h3>
+            <AcceptedAssets />
+          </div>
           {needSignin && <p className="card-flat p-3 text-sm" role="status">Sign in first so the order is tied to your account. <Link href="/login?next=/add-coin" className="font-semibold text-brand">Sign in</Link>. Your details here are kept only until you leave this page.</p>}
-          <button type="button" className="btn btn-primary w-full md:w-auto" disabled={!terms || !payCurrency || submit.state === "busy" || submit.state === "done"} onClick={placeOrder}>
-            {submit.state === "busy" ? <Loader2 size={16} className="animate-spin" /> : submit.state === "done" ? <CheckCircle2 size={16} /> : <Rocket size={16} />} {submit.state === "done" ? "Order created" : "Continue to Secure Payment"} · ${chosenPkg.priceUsd.toLocaleString("en-US")}
+          <button type="button" className="btn btn-primary btn-lg pay-cta w-full md:w-auto" disabled={!terms || submit.state === "busy" || submit.state === "done"} onClick={placeOrder}>
+            {submit.state === "busy" ? <Loader2 size={16} className="animate-spin" /> : submit.state === "done" ? <CheckCircle2 size={16} /> : <Rocket size={16} />} {submit.state === "done" ? "Order created" : "Continue to payment"} · ${chosenPkg.priceUsd.toLocaleString("en-US")}
           </button>
           {submit.state === "done" && <p className="text-sm text-up" role="status">Order created. Taking you to payment.</p>}
           {submit.state === "setup" && <p className="card-flat p-3 text-sm text-warm" role="status">{submit.message}</p>}
           {submit.state === "error" && <p className="text-sm text-down" role="alert">{submit.message}</p>}
+          <ContactCard variant="inline" title="Questions about your listing?" />
         </section>
       )}
       </div>

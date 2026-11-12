@@ -13,6 +13,7 @@ import "./globals.css";
 import "@/styles/fx.css";
 import "@/styles/pages.css";
 import "@/styles/markets.css";
+import "@/styles/pay.css";
 import { RouteProgress } from "@/components/fx/RouteProgress";
 import { BackToTop } from "@/components/fx/BackToTop";
 import { KeyboardShortcuts } from "@/components/fx/KeyboardShortcuts";

@@ -3,6 +3,7 @@
 import { AlertTriangle, ArrowRight, Search, Zap } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { PACK_EVENT, readPack, validPack } from "./packSelection";
 import { TokenLogo } from "@/components/ui/TokenLogo";
 import { getNetwork, NETWORKS } from "@/lib/market-data/networks";
 import { shortAddress } from "@/lib/utils/format";
@@ -12,12 +13,28 @@ interface Resp { configured: boolean; total: number; page: number; pageSize: num
 
 const CHAINS = NETWORKS.filter((n) => n.contractLookup).slice(0, 12);
 
-export function BoostProjects() {
+export function BoostProjects({ packs }: { packs: Array<{ id: string; name: string }> }) {
+  const [packId, setPackId] = useState<string | null>(null);
+  const [flash, setFlash] = useState(0);
   const [q, setQ] = useState("");
   const [network, setNetwork] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [data, setData] = useState<Resp | null>(null);
   const [state, setState] = useState<"loading" | "ok" | "error">("loading");
+
+  useEffect(() => {
+    const sync = (bump: boolean) => {
+      setPackId(validPack(readPack(), packs));
+      if (bump) setFlash((n) => n + 1);
+    };
+    const t = setTimeout(() => sync(false), 0);
+    const on = () => sync(true);
+    window.addEventListener(PACK_EVENT, on);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener(PACK_EVENT, on);
+    };
+  }, [packs]);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -38,6 +55,7 @@ export function BoostProjects() {
     };
   }, [q, network, page]);
 
+  const pack = packs.find((p) => p.id === packId);
   const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
   const change = (fn: () => void) => {
     setState("loading");
@@ -46,6 +64,12 @@ export function BoostProjects() {
 
   return (
     <section id="boost-projects" aria-label="Choose a project to boost" className="scroll-mt-24 space-y-4">
+      {pack && (
+        <div key={flash} className="pack-banner card-lit flex min-w-0 items-center gap-3 p-3 text-sm font-semibold" role="status">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[var(--surface-3)] text-warm"><Zap size={18} aria-hidden="true" /></span>
+          <span className="min-w-0 break-words">Choose the coin to boost with {pack.name}</span>
+        </div>
+      )}
       <div className="relative">
         <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
         <input className="input !pl-11" value={q} onChange={(e) => change(() => { setQ(e.target.value); setPage(1); })} placeholder="Search coin name, symbol or contract" aria-label="Search listed projects" />
@@ -78,7 +102,7 @@ export function BoostProjects() {
         <ul className="grid gap-2">
           {data.projects.map((p) => (
             <li key={p.id}>
-              <Link href={`/boost/${p.id}`} className="card-flat hover-lift flex items-center gap-3 p-3">
+              <Link href={pack ? `/boost/${p.id}?pack=${encodeURIComponent(pack.id)}` : `/boost/${p.id}`} className="card-flat hover-lift flex items-center gap-3 p-3">
                 <TokenLogo src={p.logo_url} symbol={p.symbol} size={48} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-semibold">{p.name}</span>

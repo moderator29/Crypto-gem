@@ -47,9 +47,9 @@ function StripPreview({ project, pack }: { project: Project; pack: BoostPack }) 
 }
 
 /** Pack picker, order summary and payment list for one project. Pricing is read from the server, never typed here. */
-export function BoostConfigurator({ submissionId, project, packs }: { submissionId: string; project: Project; packs: BoostPack[] }) {
+export function BoostConfigurator({ submissionId, project, packs, initialPackId }: { initialPackId?: string | null; submissionId: string; project: Project; packs: BoostPack[] }) {
   const router = useRouter();
-  const [packId, setPackId] = useState(packs.find((p) => p.label === "Popular")?.id ?? packs[0]?.id ?? "");
+  const [packId, setPackId] = useState(initialPackId ?? packs.find((p) => p.label === "Popular")?.id ?? packs[0]?.id ?? "");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: "error" | "signin"; text: string } | null>(null);
   const [open, setOpen] = useState<number | null>(0);
