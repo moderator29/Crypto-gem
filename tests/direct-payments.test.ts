@@ -1,6 +1,6 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { createIntent, refreshPayment, submitProof, type PaymentRow } from "@/lib/payments/direct/service";
+import { createIntent, fingerprintRng, refreshPayment, submitProof, type PaymentRow } from "@/lib/payments/direct/service";
 import { clearRateCache } from "@/lib/payments/direct/price";
 import { EVM_ADDRESS, SOLANA_ADDRESS, getDirectMethod } from "@/lib/payments/direct/methods";
 import {
@@ -28,6 +28,7 @@ function fakeDb() {
         if (name === "payments") {
           if (row.tx_hash && rows().some((r) => lowerHash(r) === lowerHash(row))) return { data: null, error: { code: "23505" } };
           if (rows().some((r) => r.order_id === row.order_id && r.pay_currency === row.pay_currency && ["created", "waiting", "confirming", "partially_paid"].includes(r.status as string))) return { data: null, error: { code: "23505" } };
+          if (rows().some((r) => r.pay_currency === row.pay_currency && r.pay_amount === row.pay_amount && ["created", "waiting", "confirming", "partially_paid"].includes(r.status as string))) return { data: null, error: { code: "23505" } };
           row.id = crypto.randomUUID();
           row.created_at = new Date().toISOString();
           row.confirmations = 0;
@@ -104,6 +105,8 @@ function evmChain(opts: { to?: string; value?: bigint; logs?: Row[]; status?: st
   chain.receipt = { status: opts.status ?? "0x1", blockNumber: bn, logs: opts.logs ?? [] };
   chain.latest = hex(opts.latest ?? 110);
 }
+
+afterEach(() => vi.restoreAllMocks());
 
 beforeEach(() => {
   for (const k of Object.keys(tables)) delete tables[k];
@@ -197,7 +200,7 @@ describe("intents", () => {
   it("quotes stablecoins at the order price and is idempotent per method", async () => {
     const db = fakeDb();
     const a = await createIntent(db, USER, ORDER, "usdt-ethereum");
-    expect(a).toMatchObject({ amount: "100", amountUsd: 100, rate: null, address: EVM_ADDRESS, status: "waiting", minConfirmations: 3 });
+    expect(a).toMatchObject({ amountUsd: 100, amountNote: "Send exactly this amount. The last digits identify your payment.", rate: null, address: EVM_ADDRESS, status: "waiting", minConfirmations: 3 });
     const b = await createIntent(db, USER, ORDER, "usdt-ethereum");
     expect(b.paymentId).toBe(a.paymentId);
     expect(tables.payments).toHaveLength(1);
@@ -212,7 +215,9 @@ describe("intents", () => {
   it("prices native coins from the quote with a buffer and records the rate", async () => {
     const db = fakeDb();
     const i = await createIntent(db, USER, ORDER, "eth-base");
-    expect(i.amount).toBe("0.05075");
+    expect(Number(i.amount)).toBeGreaterThan(0.05075);
+    expect(Number(i.amount)).toBeLessThanOrEqual(0.05075 + 0.000999);
+    expect(i.amount.split(".")[1]!.length).toBeLessThanOrEqual(6);
     expect(i.rate).toBe(2000);
     expect(Date.parse(i.expiresAt) - Date.now()).toBeLessThanOrEqual(20 * 60_000);
   });
@@ -233,13 +238,13 @@ describe("verify and settle", () => {
   async function intent(method = "usdt-ethereum") {
     const db = fakeDb();
     const i = await createIntent(db, USER, ORDER, method);
-    return { db, id: i.paymentId };
+    return { db, id: i.paymentId, amount: i.amount };
   }
 
   it("settles a full ERC-20 payment exactly once and writes the receipt", async () => {
-    const { db, id } = await intent();
+    const { db, id, amount } = await intent();
     const m = getDirectMethod("usdt-ethereum")!;
-    evmChain({ logs: [transferLog(m.token!, EVM_ADDRESS, 100_000000n)] });
+    evmChain({ logs: [transferLog(m.token!, EVM_ADDRESS, decimalToUnits(amount, 6))] });
     const v = await submitProof(db, USER, id, HASH.toUpperCase().replace("0X", "0x"));
     expect(v).toMatchObject({ status: "finished", paidAmount: "100", orderId: ORDER });
     expect(v.receiptNo).toMatch(/^CG-\d{8}-[0-9A-F]{6}$/);
@@ -253,23 +258,23 @@ describe("verify and settle", () => {
   });
 
   it("settles a BSC 18-decimal transfer and a native ETH transfer", async () => {
-    let { db, id } = await intent("usdt-bsc");
+    let { db, id, amount } = await intent("usdt-bsc");
     chain.chainId = "0x38";
-    evmChain({ logs: [transferLog(getDirectMethod("usdt-bsc")!.token!, EVM_ADDRESS, decimalToUnits("100", 18))], latest: 120 });
+    evmChain({ logs: [transferLog(getDirectMethod("usdt-bsc")!.token!, EVM_ADDRESS, decimalToUnits(amount, 18))], latest: 120 });
     expect((await submitProof(db, USER, id, HASH)).status).toBe("finished");
 
     for (const k of Object.keys(tables)) delete tables[k];
     tables.orders = [{ id: ORDER, user_id: USER, kind: "listing", ref_id: "sub-1", price_usd: 100, status: "pending" }];
     tables.token_submissions = [{ id: "sub-1", status: "awaiting_payment" }];
-    ({ db, id } = await intent("eth-ethereum"));
+    ({ db, id, amount } = await intent("eth-ethereum"));
     chain.chainId = "0x1";
-    evmChain({ value: decimalToUnits("0.05075", 18) });
+    evmChain({ value: decimalToUnits(amount, 18) });
     expect((await submitProof(db, USER, id, HASH2)).status).toBe("finished");
   });
 
   it("waits for confirmations before counting a valid transfer", async () => {
-    const { db, id } = await intent();
-    evmChain({ logs: [transferLog(getDirectMethod("usdt-ethereum")!.token!, EVM_ADDRESS, 100_000000n)], blockNumber: 100, latest: 101 });
+    const { db, id, amount } = await intent();
+    evmChain({ logs: [transferLog(getDirectMethod("usdt-ethereum")!.token!, EVM_ADDRESS, decimalToUnits(amount, 6))], blockNumber: 100, latest: 101 });
     const v = await submitProof(db, USER, id, HASH);
     expect(v).toMatchObject({ status: "confirming", confirmations: 2, required: 3 });
     expect(tables.orders[0]!.status).toBe("pending");
@@ -277,7 +282,7 @@ describe("verify and settle", () => {
   });
 
   it("rejects the wrong recipient, the wrong token and a failed transaction", async () => {
-    const { db, id } = await intent();
+    const { db, id, amount } = await intent();
     const m = getDirectMethod("usdt-ethereum")!;
     evmChain({ logs: [transferLog(m.token!, OTHER, 100_000000n)] });
     const a = await submitProof(db, USER, id, HASH);
@@ -285,13 +290,13 @@ describe("verify and settle", () => {
     expect(a.txHash).toBeNull();
     evmChain({ logs: [transferLog(getDirectMethod("usdc-ethereum")!.token!, EVM_ADDRESS, 100_000000n)] });
     expect((await submitProof(db, USER, id, HASH2)).rejected).toBe(true);
-    evmChain({ logs: [transferLog(m.token!, EVM_ADDRESS, 100_000000n)], status: "0x0" });
+    evmChain({ logs: [transferLog(m.token!, EVM_ADDRESS, decimalToUnits(amount, 6))], status: "0x0" });
     expect((await submitProof(db, USER, id, HASH)).rejected).toBe(true);
     expect(tables.orders[0]!.status).toBe("pending");
   });
 
   it("rejects a native transfer sent to a different address and a transfer from before the intent", async () => {
-    const { db, id } = await intent("eth-ethereum");
+    const { db, id, amount } = await intent("eth-ethereum");
     evmChain({ to: OTHER, value: decimalToUnits("1", 18) });
     expect((await submitProof(db, USER, id, HASH)).rejected).toBe(true);
     evmChain({ value: decimalToUnits("1", 18) });
@@ -301,7 +306,7 @@ describe("verify and settle", () => {
   });
 
   it("handles a short payment, then completes it with a second hash", async () => {
-    const { db, id } = await intent();
+    const { db, id, amount } = await intent();
     const m = getDirectMethod("usdt-ethereum")!;
     evmChain({ logs: [transferLog(m.token!, EVM_ADDRESS, 60_000000n)] });
     const first = await submitProof(db, USER, id, HASH);
@@ -317,14 +322,14 @@ describe("verify and settle", () => {
   });
 
   it("accepts a payment within the 0.5 percent tolerance", async () => {
-    const { db, id } = await intent();
+    const { db, id, amount } = await intent();
     evmChain({ logs: [transferLog(getDirectMethod("usdt-ethereum")!.token!, EVM_ADDRESS, 99_600000n)] });
     expect((await submitProof(db, USER, id, HASH)).status).toBe("finished");
   });
 
   it("rejects a replayed hash on a second payment", async () => {
-    const { db, id } = await intent();
-    evmChain({ logs: [transferLog(getDirectMethod("usdt-ethereum")!.token!, EVM_ADDRESS, 100_000000n)] });
+    const { db, id, amount } = await intent();
+    evmChain({ logs: [transferLog(getDirectMethod("usdt-ethereum")!.token!, EVM_ADDRESS, decimalToUnits(amount, 6))] });
     expect((await submitProof(db, USER, id, HASH)).status).toBe("finished");
     tables.orders.push({ id: "22222222-2222-2222-2222-222222222222", user_id: USER, kind: "listing", ref_id: "sub-2", price_usd: 100, status: "pending" });
     const second = await createIntent(db, USER, "22222222-2222-2222-2222-222222222222", "usdt-ethereum");
@@ -335,33 +340,33 @@ describe("verify and settle", () => {
   });
 
   it("expires a waiting intent with no proof and refuses a late submission", async () => {
-    const { db, id } = await intent();
+    const { db, id, amount } = await intent();
     tables.payments[0]!.expires_at = new Date(Date.now() - 1000).toISOString();
     const v = await refreshPayment(db, tables.payments[0]! as unknown as PaymentRow);
     expect(v.status).toBe("expired");
-    evmChain({ logs: [transferLog(getDirectMethod("usdt-ethereum")!.token!, EVM_ADDRESS, 100_000000n)] });
+    evmChain({ logs: [transferLog(getDirectMethod("usdt-ethereum")!.token!, EVM_ADDRESS, decimalToUnits(amount, 6))] });
     const r = await submitProof(db, USER, id, HASH);
     expect(r.rejected).toBe(true);
     expect(tables.orders[0]!.status).toBe("pending");
   });
 
   it("refuses to verify on an RPC that reports the wrong chain", async () => {
-    const { db, id } = await intent();
+    const { db, id, amount } = await intent();
     chain.chainId = "0x38";
-    evmChain({ logs: [transferLog(getDirectMethod("usdt-ethereum")!.token!, EVM_ADDRESS, 100_000000n)] });
+    evmChain({ logs: [transferLog(getDirectMethod("usdt-ethereum")!.token!, EVM_ADDRESS, decimalToUnits(amount, 6))] });
     const v = await submitProof(db, USER, id, HASH);
     expect(v.status).toBe("confirming");
     expect(tables.orders[0]!.status).toBe("pending");
   });
 
   it("rejects malformed hashes and other users' payments", async () => {
-    const { db, id } = await intent();
+    const { db, id, amount } = await intent();
     expect((await submitProof(db, USER, id, "0x12")).rejected).toBe(true);
     await expect(submitProof(db, "did:privy:other", id, HASH)).rejects.toMatchObject({ status: 404 });
   });
 
   it("settles a Solana USDC transfer from token balances", async () => {
-    const { db, id } = await intent("usdc-solana");
+    const { db, id, amount } = await intent("usdc-solana");
     const mint = getDirectMethod("usdc-solana")!.token!;
     chain.solana = {
       blockTime: nowSec(),
@@ -376,7 +381,7 @@ describe("verify and settle", () => {
   });
 
   it("does not settle a failed Solana transaction", async () => {
-    const { db, id } = await intent("usdc-solana");
+    const { db, id, amount } = await intent("usdc-solana");
     chain.solana = { blockTime: nowSec(), meta: { err: { InstructionError: [0, "Custom"] }, preTokenBalances: [], postTokenBalances: [] } };
     expect((await submitProof(db, USER, id, SIG)).rejected).toBe(true);
     expect(tables.orders[0]!.status).toBe("pending");

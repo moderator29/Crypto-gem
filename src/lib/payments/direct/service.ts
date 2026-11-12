@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { verifyEvmTransfer } from "./evm";
 import { DIRECT_METHODS, EXPLORER_ADDRESS, getDirectMethod, type DirectMethod } from "./methods";
@@ -5,7 +6,7 @@ import { usdRate } from "./price";
 import { settlePayment } from "./settle";
 import { verifySolanaTransfer } from "./solana";
 import { PayError, type PaymentView, type PayStatus, type TxCheck } from "./types";
-import { decimalToUnits, EVM_CONFIRMATIONS, isEvmHash, isSolanaSignature, nativeAmount, numberToDecimal, stableAmount, unitsToDecimal, withinTolerance } from "./units";
+import { classifyTransfer, decimalToUnits, EVM_CONFIRMATIONS, isEvmHash, isSolanaSignature, nativeWithFingerprint, numberToDecimal, stableWithFingerprint, unitsToDecimal, withinTolerance } from "./units";
 
 export const CHECK_INTERVAL_MS = 4000;
 const STABLE_TTL_MS = 60 * 60_000;
@@ -37,6 +38,28 @@ export interface PaymentRow {
 interface ProofRow {
   tx_hash: string;
   amount_units: string;
+}
+
+/** Random source for amount fingerprints. Replaceable in tests. */
+export const fingerprintRng = { int: (max: number): number => randomInt(0, max) };
+
+/** Picks a fingerprinted amount no other live payment on the same asset and network has. Narrow range first, then wider. */
+function pickAmount(m: DirectMethod, usd: number, rate: number | null, taken: Set<string>): string {
+  const stable = m.kind !== "native";
+  const ranges = stable ? [999, 4999] : [999, 9999];
+  for (const [i, max] of ranges.entries()) {
+    for (let a = 0; a < (i === 0 ? 20 : 40); a++) {
+      const k = 1 + fingerprintRng.int(max);
+      const amount = stable ? stableWithFingerprint(usd, k) : nativeWithFingerprint(usd, rate as number, k);
+      if (!taken.has(amount)) return amount;
+    }
+  }
+  throw new PayError("Too many payments are open right now. Try again in a moment.", 503);
+}
+
+async function takenAmounts(db: SupabaseClient, m: DirectMethod): Promise<Set<string>> {
+  const { data } = await db.from("payments").select("pay_amount").eq("provider", "direct").eq("pay_currency", m.id).in("status", LIVE);
+  return new Set(((data ?? []) as Array<{ pay_amount: number | string }>).map((r) => numberToDecimal(r.pay_amount, 6)));
 }
 
 export const requiredFor = (m: DirectMethod): number => EVM_CONFIRMATIONS[m.networkId] ?? 5;
@@ -156,6 +179,18 @@ export async function refreshPayment(db: SupabaseClient, input: PaymentRow, opts
     return view(row, m);
   }
 
+  const target = expected - total;
+  const cls = classifyTransfer(check.receivedUnits, target, m.kind === "native" ? "native" : "stable", m.decimals);
+  if (proofs.length > 0 && cls !== "in") {
+    return rejectHash(db, row, m, proofs, `Send exactly the remaining ${unitsToDecimal(target, m.decimals)} ${m.asset} and submit that hash.`);
+  }
+  if (cls === "over") {
+    return rejectHash(db, row, m, proofs, "That transfer is larger than this payment amount. Contact support if you sent it by mistake.");
+  }
+  if (cls === "in" && proofs.length === 0 && (await closerToAnotherPayment(db, row, m, expected, check.receivedUnits))) {
+    return rejectHash(db, row, m, proofs, "That transfer matches a different payment.");
+  }
+
   const amountText = unitsToDecimal(check.receivedUnits, m.decimals);
   const { error } = await db.from("payment_proofs").insert({ payment_id: row.id, tx_hash: hash.toLowerCase(), amount: Number(amountText), amount_units: check.receivedUnits.toString(), verified_at: new Date().toISOString() });
   if (error) {
@@ -174,6 +209,18 @@ export async function refreshPayment(db: SupabaseClient, input: PaymentRow, opts
   const msg = `Received ${unitsToDecimal(sum, m.decimals)} of ${numberToDecimal(row.pay_amount, 6)}. Send the remaining amount and submit that hash too`;
   row = await patch(db, row, { status: "partially_paid", confirmations: check.confirmations, actually_paid: Number(unitsToDecimal(sum, m.decimals)), message: msg });
   return view(row, m);
+}
+
+/** True when another live payment on the same asset and network has an expected amount strictly closer to the transfer. */
+async function closerToAnotherPayment(db: SupabaseClient, row: PaymentRow, m: DirectMethod, expected: bigint, received: bigint): Promise<boolean> {
+  const { data } = await db.from("payments").select("id,pay_amount").eq("provider", "direct").eq("pay_currency", m.id).in("status", LIVE);
+  const dist = (a: bigint): bigint => (received > a ? received - a : a - received);
+  const mine = dist(expected);
+  for (const o of (data ?? []) as Array<{ id: string; pay_amount: number | string }>) {
+    if (o.id === row.id) continue;
+    if (dist(decimalToUnits(numberToDecimal(o.pay_amount, 6), m.decimals)) < mine) return true;
+  }
+  return false;
 }
 
 /** Drops a submitted hash that cannot pay this order and tells the buyer why. The payment stays open for another hash. */
@@ -204,6 +251,7 @@ export interface IntentResult {
   minConfirmations: number;
   explorerAddressUrl: string;
   status: "waiting";
+  amountNote: string;
 }
 
 function intentFrom(row: PaymentRow, m: DirectMethod, amountUsd: number): IntentResult {
@@ -221,6 +269,7 @@ function intentFrom(row: PaymentRow, m: DirectMethod, amountUsd: number): Intent
     minConfirmations: requiredFor(m),
     explorerAddressUrl: `${EXPLORER_ADDRESS[m.networkId]}${m.address}`,
     status: "waiting",
+    amountNote: "Send exactly this amount. The last digits identify your payment.",
   };
 }
 
@@ -251,39 +300,41 @@ export async function createIntent(db: SupabaseClient, userId: string, orderId: 
     }
   }
 
-  let amount: string;
   let rate: number | null = null;
-  try {
-    if (m.kind === "native") {
+  if (m.kind === "native") {
+    try {
       rate = await usdRate(m.priceId as string);
-      amount = nativeAmount(usd, rate, 6);
-    } else {
-      amount = stableAmount(usd, 6);
+    } catch {
+      throw new PayError("Live pricing is unavailable right now. Try again in a moment or choose a stablecoin.", 503);
     }
-  } catch {
-    throw new PayError("Live pricing is unavailable right now. Try again in a moment or choose a stablecoin.", 503);
   }
 
   const expiresAt = new Date(Date.now() + (m.kind === "native" ? NATIVE_TTL_MS : STABLE_TTL_MS)).toISOString();
-  const { data: created, error } = await db.from("payments").insert({
-    order_id: orderId,
-    provider: "direct",
-    pay_currency: m.id,
-    pay_network: m.networkId,
-    pay_amount: Number(amount),
-    pay_address: m.address,
-    status: "waiting",
-    expires_at: expiresAt,
-    rate_usd: rate,
-  }).select("*").single();
-  if (error || !created) {
-    if (error?.code === "23505") {
-      const { data: again } = await db.from("payments").select("*").eq("order_id", orderId).eq("provider", "direct").eq("pay_currency", m.id).in("status", LIVE).maybeSingle();
-      if (again) return intentFrom(again as PaymentRow, m, usd);
+  for (let attempt = 0; attempt < 6; attempt++) {
+    let amount: string;
+    try {
+      amount = pickAmount(m, usd, rate, await takenAmounts(db, m));
+    } catch (e) {
+      if (e instanceof PayError) throw e;
+      throw new PayError("Could not price this order. Try again.", 503);
     }
-    throw new PayError("Could not create the payment", 500);
+    const { data: created, error } = await db.from("payments").insert({
+      order_id: orderId,
+      provider: "direct",
+      pay_currency: m.id,
+      pay_network: m.networkId,
+      pay_amount: Number(amount),
+      pay_address: m.address,
+      status: "waiting",
+      expires_at: expiresAt,
+      rate_usd: rate,
+    }).select("*").single();
+    if (!error && created) return intentFrom(created as PaymentRow, m, usd);
+    if (error?.code !== "23505") throw new PayError("Could not create the payment", 500);
+    const { data: again } = await db.from("payments").select("*").eq("order_id", orderId).eq("provider", "direct").eq("pay_currency", m.id).in("status", LIVE).maybeSingle();
+    if (again) return intentFrom(again as PaymentRow, m, usd);
   }
-  return intentFrom(created as PaymentRow, m, usd);
+  throw new PayError("Could not create the payment", 500);
 }
 
 /** Validates the hash for the method, stores it as pending proof and verifies immediately. */

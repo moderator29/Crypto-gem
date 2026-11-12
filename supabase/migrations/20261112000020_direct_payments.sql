@@ -11,6 +11,8 @@ alter table public.payments add column if not exists last_checked_at timestamptz
 create unique index if not exists payments_direct_tx_hash_uidx on public.payments (lower(tx_hash)) where provider = 'direct' and tx_hash is not null;
 -- One live intent per order and method.
 create unique index if not exists payments_direct_live_uidx on public.payments (order_id, pay_currency) where provider = 'direct' and status in ('created', 'waiting', 'confirming', 'partially_paid');
+-- No two live intents on the same asset and network share an amount (the amount carries a per-payment fingerprint).
+create unique index if not exists payments_direct_amount_live_uidx on public.payments (pay_currency, pay_amount) where provider = 'direct' and status in ('created', 'waiting', 'confirming', 'partially_paid');
 
 -- Verified transfers. Several hashes may add up to one payment; a hash is unique across all payments.
 create table if not exists public.payment_proofs (

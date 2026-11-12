@@ -112,3 +112,36 @@ export function parseSolanaTokenDelta(meta: SolanaMeta, owner: string, mint: str
 }
 
 export const EVM_CONFIRMATIONS: Record<string, number> = { ethereum: 3, bsc: 8, base: 5, arbitrum: 5, solana: 1 };
+
+export type WindowClass = "in" | "short" | "over";
+
+/**
+ * Where a single transfer falls relative to the amount it should cover.
+ * Stable: no more than 0.002 below, and above by at most min(0.5 USD, 0.5%). Native: 0.1% below, 1% above.
+ */
+export function classifyTransfer(received: bigint, target: bigint, kind: "stable" | "native", decimals: number): WindowClass {
+  let lowerTol: bigint;
+  let upperTol: bigint;
+  if (kind === "stable") {
+    lowerTol = decimalToUnits("0.002", decimals);
+    const half = decimalToUnits("0.5", decimals);
+    const pct = (target * 50n) / 10000n;
+    upperTol = half < pct ? half : pct;
+  } else {
+    lowerTol = target / 1000n;
+    upperTol = target / 100n;
+  }
+  if (received < target - lowerTol) return "short";
+  if (received > target + upperTol) return "over";
+  return "in";
+}
+
+/** Stablecoin amount: order price (4 decimals, rounded up) plus a fingerprint of k units of 0.0001. */
+export function stableWithFingerprint(usd: number, k: number): string {
+  return unitsToDecimal(decimalToUnits(stableAmount(usd, 4), 4) + BigInt(k), 4);
+}
+
+/** Native amount: buffered quote rounded up to 6 decimals plus a fingerprint of k millionths in the last 4 digits. */
+export function nativeWithFingerprint(usd: number, rate: number, k: number): string {
+  return unitsToDecimal(decimalToUnits(nativeAmount(usd, rate, 6), 6) + BigInt(k), 6);
+}

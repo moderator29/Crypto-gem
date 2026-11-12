@@ -34,7 +34,7 @@ beforeAll(async () => {
     grant usage on schema auth to anon, authenticated;
     grant execute on function auth.jwt() to anon, authenticated;
   `);
-  for (const f of ["20261103000001_core_schema.sql", "20261103000002_seed_catalog.sql", "20261103000003_boost_allocations.sql", "20261103000010_admin_moderation.sql", "20261103000030_votes.sql", "20261103000040_rls_privy.sql", "20261112000020_direct_payments.sql"]) await db.exec(migration(f));
+  for (const f of ["20261103000001_core_schema.sql", "20261103000002_seed_catalog.sql", "20261103000003_boost_allocations.sql", "20261103000010_admin_moderation.sql", "20261103000030_votes.sql", "20261103000040_rls_privy.sql", "20261112000010_token_votes.sql", "20261112000020_direct_payments.sql"]) await db.exec(migration(f));
   await db.exec(`
     grant usage on schema public to anon, authenticated;
     grant select, insert, update, delete on all tables in schema public to anon, authenticated;
