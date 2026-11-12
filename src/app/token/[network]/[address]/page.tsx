@@ -14,6 +14,7 @@ import { ShareButton } from "@/components/ui/ShareButton";
 import { getHomeData } from "@/lib/market-data/home";
 import { dexscreener } from "@/lib/market-data/providers/dexscreener";
 import { QuickAlert } from "@/components/account/QuickAlert";
+import { LivePrice } from "@/components/token/LivePrice";
 import { StickyPriceBar } from "@/components/token/StickyPriceBar";
 import { ViewTracker } from "@/components/token/ViewTracker";
 import { BuyPanel } from "@/components/token/BuyPanel";
@@ -115,7 +116,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
             </p>
           </div>
           <div className="num shrink-0 text-right">
-            <div className="text-xl font-bold md:text-2xl">{priceUsd(price)}</div>
+            <div className="text-xl font-bold md:text-2xl"><LivePrice network={net.id} address={canonical} initial={price} /></div>
             <div className="text-sm">
               <Change v={top?.change.h24 ?? null} /> <span className="text-xs text-muted">24h</span>
             </div>

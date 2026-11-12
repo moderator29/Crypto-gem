@@ -106,3 +106,16 @@
 .chip.tab-spring { position: relative; }
 .chip.tab-spring[aria-selected="true"] { background: var(--surface-1); border-color: transparent; box-shadow: none; color: #fff; }
 .tab-spring-bg { position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(180deg, #ff5a3c, #e8432a); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 4px 14px rgba(232,67,42,.3); }
+
+/* Theme change: the new theme is revealed by a growing circle, so the old one must not fade */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+
+/* Market mood tints the page aurora (set from the Fear and Greed reading on Discover) */
+[data-mood="fear"] .aurora { filter: hue-rotate(-12deg) saturate(1.15); }
+[data-mood="greed"] .aurora { filter: hue-rotate(115deg) saturate(1.1); }
+.aurora { transition: filter 1.2s ease; }
+
+/* Live price update pulse */
+.fx-live-dot { display: inline-block; width: 6px; height: 6px; border-radius: 999px; background: var(--up); box-shadow: 0 0 0 0 var(--up); animation: fx-live 2s ease-out infinite; }
+@keyframes fx-live { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--up) 60%, transparent); } 100% { box-shadow: 0 0 0 8px transparent; } }
+@media (prefers-reduced-motion: reduce) { .fx-live-dot { animation: none; } }

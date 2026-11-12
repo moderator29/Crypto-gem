@@ -1,6 +1,8 @@
 import { chainPulse } from "@/lib/market-data/pulse";
 import { Movers } from "@/components/home/Movers";
+import { WatchlistStrip } from "@/components/home/WatchlistStrip";
 import { RecentlyViewed } from "@/components/home/RecentlyViewed";
+import { MoodTint } from "@/components/fx/MoodTint";
 import { PulseStrip } from "@/components/home/PulseStrip";
 import { getFearGreed } from "@/lib/market-data/providers/fng";
 import { BannerStrip } from "@/components/home/BannerStrip";
@@ -39,7 +41,9 @@ export default async function HomePage() {
       <div className="fx-aurora" aria-hidden="true"><i /><i /><i /></div>
       {data && <Ticker items={data.organic} />}
 
+      {fng && <MoodTint value={fng.value} />}
       {data && data.organic.length > 0 && <PulseStrip data={data} chains={chains} fng={fng} />}
+      <WatchlistStrip />
       <RecentlyViewed />
       <div className="fx-divider" aria-hidden="true" />
       <div className="reveal"><BannerStrip campaigns={campaigns} demos={demos} from={featuredFrom} /></div>
