@@ -11,7 +11,7 @@ export default async function BookPage({ searchParams }: { searchParams: Promise
     <div className="space-y-5">
       <header>
         <h1 className="font-display text-3xl font-bold md:text-4xl">Book a campaign</h1>
-        <p className="mt-1 text-soft">Pick where you appear, upload your creative, preview it in place, then pay.</p>
+        <p className="mt-1 text-soft">Pick where you appear, preview your banner in place, then pay. No account needed.</p>
       </header>
       <BookingWizard initial={initial} />
     </div>

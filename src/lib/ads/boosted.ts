@@ -1,6 +1,8 @@
 import "server-only";
 import { normalizeAddress } from "@/lib/market-data/identifiers";
 import { supabaseAdmin, supabaseConfigured } from "@/lib/supabase/admin";
+import { ACTIVE_BOOSTS, type StaticBoost } from "@/data/sponsored";
+import { BOOST_PACKS } from "./catalog";
 
 export interface BoostedProject {
   id: string;
@@ -12,13 +14,35 @@ export interface BoostedProject {
   priority: number;
 }
 
+/** Boosts from src/data/sponsored.ts that have not ended, mapped to the same shape and order as database boosts. */
+export function staticBoostedProjects(list: StaticBoost[] = ACTIVE_BOOSTS, now = Date.now(), limit = 6): BoostedProject[] {
+  const prio = (packId: string): number => BOOST_PACKS.find((p) => p.id === packId)?.priority ?? 0;
+  return list
+    .filter((b) => {
+      const end = Date.parse(b.endsAt);
+      return Number.isFinite(end) && end > now && !!b.network && !!b.address;
+    })
+    .sort((a, b) => prio(b.packId) - prio(a.packId) || a.endsAt.localeCompare(b.endsAt))
+    .slice(0, limit)
+    .map((b) => ({
+      id: `static:${b.network}:${normalizeAddress(b.address)}`,
+      name: b.name,
+      symbol: b.symbol,
+      networkId: b.network,
+      address: b.address.trim(),
+      logoUrl: b.logo && b.logo.startsWith("https://") ? b.logo : null,
+      priority: prio(b.packId),
+    }));
+}
+
 /**
  * Projects with a boost running right now, highest pack priority first and
  * oldest start first among equals. This is the sponsored list. It is never
  * merged into organic ranking and every consumer must label it Sponsored.
+ * Without a database the list comes from src/data/sponsored.ts.
  */
 export async function getBoostedProjects(limit = 6): Promise<BoostedProject[]> {
-  if (!supabaseConfigured()) return [];
+  if (!supabaseConfigured()) return staticBoostedProjects(ACTIVE_BOOSTS, Date.now(), limit);
   try {
     const db = supabaseAdmin();
     const now = new Date().toISOString();

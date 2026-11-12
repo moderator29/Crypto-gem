@@ -94,7 +94,7 @@ export const dexscreener = {
   toPools(pairs: RawPair[], address: string, networkId: string): PoolSummary[] {
     return pairs
       .filter((p) => networkFromDexScreener(p.chainId) === networkId)
-      .filter((p) => p.baseToken.address.toLowerCase() === address.toLowerCase() || p.quoteToken.address.toLowerCase() === address.toLowerCase())
+      .filter((p) => address === "" || p.baseToken.address.toLowerCase() === address.toLowerCase() || p.quoteToken.address.toLowerCase() === address.toLowerCase())
       .map((p) => ({
         id: `ds:${p.chainId}:${p.pairAddress}`,
         networkId,

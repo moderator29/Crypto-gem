@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: "Banner promotion", description: "Ban
 const DAYS = [1, 3, 7] as const;
 const STEPS = [
   { icon: MousePointerClick, title: "Pick a placement", text: "Choose where your banner appears and for how long." },
-  { icon: Layers, title: "Upload your creative", text: "Desktop and mobile versions. You see it in place before paying." },
+  { icon: Layers, title: "Preview your creative", text: "See it in place before paying, then send it to an admin on Telegram." },
   { icon: ShieldCheck, title: "Pay in crypto", text: "Verified on the network. Goes live once the creative is approved." },
 ] as const;
 
@@ -24,7 +24,7 @@ export default async function PromotionPage({ searchParams }: { searchParams: Pr
       <header className="card card-lit relative overflow-hidden p-6 md:p-10">
         <span className="inline-flex items-center gap-2 rounded-full border border-[var(--line-2)] px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-brand"><NavIcon name="promo" size={16} /> Banner promotion</span>
         <h1 className="h-display mt-5 max-w-[20ch]">Put your project in front of active traders</h1>
-        <p className="mt-4 max-w-2xl text-soft md:text-lg">Choose a banner placement, upload your creative and pick a campaign length. Your banner goes live after payment is confirmed and the creative is approved.</p>
+        <p className="mt-4 max-w-2xl text-soft md:text-lg">Choose a banner placement and a campaign length, then send your creative to an admin on Telegram. Your banner goes live after payment is confirmed and the creative is approved.</p>
         <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-soft">
           <li className="flex items-center gap-2"><Check size={15} className="text-up" aria-hidden="true" /> Measured impressions and clicks</li>
           <li className="flex items-center gap-2"><Check size={15} className="text-up" aria-hidden="true" /> Longer campaigns cost less per day</li>
@@ -83,7 +83,7 @@ export default async function PromotionPage({ searchParams }: { searchParams: Pr
       <section className="reveal card grid gap-5 p-5 md:grid-cols-3 md:p-6" aria-label="Measurement and rules">
         <div><h2 className="h3 flex items-center gap-2"><Timer size={18} aria-hidden="true" /> What we measure</h2><p className="mt-2 text-sm text-soft">An impression counts when the banner is visible for at least a second, once per visitor per hour, bots excluded. Clicks are counted on our server before the redirect.</p></div>
         <div><h2 className="h3 flex items-center gap-2"><ShieldCheck size={18} aria-hidden="true" /> Always labelled</h2><p className="mt-2 text-sm text-soft">Every paid banner carries a Sponsored label. Paid placement never changes organic ranking or the order of any list.</p></div>
-        <div><h2 className="h3 flex items-center gap-2"><Info size={18} aria-hidden="true" /> Creative review</h2><p className="mt-2 text-sm text-soft">Creatives are reviewed before they go live. If one is rejected you can upload a replacement, and the campaign window is kept.</p></div>
+        <div><h2 className="h3 flex items-center gap-2"><Info size={18} aria-hidden="true" /> Creative review</h2><p className="mt-2 text-sm text-soft">Creatives are reviewed before they go live. If one is rejected you can send a replacement, and the campaign window is kept.</p></div>
       </section>
     </div>
   );

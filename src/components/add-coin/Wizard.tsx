@@ -1,23 +1,21 @@
 "use client";
 
-import { fireConfetti } from "@/components/fx/confetti";
 import { Meter, Stepper } from "@/components/ui/Kit";
 import { AcceptedAssets } from "@/components/boost/AcceptedAssets";
 import { ContactCard } from "@/components/ui/ContactCard";
+import { CopyButton } from "@/components/ui/CopyButton";
 import { SummaryPanel } from "./SummaryPanel";
 import { TokenFinder } from "./TokenFinder";
 import { classifyAddress } from "@/lib/market-data/identifiers";
-import { AlertTriangle, ArrowLeft, BadgeCheck, CheckCircle2, Globe, Loader2, RefreshCw, Rocket, ScanSearch, Upload, X, Zap } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
+import { AlertTriangle, ArrowLeft, BadgeCheck, CheckCircle2, Globe, ImageIcon, Loader2, RefreshCw, Rocket, ScanSearch, X, Zap } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { accessToken } from "@/lib/auth/client";
+import { listingCheckoutHref, telegramHandle } from "@/lib/local/checkout";
 import { LISTING_PACKAGES } from "@/lib/ads/catalog";
 import type { DetectedToken, Sourced } from "@/lib/detect/types";
 import { getNetwork, NETWORKS } from "@/lib/market-data/networks";
 import { priceUsd, usdCompact } from "@/lib/utils/format";
 import { TokenLogo } from "@/components/ui/TokenLogo";
-import { LOGO_MAX_BYTES } from "@/lib/logo";
 import { useDetect } from "./useDetect";
 
 type Mode = "express" | "standard";
@@ -31,9 +29,9 @@ const STEPS: Array<{ id: Step; label: string }> = [
 
 interface Form {
   name: string; symbol: string; description: string; descriptionZh: string; website: string; twitter: string; telegram: string;
-  discord: string; medium: string; coingecko: string; coinmarketcap: string; zhTelegram: string; btok: string; weibo: string; email: string; logoUrl: string;
+  discord: string; medium: string; coingecko: string; coinmarketcap: string; zhTelegram: string; btok: string; weibo: string; logoUrl: string;
 }
-const EMPTY: Form = { name: "", symbol: "", description: "", descriptionZh: "", website: "", twitter: "", telegram: "", discord: "", medium: "", coingecko: "", coinmarketcap: "", zhTelegram: "", btok: "", weibo: "", email: "", logoUrl: "" };
+const EMPTY: Form = { name: "", symbol: "", description: "", descriptionZh: "", website: "", twitter: "", telegram: "", discord: "", medium: "", coingecko: "", coinmarketcap: "", zhTelegram: "", btok: "", weibo: "", logoUrl: "" };
 
 type LinkKey = "website" | "twitter" | "telegram" | "discord" | "medium" | "coingecko" | "coinmarketcap" | "zhTelegram" | "btok" | "weibo";
 const LINKS: Array<[LinkKey, string]> = [
@@ -73,12 +71,8 @@ export function Wizard() {
   const [touched, setTouched] = useState<Set<keyof Form>>(new Set());
   const [pkg, setPkg] = useState<string>("pro");
   const [terms, setTerms] = useState(false);
-  const [submit, setSubmit] = useState<{ state: "idle" | "busy" | "done" | "setup" | "error"; message?: string }>({ state: "idle" });
+  const [going, setGoing] = useState(false);
   const router = useRouter();
-  const [needSignin, setNeedSignin] = useState(false);
-  const [logoBusy, setLogoBusy] = useState(false);
-  const [logoError, setLogoError] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
   const { state, retry } = useDetect(step === "identify" ? address : "", network);
 
   const token = state.token;
@@ -89,9 +83,8 @@ export function Wizard() {
     const e: Partial<Record<keyof Form, string>> = {};
     if (!form.name.trim()) e.name = "Project name is required";
     if (!form.symbol.trim()) e.symbol = "Ticker is required";
-    if (!form.description.trim() || form.description.trim().length < 30) e.description = "Describe the project in at least 30 characters";
     for (const [k] of LINKS) if (!urlOk(form[k])) e[k] = "Enter a valid http(s) URL";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "A valid contact email is required";
+    if (form.logoUrl && !/^https:\/\/\S+$/.test(form.logoUrl)) e.logoUrl = "Use a full https:// image link";
     return e;
   }, [form]);
 
@@ -119,52 +112,25 @@ export function Wizard() {
     setStep("review");
   };
 
-  async function uploadLogo(file: File) {
-    setLogoError(null);
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) return setLogoError("Use a JPG, PNG or WebP image");
-    if (file.size > LOGO_MAX_BYTES) return setLogoError("Image must be 1 MB or smaller");
-    setLogoBusy(true);
-    try {
-      const jwt = await accessToken();
-      const body = new FormData();
-      body.append("file", file);
-      const res = await fetch("/api/uploads/logo", { method: "POST", headers: jwt ? { Authorization: `Bearer ${jwt}` } : {}, body });
-      const j = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
-      if (res.status === 401) return setLogoError("Sign in to upload a logo.");
-      if (!res.ok || !j.url) return setLogoError(j.error ?? "Upload failed");
-      set("logoUrl", j.url);
-    } catch {
-      setLogoError("Network error. Try the upload again.");
-    } finally {
-      setLogoBusy(false);
-      if (fileRef.current) fileRef.current.value = "";
-    }
-  }
-
   const goBack = () => setStep(({ identify: "mode", review: "identify", package: "review", summary: "package", mode: "mode" } as Record<Step, Step>)[step]);
 
-  async function placeOrder() {
-    setSubmit({ state: "busy" });
-    try {
-      const jwt = await accessToken();
-      const res = await fetch("/api/listings", {
-        method: "POST",
-        headers: { "content-type": "application/json", ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}) },
-        body: JSON.stringify({ mode, network: token?.networkId ?? network, address: token?.address ?? (address.trim() || null), package: pkg, form }),
-      });
-      const j = await res.json().catch(() => ({}));
-      if (res.status === 503) return setSubmit({ state: "setup", message: j.error });
-      if (res.status === 401) {
-        setNeedSignin(true);
-        return setSubmit({ state: "idle" });
-      }
-      if (!res.ok) return setSubmit({ state: "error", message: j.error ?? "Submission failed" });
-      setSubmit({ state: "done" });
-      fireConfetti();
-      setTimeout(() => router.push(`/pay/${j.orderId}`), 1100);
-    } catch {
-      setSubmit({ state: "error", message: "Network error. Your details are still here, try again." });
-    }
+  const contract = token?.address ?? (classifyAddress(address.trim()) !== "unknown" ? address.trim() : null);
+  const tg = telegramHandle(form.telegram);
+  const checkoutHref = listingCheckoutHref({ pkg, name: form.name.trim(), symbol: form.symbol.trim(), network: token?.networkId ?? network, address: contract, telegram: tg });
+  const details = [
+    `Listing request: ${form.name.trim()} (${form.symbol.trim()})`,
+    `Package: ${chosenPkg.name}`,
+    `Network: ${net?.name ?? "Not specified"}`,
+    `Contract: ${contract ?? "Not provided"}`,
+    form.logoUrl ? `Logo: ${form.logoUrl}` : "",
+    ...LINKS.filter(([k]) => form[k]).map(([k, label]) => `${label}: ${form[k]}`),
+    form.description.trim() ? `Description: ${form.description.trim()}` : "",
+    form.descriptionZh.trim() ? `Chinese description: ${form.descriptionZh.trim()}` : "",
+  ].filter(Boolean).join("\n");
+
+  function continueToPayment() {
+    setGoing(true);
+    router.push(checkoutHref);
   }
 
   if (step === "mode") {
@@ -296,7 +262,7 @@ export function Wizard() {
             </label>
           )}
           <div className="grid gap-4 md:grid-cols-2">
-            {([["name", "Project name", "text"], ["symbol", "Ticker", "text"], ["email", "Contact email", "email"]] as const).map(([k, label, type]) => (
+            {([["name", "Project name", "text"], ["symbol", "Ticker", "text"]] as const).map(([k, label, type]) => (
               <label key={k} className="block">
                 <span className="mb-1 flex items-center justify-between text-sm font-semibold">{label}
                   {badge(k)}
@@ -310,20 +276,23 @@ export function Wizard() {
           <div className="space-y-2">
             <span className="block text-sm font-semibold">Logo</span>
             <div className="card-flat flex flex-col items-center gap-3 p-4 text-center sm:flex-row sm:text-left" style={{ borderStyle: "dashed" }}>
-              <div className="relative">
-                <TokenLogo src={form.logoUrl || null} symbol={form.symbol || "?"} size={72} />
+              <div className="relative shrink-0">
+                <TokenLogo src={form.logoUrl && !errors.logoUrl ? form.logoUrl : null} symbol={form.symbol || "?"} size={72} />
                 {form.logoUrl && (
                   <button type="button" onClick={() => set("logoUrl", "")} className="absolute -right-2 -top-2 grid h-7 w-7 place-items-center rounded-full bg-[var(--border-strong)]" aria-label="Remove logo"><X size={14} /></button>
                 )}
               </div>
-              <div className="min-w-0 flex-1 space-y-1">
-                <p className="text-sm text-soft">{form.logoUrl ? (touched.has("logoUrl") ? "Uploaded by you" : `Detected via ${src(token?.logoUrl ?? null) ?? "provider"}`) : "No logo yet. Upload one or continue without."}</p>
-                <p className="text-xs text-muted">JPG, PNG or WebP. Up to 1 MB, roughly square, at least 128px.</p>
+              <div className="w-full min-w-0 flex-1 space-y-2">
+                <p className="text-sm text-soft">{form.logoUrl ? (touched.has("logoUrl") ? "Logo link added by you" : `Detected via ${src(token?.logoUrl ?? null) ?? "provider"}`) : "No logo yet. Paste a link to your logo, or send the file to an admin on Telegram after payment."}</p>
+                <span className="relative block">
+                  <ImageIcon size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted" aria-hidden="true" />
+                  <input className="input !pl-10" type="url" inputMode="url" value={form.logoUrl} onChange={(e) => set("logoUrl", e.target.value.trim())} aria-label="Logo image link" aria-invalid={Boolean(errors.logoUrl)} placeholder="https://your-site.com/logo.png" maxLength={300} />
+                </span>
+                {errors.logoUrl && <p className="text-xs text-down" role="alert">{errors.logoUrl}</p>}
+                {token?.logoUrl && form.logoUrl !== token.logoUrl.value && <button type="button" className="btn btn-sm" onClick={() => { setForm((f) => ({ ...f, logoUrl: String(token.logoUrl?.value ?? "") })); setTouched((t) => { const n = new Set(t); n.delete("logoUrl"); return n; }); }}>Use detected logo</button>}
+                <p className="text-xs text-muted">PNG, JPG, WebP or SVG link, roughly square, at least 128px.</p>
               </div>
-              <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="sr-only" id="logo-file" onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadLogo(f); }} />
-              <label htmlFor="logo-file" className="btn cursor-pointer">{logoBusy ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />} Upload</label>
             </div>
-            {logoError && <p className="text-xs text-down" role="alert">{logoError}</p>}
           </div>
 
           <div className="space-y-3">
@@ -343,15 +312,14 @@ export function Wizard() {
               ))}
             </div>
           </div>
-          <label className="block"><span className="mb-1 block text-sm font-semibold">Description</span>
+          <label className="block"><span className="mb-1 block text-sm font-semibold">Description (optional)</span>
             <textarea className="input !min-h-28 py-3" value={form.description} onChange={(e) => set("description", e.target.value)} maxLength={2000} />
-            <span className="mt-1 flex items-center gap-2"><Meter className="flex-1" value={Math.min(100, (form.description.trim().length / 30) * 100)} tone={form.description.trim().length >= 30 ? "up" : "warm"} label="Description length" /><span className="num text-[11px] text-muted">{form.description.trim().length}/2000 · min 30</span></span>
-            {touched.has("description") && errors.description && <span className="mt-1 block text-xs text-down">{errors.description}</span>}
+            <span className="mt-1 block text-right num text-[11px] text-muted">{form.description.trim().length}/2000</span>
           </label>
           <label className="block"><span className="mb-1 block text-sm font-semibold">Chinese description (optional)</span>
             <textarea className="input !min-h-20 py-3" value={form.descriptionZh} onChange={(e) => set("descriptionZh", e.target.value)} maxLength={2000} lang="zh" />
           </label>
-          <p className="text-xs text-muted">Descriptions and links are submitted by you and are shown to visitors as owner-provided. They are not verified.</p>
+          <p className="text-xs text-muted">Nothing is stored on our servers. After payment you send these details to an admin on Telegram, and links are shown to visitors as owner-provided.</p>
           <button type="button" className="btn btn-primary w-full md:w-auto" disabled={Object.keys(errors).length > 0} onClick={() => setStep("package")}>Continue to packages</button>
           {Object.keys(errors).length > 0 && <p className="text-xs text-muted">Complete the required fields to continue.</p>}
         </section>
@@ -378,7 +346,7 @@ export function Wizard() {
         <section className="card step-swap space-y-4 p-5 md:p-7" aria-label="Order summary">
           <div><StepLabel n={idx + 1} /><h2 className="font-display text-2xl font-bold">Order summary</h2></div>
           <dl className="grid gap-3 text-sm md:grid-cols-2">
-            {([["Project", form.name], ["Ticker", form.symbol], ["Network", net?.name ?? "Not specified"], ["Contract", token?.address ?? (address.trim() || "Not provided")], ["Package", `${chosenPkg.name}`], ["Contact", form.email]] as const).map(([k, v]) => (
+            {([["Project", form.name], ["Ticker", form.symbol], ["Network", net?.name ?? "Not specified"], ["Contract", contract ?? "Not provided"], ["Package", `${chosenPkg.name}`], ["Telegram", tg ? `@${tg}` : "Not provided"]] as const).map(([k, v]) => (
               <div key={k}><dt className="text-xs text-muted">{k}</dt><dd className="num break-all font-semibold">{v}</dd></div>
             ))}
           </dl>
@@ -395,14 +363,14 @@ export function Wizard() {
             <h3 className="eyebrow">Pay with crypto</h3>
             <AcceptedAssets />
           </div>
-          {needSignin && <p className="card-flat p-3 text-sm" role="status">Sign in first so the order is tied to your account. <Link href="/login?next=/add-coin" className="font-semibold text-brand">Sign in</Link>. Your details here are kept only until you leave this page.</p>}
-          <button type="button" className="btn btn-primary btn-lg pay-cta w-full md:w-auto" disabled={!terms || submit.state === "busy" || submit.state === "done"} onClick={placeOrder}>
-            {submit.state === "busy" ? <Loader2 size={16} className="animate-spin" /> : submit.state === "done" ? <CheckCircle2 size={16} /> : <Rocket size={16} />} {submit.state === "done" ? "Order created" : "Continue to payment"} · ${chosenPkg.priceUsd.toLocaleString("en-US")}
+          <button type="button" className="btn btn-primary btn-lg pay-cta w-full md:w-auto" disabled={!terms || going} onClick={continueToPayment}>
+            {going ? <Loader2 size={16} className="animate-spin" aria-hidden="true" /> : <Rocket size={16} aria-hidden="true" />} Continue to payment · ${chosenPkg.priceUsd.toLocaleString("en-US")}
           </button>
-          {submit.state === "done" && <p className="text-sm text-up" role="status">Order created. Taking you to payment.</p>}
-          {submit.state === "setup" && <p className="card-flat p-3 text-sm text-warm" role="status">{submit.message}</p>}
-          {submit.state === "error" && <p className="text-sm text-down" role="alert">{submit.message}</p>}
-          <ContactCard variant="inline" title="Questions about your listing?" />
+          <div className="card-flat space-y-3 p-4">
+            <p className="text-sm text-soft">After payment, send your full project details to an admin on Telegram: description, links and your logo file. Copy them here in one tap.</p>
+            <CopyButton value={details} label="Copy project details" what="Project details copied" />
+          </div>
+          <ContactCard title="Message admin" note="Send your project details, logo and any questions straight to an admin on Telegram. They reply fast and get your listing live." />
         </section>
       )}
       </div>

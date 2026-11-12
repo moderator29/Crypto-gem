@@ -1,20 +1,18 @@
 "use client";
 
-import { Bell, CreditCard, Eye, LayoutDashboard, ListChecks, Megaphone, Rocket, type LucideIcon } from "lucide-react";
+import { Bell, Eye, LayoutDashboard, Receipt, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LinkTabs } from "@/components/ui/LinkTabs";
 
 const ITEMS: Array<{ href: string; label: string; icon: LucideIcon }> = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/dashboard/listings", label: "Listings", icon: ListChecks },
-  { href: "/dashboard/boosts", label: "Boosts", icon: Rocket },
-  { href: "/dashboard/campaigns", label: "Campaigns", icon: Megaphone },
-  { href: "/dashboard/payments", label: "Payments", icon: CreditCard },
   { href: "/dashboard/watchlist", label: "Watchlist", icon: Eye },
+  { href: "/dashboard/receipts", label: "Receipts", icon: Receipt },
+  { href: "/alerts", label: "Alerts", icon: Bell },
 ];
 
-/** Sidebar on desktop, link tabs on phones. Every item is a real page. */
+/** Sidebar on desktop, link tabs on phones. Every item is a real page and reads only this device's data. */
 export function DashboardNav() {
   const path = usePathname();
   const active = ITEMS.find((i) => (i.href === "/dashboard" ? path === "/dashboard" : path.startsWith(i.href)))?.href ?? "/dashboard";
@@ -30,7 +28,7 @@ export function DashboardNav() {
             </Link>
           );
         })}
-        <p className="flex items-start gap-2 px-3 pb-2 pt-3 text-[11px] text-muted"><Bell size={13} className="mt-0.5 shrink-0" aria-hidden="true" /> Price alerts are not available yet.</p>
+        <p className="px-3 pb-2 pt-3 text-[11px] text-muted">Saved on this device. No account needed.</p>
       </nav>
     </>
   );

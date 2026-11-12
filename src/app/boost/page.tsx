@@ -3,15 +3,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PackBoostButton } from "@/components/boost/PackBoostButton";
 import { ExpressRail } from "@/components/boost/ExpressRail";
-import { BoostProjects } from "@/components/boost/BoostProjects";
+import { BoostTokenPicker } from "@/components/boost/BoostTokenPicker";
 import { ContactCard } from "@/components/ui/ContactCard";
 import { NavIcon } from "@/components/ui/NavIcon";
 import { BOOST_PACKS } from "@/lib/ads/catalog";
 
-export const metadata: Metadata = { title: "Boost", description: "Sponsored visibility for listed projects. Packs from $100, paid in crypto, live after verified payment." };
+export const metadata: Metadata = { title: "Boost", description: "Sponsored visibility for any token with a live pool. Packs from $100, paid in crypto, live after verified payment." };
 
 const STEPS = [
-  { n: "01", title: "Pick your coin", text: "Search the projects already listed on Crypto Gems." },
+  { n: "01", title: "Pick your coin", text: "Search any token by name, symbol or contract address." },
   { n: "02", title: "Choose a pack", text: "Six packs from $100. Longer packs rotate with higher priority." },
   { n: "03", title: "Pay in crypto", text: "USDT, USDC, ETH or BNB from your own wallet. Live after verified payment." },
 ] as const;
@@ -26,7 +26,7 @@ export default function BoostPage() {
         <span className="grid h-14 w-14 place-items-center rounded-2xl bg-[color-mix(in_srgb,var(--brand)_16%,transparent)]"><NavIcon name="boost" size={28} /></span>
         <p className="eyebrow mt-5">Trending promotion</p>
         <h1 className="h-display mt-3 max-w-[18ch]">Boost your project to the top</h1>
-        <p className="mt-4 max-w-2xl text-soft md:text-lg">Select a listed coin, choose a Boost pack and pay in crypto. Your boost starts automatically after payment is verified.</p>
+        <p className="mt-4 max-w-2xl text-soft md:text-lg">Search any token, choose a Boost pack and pay in crypto. No account needed. Your boost starts automatically after payment is verified.</p>
         <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-soft">
           <li className="flex items-center gap-2"><ShieldCheck size={16} className="text-up" aria-hidden="true" /> Clearly labelled as sponsored</li>
           <li className="flex items-center gap-2"><Clock size={16} className="text-up" aria-hidden="true" /> From 12 hours to 7 days</li>
@@ -43,7 +43,7 @@ export default function BoostPage() {
         ))}
       </ol>
 
-      <BoostProjects packs={BOOST_PACKS.map((b) => ({ id: b.id, name: b.name }))} />
+      <BoostTokenPicker packs={BOOST_PACKS.map((b) => ({ id: b.id, name: b.name, priceUsd: b.priceUsd, hours: b.hours, label: b.label }))} />
 
       <ContactCard note="Want a custom boost, a bigger package or help choosing a coin? Message an admin directly on Telegram." />
 

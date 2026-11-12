@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Settings", robots: { index: false } 
 export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-5xl">
-      <PageHeader crumbs={[{ label: "Home", href: "/" }, { label: "Settings" }]} eyebrow="Account" title="Settings" description="Your profile, how you sign in, and how CryptoGemCN looks for you." />
+      <PageHeader crumbs={[{ label: "Home", href: "/" }, { label: "Settings" }]} eyebrow="On this device" title="Settings" description="How CryptoGemCN looks and sounds for you, and the data saved in this browser." />
       <SettingsView />
     </div>
   );

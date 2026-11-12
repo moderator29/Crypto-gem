@@ -1,16 +1,6 @@
-import type { Metadata } from "next";
-import { Gate, BoostsView } from "@/components/dashboard/views";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = { title: "Boosts" };
-
-export default function Page() {
-  return (
-    <>
-      <PageHeader crumbs={[{ label: "Home", href: "/" }, { label: "Dashboard", href: "/dashboard" }, { label: "Boosts" }]} eyebrow="Dashboard" title="Boosts" description="Sponsored visibility you have purchased." />
-      <Gate>
-        <BoostsView />
-      </Gate>
-    </>
-  );
+/** Orders are no longer stored on a server. Receipts saved on this device replace this view. */
+export default function Page(): never {
+  redirect("/dashboard/receipts");
 }

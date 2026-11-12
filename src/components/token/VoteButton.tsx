@@ -1,38 +1,19 @@
 "use client";
 
-import { Rocket } from "lucide-react";
-import { useState } from "react";
-import { accessToken } from "@/lib/auth/client";
+import { ArrowUp } from "lucide-react";
+import { playSound } from "@/components/fx/sound";
+import { toggleStar, useStars } from "@/lib/local/stars";
 
-/** Community vote for a listed project. The 30 minute rule is stated up front, not only after a failure. */
-export function VoteButton({ submissionId, initialVotes }: { submissionId: string; initialVotes: number }) {
-  const [votes, setVotes] = useState(initialVotes);
-  const [state, setState] = useState<"idle" | "busy" | "ok" | "error">("idle");
-  const [msg, setMsg] = useState<string | null>(null);
-
-  async function vote() {
-    setState("busy");
-    setMsg(null);
-    const jwt = await accessToken();
-    const res = await fetch("/api/vote", { method: "POST", headers: { "content-type": "application/json", ...(jwt ? { Authorization: `Bearer ${jwt}` } : {}) }, body: JSON.stringify({ submissionId }) });
-    const j = await res.json().catch(() => ({}));
-    if (res.ok) {
-      setVotes(j.votes ?? votes + 1);
-      setState("ok");
-      setMsg("Vote counted");
-    } else {
-      setState("error");
-      setMsg(j.error ?? "Could not vote");
-    }
-  }
-
+/** "Starred by you" toggle for a listed project, saved on this device. No shared count is shown because none is kept. */
+export function VoteButton({ submissionId }: { submissionId: string; initialVotes?: number }) {
+  const key = `listing:${submissionId}`;
+  const on = useStars().includes(key);
   return (
     <div className="space-y-1.5">
-      <button type="button" className="btn btn-primary w-full" disabled={state === "busy"} onClick={vote} aria-describedby="vote-rule">
-        <Rocket size={16} /> <span className="num">{votes.toLocaleString("en-US")}</span> Vote
+      <button type="button" className={`btn w-full ${on ? "btn-primary" : ""}`} aria-pressed={on} onClick={() => { if (toggleStar(key)) playSound("coin"); }}>
+        <ArrowUp size={16} aria-hidden="true" /> {on ? "Starred by you" : "Star this project"}
       </button>
-      <p id="vote-rule" className="text-[11px] text-muted">One vote per project per day, and 30 minutes between votes.</p>
-      {msg && <p className={`text-xs ${state === "ok" ? "text-up" : "text-down"}`} role="status">{msg}</p>}
+      <p className="text-[11px] text-muted">Saved on this device only. There is no public vote count.</p>
     </div>
   );
 }

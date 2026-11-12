@@ -1,50 +1,26 @@
 "use client";
 
 import { Star } from "lucide-react";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { accessToken } from "@/lib/auth/client";
+import { useToast } from "@/components/ui/Toast";
+import { assetKey } from "@/lib/market-data/identifiers";
+import { enrichWatchItem, toggleWatchlist, useLocalWatchlist } from "@/lib/local/watchlist";
 
-/** Adds or removes a token from the signed-in user's watchlist. Signed-out users are sent to sign in, not shown a fake state. */
-export function WatchButton({ network, address }: { network: string; address: string }) {
-  const [state, setState] = useState<"loading" | "off" | "on" | "signin" | "unavailable">("loading");
+/** Watch toggle for a token page. The watchlist is saved on this device, so it works without an account. */
+export function WatchButton({ network, address, symbol = "", name = "", logo = null }: { network: string; address: string; symbol?: string; name?: string; logo?: string | null }) {
+  const toast = useToast();
+  const list = useLocalWatchlist();
+  const key = assetKey(network, address);
+  const on = list.some((i) => assetKey(i.network, i.address) === key);
 
-  useEffect(() => {
-    let live = true;
-    (async () => {
-      const jwt = await accessToken();
-      if (!jwt) return live && setState("signin");
-      const res = await fetch("/api/watchlist", { headers: { Authorization: `Bearer ${jwt}` } });
-      if (!live) return;
-      if (res.status === 503) return setState("unavailable");
-      if (!res.ok) return setState("signin");
-      const j = (await res.json()) as { items: Array<{ network: string; address: string }> };
-      setState(j.items.some((i) => i.network === network && i.address.toLowerCase() === address.toLowerCase()) ? "on" : "off");
-    })();
-    return () => {
-      live = false;
-    };
-  }, [network, address]);
-
-  if (state === "unavailable") return null;
-  if (state === "signin") return <Link href={`/login?next=/token/${network}/${address}`} className="btn btn-sm"><Star size={14} /> Watch</Link>;
-
-  async function toggle() {
-    const jwt = await accessToken();
-    if (!jwt) return setState("signin");
-    const on = state === "on";
-    setState(on ? "off" : "on");
-    const res = await fetch(on ? `/api/watchlist?network=${network}&address=${encodeURIComponent(address)}` : "/api/watchlist", {
-      method: on ? "DELETE" : "POST",
-      headers: { Authorization: `Bearer ${jwt}`, "content-type": "application/json" },
-      body: on ? undefined : JSON.stringify({ network, address }),
-    });
-    if (!res.ok) setState(on ? "on" : "off");
+  function toggle() {
+    const now = toggleWatchlist({ network, address, symbol, name, logo });
+    if (now && (!symbol || !logo)) void enrichWatchItem(network, address);
+    toast.success(now ? "Added to your watchlist" : "Removed from your watchlist", now ? "Saved on this device." : undefined);
   }
 
   return (
-    <button type="button" className="btn btn-sm" aria-pressed={state === "on"} disabled={state === "loading"} onClick={toggle}>
-      <Star size={14} className={state === "on" ? "fill-[var(--warm)] text-warm" : ""} /> {state === "on" ? "Watching" : "Watch"}
+    <button type="button" className="btn btn-sm" aria-pressed={on} onClick={toggle}>
+      <Star size={14} className={on ? "fill-[var(--warm)] text-warm" : ""} /> {on ? "Watching" : "Watch"}
     </button>
   );
 }
