@@ -246,7 +246,7 @@ describe("verify and settle", () => {
     const m = getDirectMethod("usdt-ethereum")!;
     evmChain({ logs: [transferLog(m.token!, EVM_ADDRESS, decimalToUnits(amount, 6))] });
     const v = await submitProof(db, USER, id, HASH.toUpperCase().replace("0X", "0x"));
-    expect(v).toMatchObject({ status: "finished", paidAmount: "100", orderId: ORDER });
+    expect(v).toMatchObject({ status: "finished", paidAmount: amount, orderId: ORDER });
     expect(v.receiptNo).toMatch(/^CG-\d{8}-[0-9A-F]{6}$/);
     expect(tables.orders[0]!.status).toBe("paid");
     expect(tables.token_submissions[0]!.status).toBe("pending_review");
@@ -311,19 +311,19 @@ describe("verify and settle", () => {
     evmChain({ logs: [transferLog(m.token!, EVM_ADDRESS, 60_000000n)] });
     const first = await submitProof(db, USER, id, HASH);
     expect(first.status).toBe("waiting");
-    expect(first.message).toBe("Received 60 of 100. Send the remaining amount and submit that hash too");
+    expect(first.message).toBe(`Received 60 of ${amount}. Send the remaining amount and submit that hash too`);
     expect(tables.payments[0]!.status).toBe("partially_paid");
     expect(tables.orders[0]!.status).toBe("pending");
-    evmChain({ logs: [transferLog(m.token!, EVM_ADDRESS, 40_000000n)] });
+    evmChain({ logs: [transferLog(m.token!, EVM_ADDRESS, decimalToUnits(amount, 6) - 60_000000n)] });
     const second = await submitProof(db, USER, id, HASH2);
     expect(second.status).toBe("finished");
-    expect(second.paidAmount).toBe("100");
+    expect(second.paidAmount).toBe(amount);
     expect(tables.orders[0]!.status).toBe("paid");
   });
 
   it("accepts a payment within the 0.5 percent tolerance", async () => {
     const { db, id, amount } = await intent();
-    evmChain({ logs: [transferLog(getDirectMethod("usdt-ethereum")!.token!, EVM_ADDRESS, 99_600000n)] });
+    evmChain({ logs: [transferLog(getDirectMethod("usdt-ethereum")!.token!, EVM_ADDRESS, decimalToUnits(amount, 6) - 400000n)] });
     expect((await submitProof(db, USER, id, HASH)).status).toBe("finished");
   });
 
@@ -373,10 +373,10 @@ describe("verify and settle", () => {
       meta: {
         err: null,
         preTokenBalances: [{ owner: SOLANA_ADDRESS, mint, uiTokenAmount: { amount: "1000000" } }],
-        postTokenBalances: [{ owner: SOLANA_ADDRESS, mint, uiTokenAmount: { amount: "101000000" } }],
+        postTokenBalances: [{ owner: SOLANA_ADDRESS, mint, uiTokenAmount: { amount: String(1000000n + decimalToUnits(amount, 6)) } }],
       },
     };
-    expect(await submitProof(db, USER, id, SIG)).toMatchObject({ status: "finished", paidAmount: "100" });
+    expect(await submitProof(db, USER, id, SIG)).toMatchObject({ status: "finished", paidAmount: amount });
     expect(tables.orders[0]!.status).toBe("paid");
   });
 
@@ -384,6 +384,69 @@ describe("verify and settle", () => {
     const { db, id, amount } = await intent("usdc-solana");
     chain.solana = { blockTime: nowSec(), meta: { err: { InstructionError: [0, "Custom"] }, preTokenBalances: [], postTokenBalances: [] } };
     expect((await submitProof(db, USER, id, SIG)).rejected).toBe(true);
+    expect(tables.orders[0]!.status).toBe("pending");
+  });
+
+  it("gives two live orders of the same price different fingerprinted amounts", async () => {
+    const db = fakeDb();
+    const O2 = "33333333-3333-3333-3333-333333333333";
+    tables.orders.push({ id: O2, user_id: USER, kind: "listing", ref_id: "sub-3", price_usd: 100, status: "pending" });
+    const a = await createIntent(db, USER, ORDER, "usdt-ethereum");
+    const b = await createIntent(db, USER, O2, "usdt-ethereum");
+    expect(a.amount).not.toBe(b.amount);
+    for (const x of [a, b]) {
+      expect(Number(x.amount)).toBeGreaterThanOrEqual(100.0001);
+      expect(Number(x.amount)).toBeLessThanOrEqual(100.0999);
+    }
+  });
+
+  it("retries the fingerprint on collision and widens the range when it keeps colliding", async () => {
+    const db = fakeDb();
+    const O2 = "33333333-3333-3333-3333-333333333333";
+    tables.orders.push({ id: O2, user_id: USER, kind: "listing", ref_id: "sub-3", price_usd: 100, status: "pending" });
+    const seq = vi.spyOn(fingerprintRng, "int").mockReturnValue(6);
+    const a = await createIntent(db, USER, ORDER, "usdt-ethereum");
+    expect(a.amount).toBe("100.0007");
+    seq.mockReset();
+    let calls = 0;
+    seq.mockImplementation(() => (calls++ < 20 ? 6 : 1500));
+    const b = await createIntent(db, USER, O2, "usdt-ethereum");
+    expect(b.amount).toBe("100.1501");
+    expect(calls).toBe(21);
+  });
+
+  it("does not let a transfer that matches order A settle order B", async () => {
+    const db = fakeDb();
+    const O2 = "33333333-3333-3333-3333-333333333333";
+    tables.orders.push({ id: O2, user_id: USER, kind: "listing", ref_id: "sub-3", price_usd: 100, status: "pending" });
+    vi.spyOn(fingerprintRng, "int").mockReturnValueOnce(0).mockReturnValueOnce(1);
+    const a = await createIntent(db, USER, ORDER, "usdt-ethereum");
+    const b = await createIntent(db, USER, O2, "usdt-ethereum");
+    expect(a.amount).toBe("100.0001");
+    expect(b.amount).toBe("100.0002");
+    evmChain({ logs: [transferLog(getDirectMethod("usdt-ethereum")!.token!, EVM_ADDRESS, decimalToUnits(a.amount, 6))] });
+    const r = await submitProof(db, USER, b.paymentId, HASH);
+    expect(r.rejected).toBe(true);
+    expect(tables.orders.find((o) => o.id === O2)!.status).toBe("pending");
+    expect((await submitProof(db, USER, a.paymentId, HASH)).status).toBe("finished");
+  });
+
+  it("does not let a 500 USD transfer settle a 100 USD order", async () => {
+    const { db, id } = await intent();
+    evmChain({ logs: [transferLog(getDirectMethod("usdt-ethereum")!.token!, EVM_ADDRESS, 500_000000n)] });
+    const r = await submitProof(db, USER, id, HASH);
+    expect(r.rejected).toBe(true);
+    expect(tables.orders[0]!.status).toBe("pending");
+    expect(tables.payment_proofs).toHaveLength(0);
+  });
+
+  it("requires a top-up to match the remaining amount", async () => {
+    const { db, id, amount } = await intent();
+    const m = getDirectMethod("usdt-ethereum")!;
+    evmChain({ logs: [transferLog(m.token!, EVM_ADDRESS, 60_000000n)] });
+    await submitProof(db, USER, id, HASH);
+    evmChain({ logs: [transferLog(m.token!, EVM_ADDRESS, decimalToUnits(amount, 6))] });
+    expect((await submitProof(db, USER, id, HASH2)).rejected).toBe(true);
     expect(tables.orders[0]!.status).toBe("pending");
   });
 });

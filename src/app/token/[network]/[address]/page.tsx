@@ -105,8 +105,8 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
       <StickyPriceBar symbol={identity?.symbol ?? "?"} name={identity?.name ?? "Token"} logo={identity?.imageUrl ?? null} networkId={net.id} address={canonical} price={priceUsd(price)} change={top?.change.h24 ?? null} />
       <ViewTracker network={net.id} address={canonical} symbol={identity?.symbol ?? "?"} name={identity?.name ?? "Token"} logo={identity?.imageUrl ?? null} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld).replace(/</g, "\\u003c") }} />
-      <header className="card space-y-3 p-4 md:p-5">
-        <div className="flex items-center gap-3 md:gap-4">
+      <header className="card space-y-3 overflow-hidden p-4 md:p-5">
+        <div className="flex flex-wrap items-center gap-3 md:flex-nowrap md:gap-4">
           <TokenLogo src={identity?.imageUrl} symbol={identity?.symbol ?? "?"} size={48} networkId={networkId} address={address} />
           <div className="min-w-0 flex-1">
             <h1 className="font-display truncate text-xl font-bold leading-tight md:text-2xl">{identity?.name || "Unnamed token"}{isBoosted && <span className="badge badge-sponsored ml-2 align-middle"><Zap size={11} aria-hidden="true" /> Boosted</span>}</h1>
@@ -115,7 +115,7 @@ export default async function TokenPage({ params }: { params: Promise<Params> })
               <span className="rounded-full border border-line px-2 py-0.5 font-semibold text-soft">{net.name}</span>
             </p>
           </div>
-          <div className="num shrink-0 text-right">
+          <div className="num w-full shrink-0 text-left md:w-auto md:text-right">
             <div className="text-xl font-bold md:text-2xl"><LivePrice network={net.id} address={canonical} initial={price} /></div>
             <div className="text-sm">
               <Change v={top?.change.h24 ?? null} /> <span className="text-xs text-muted">24h</span>

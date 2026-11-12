@@ -14,6 +14,7 @@ import "@/styles/fx.css";
 import "@/styles/pages.css";
 import "@/styles/markets.css";
 import "@/styles/pay.css";
+import "@/styles/token.css";
 import { RouteProgress } from "@/components/fx/RouteProgress";
 import { BackToTop } from "@/components/fx/BackToTop";
 import { KeyboardShortcuts } from "@/components/fx/KeyboardShortcuts";

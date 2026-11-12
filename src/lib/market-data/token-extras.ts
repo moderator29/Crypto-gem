@@ -30,8 +30,8 @@ export function sma(values: number[], n: number): Array<number | null> {
   if (!Number.isInteger(n) || n < 1 || values.length < n) return out;
   let sum = 0;
   for (let i = 0; i < values.length; i++) {
-    sum += values[i];
-    if (i >= n) sum -= values[i - n];
+    sum += values[i] ?? 0;
+    if (i >= n) sum -= values[i - n] ?? 0;
     if (i >= n - 1) out[i] = sum / n;
   }
   return out;
@@ -45,7 +45,7 @@ export function ema(values: number[], n: number): Array<number | null> {
   let prev = values.slice(0, n).reduce((a, b) => a + b, 0) / n;
   out[n - 1] = prev;
   for (let i = n; i < values.length; i++) {
-    prev = values[i] * k + prev * (1 - k);
+    prev = (values[i] ?? prev) * k + prev * (1 - k);
     out[i] = prev;
   }
   return out;
@@ -56,7 +56,8 @@ export function toLineData(candles: Candle[], values: Array<number | null>): Arr
   const out: Array<{ time: number; value: number }> = [];
   for (let i = 0; i < candles.length; i++) {
     const v = values[i];
-    if (v !== null && v !== undefined) out.push({ time: candles[i].time, value: v });
+    const c = candles[i];
+    if (v !== null && v !== undefined && c) out.push({ time: c.time, value: v });
   }
   return out;
 }
