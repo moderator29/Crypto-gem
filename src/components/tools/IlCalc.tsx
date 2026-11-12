@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { fmtPct, fmtUsd, parseNum } from "@/lib/tools/common";
 import { ilCurve, impermanentLoss } from "@/lib/tools/il";
+import { ScenarioBar } from "@/components/engage/ScenarioBar";
+import { useCalcInputs } from "./useCalcInputs";
 import { LiveNumber } from "./LiveNumber";
 import { CalcFrame, Field, HowItWorks, Metric, missingFields, Outcome } from "./parts";
 
@@ -38,16 +40,18 @@ function CurveChart({ ratio, il }: { ratio: number; il: number }) {
 }
 
 export function IlCalc() {
-  const [f, setF] = useState(EMPTY);
-  const set = (k: keyof typeof EMPTY) => (v: string) => setF((p) => ({ ...p, [k]: v }));
+  const calc = useCalcInputs("impermanent-loss", EMPTY);
+  const f = calc.values;
+  const set = calc.set;
   const deposit = f.deposit.trim() === "" ? null : parseNum(f.deposit);
   const r = impermanentLoss(parseNum(f.change), deposit);
   const missing = missingFields([["price change", f.change]]);
   return (
     <>
       <CalcFrame
-        onReset={() => setF(EMPTY)}
-        canReset={Object.values(f).some(Boolean)}
+        onReset={calc.reset}
+        canReset={calc.dirty}
+        toolbar={<ScenarioBar calc={calc} />}
         form={
           <>
             <Field id="il-change" label="Price change of one token versus the other" suffix="%" value={f.change} onChange={set("change")} placeholder="100" hint="Use -50 for a halving and 100 for a doubling. If both move together, the ratio is what counts." />

@@ -35,8 +35,19 @@ export function Field({ label, value, onChange, prefix, suffix, hint, placeholde
   );
 }
 
+/** A row of single-choice chips, used for options such as long or short. */
+export function ChipGroup({ label, options, value, onChange }: { label: string; options: ReadonlyArray<{ value: string; label: string }>; value: string; onChange: (v: string) => void }) {
+  return (
+    <div role="group" aria-label={label} className="flex flex-wrap gap-2">
+      {options.map((o) => (
+        <button key={o.value} type="button" className="chip" aria-pressed={value === o.value} onClick={() => onChange(o.value)}>{o.label}</button>
+      ))}
+    </div>
+  );
+}
+
 /** Two-column frame: inputs with a Reset button on one side, live results on the other. */
-export function CalcFrame({ title = "Your numbers", form, onReset, canReset, children }: { title?: string; form: ReactNode; onReset: () => void; canReset: boolean; children: ReactNode }) {
+export function CalcFrame({ title = "Your numbers", form, onReset, canReset, toolbar, children }: { title?: string; form: ReactNode; onReset: () => void; canReset: boolean; toolbar?: ReactNode; children: ReactNode }) {
   return (
     <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
       <section className="card space-y-4 p-5" aria-label="Inputs">
@@ -49,6 +60,7 @@ export function CalcFrame({ title = "Your numbers", form, onReset, canReset, chi
       <section className="card card-lit min-h-[220px] space-y-4 p-5" aria-live="polite" aria-label="Results">
         {children}
       </section>
+      {toolbar && <div className="card-flat px-3.5 py-3 lg:col-span-2">{toolbar}</div>}
     </div>
   );
 }

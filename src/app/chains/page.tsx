@@ -1,6 +1,7 @@
 import { AlertTriangle } from "lucide-react";
 import type { Metadata } from "next";
 import { ChainsGrid } from "@/components/home/ChainsGrid";
+import { VolumeShareBar } from "@/components/markets/VolumeShareBar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { geckoTerminal } from "@/lib/market-data/providers/geckoterminal";
@@ -24,7 +25,10 @@ export default async function ChainsPage() {
       {failed || chains.length === 0 ? (
         <EmptyState tone="error" icon={AlertTriangle} title="Chain data is unavailable" description="The data provider is not responding or is rate limited. Try again in a moment." />
       ) : (
-        <ChainsGrid chains={chains} limit={100} />
+        <div className="space-y-5">
+          <VolumeShareBar chains={chains} />
+          <ChainsGrid chains={chains} limit={100} />
+        </div>
       )}
     </div>
   );

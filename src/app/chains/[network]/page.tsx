@@ -4,12 +4,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CountUp } from "@/components/fx/CountUp";
 import { Change } from "@/components/home/TokenRow";
+import { DexDonut } from "@/components/markets/DexDonut";
+import { MoversStrip } from "@/components/markets/MoversStrip";
 import { PriceTable } from "@/components/markets/PriceTable";
 import { ChainBadge } from "@/components/ui/ChainBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Stat } from "@/components/ui/Kit";
 import { LinkTabs } from "@/components/ui/LinkTabs";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { chainColor, topMovers } from "@/lib/market-data/analytics";
 import { getMarketList, type MarketList } from "@/lib/market-data/lists";
 import { getNetwork } from "@/lib/market-data/networks";
 import { chainPulse } from "@/lib/market-data/pulse";
@@ -38,31 +41,39 @@ export default async function ChainPage({ params, searchParams }: Props) {
   const stats = list && other ? chainPulse(tab === "trending" ? list.pools : other.pools, tab === "new" ? list.pools : other.pools).find((c) => c.networkId === net.id) : undefined;
   const base = `/chains/${net.id}`;
 
+  const sampled = list && other ? [...new Map([...list.pools, ...other.pools].map((p) => [p.id, p])).values()] : [];
+  const movers = topMovers(sampled, 5);
+
   return (
     <div className="space-y-6">
-      <PageHeader
-        crumbs={[{ label: "Home", href: "/" }, { label: "Chains", href: "/chains" }, { label: net.name }]}
-        eyebrow={net.family === "evm" ? "EVM network" : "Network"}
-        title={net.name}
-        description={`Trending and new pools on ${net.name}, measured from GeckoTerminal.`}
-        actions={
-          <>
+      <Breadcrumbs items={[{ label: "Home", href: "/" }, { label: "Chains", href: "/chains" }, { label: net.name }]} />
+      <header className="card mk-hero" style={{ ["--chain" as string]: chainColor(net.id) }}>
+        <div className="flex flex-wrap items-center gap-4 md:gap-5">
+          <span className="mk-hero-logo"><ChainBadge networkId={net.id} size={64} /></span>
+          <div className="min-w-0 flex-1">
+            <p className="eyebrow">{net.family === "evm" ? "EVM network" : "Network"}</p>
+            <h1 className="h1 truncate">{net.name}</h1>
+            <p className="mt-1 text-sm text-soft">Native asset {net.nativeSymbol}{net.chainId ? ` · chain id ${net.chainId}` : ""}. Trending and new pools measured from GeckoTerminal.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             {net.explorer && <a href={net.explorer} target="_blank" rel="noopener noreferrer" className="btn btn-sm">Explorer <ExternalLink size={14} /></a>}
             <Link href="/add-coin" className="btn btn-primary btn-sm">List a token on {net.name}</Link>
-          </>
-        }
-      />
-      <div className="flex items-center gap-3"><ChainBadge networkId={net.id} size={36} /><span className="text-sm text-muted">Native asset {net.nativeSymbol}{net.chainId ? ` · chain id ${net.chainId}` : ""}</span></div>
+          </div>
+        </div>
+      </header>
 
       {stats && (
-        <div className="stagger grid grid-cols-2 gap-3 md:grid-cols-4">
-          <Stat label="24h volume" value={stats.volume24hUsd === null ? "—" : <CountUp value={stats.volume24hUsd} kind="usd" />} />
-          <Stat label="Liquidity" value={stats.liquidityUsd === null ? "—" : <CountUp value={stats.liquidityUsd} kind="usd" />} />
+        <div className="stagger grid grid-cols-[repeat(2,minmax(0,1fr))] gap-3 md:grid-cols-4">
+          <Stat label="24h volume" value={<CountUp value={stats.volume24hUsd} kind="usd" />} />
+          <Stat label="Liquidity" value={<CountUp value={stats.liquidityUsd} kind="usd" />} />
           <Stat label="Pools sampled" value={<CountUp value={stats.pools} />} />
           <Stat label="New pools, 24h" value={<CountUp value={stats.newPools} />} />
           <div className="card col-span-2 p-4 md:col-span-4"><p className="eyebrow">Median 24h change, liquid pools</p><p className="num mt-2 text-xl font-bold"><Change v={stats.medianChange24h} /></p></div>
         </div>
       )}
+
+      <MoversStrip up={movers.up} down={movers.down} name={net.name} />
+      {sampled.length > 0 && <DexDonut pools={sampled} />}
 
       <LinkTabs label="Chain views" activeHref={tab === "new" ? `${base}?tab=new` : base} tabs={[{ href: base, label: "Trending" }, { href: `${base}?tab=new`, label: "New pairs" }]} />
       {!list ? (

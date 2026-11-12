@@ -3,10 +3,12 @@
 import { useMemo, useState } from "react";
 import { dca } from "@/lib/tools/dca";
 import { fmtPct, fmtPrice, fmtQty, fmtUsd, parseNum } from "@/lib/tools/common";
+import { ScenarioBar } from "@/components/engage/ScenarioBar";
+import { useCalcInputs } from "./useCalcInputs";
 import { LiveNumber } from "./LiveNumber";
 import { CalcFrame, Field, HowItWorks, Metric, missingFields, Outcome } from "./parts";
 
-const EMPTY = { amount: "", count: "", start: "", end: "", prices: "" };
+const EMPTY = { mode: "linear", amount: "", count: "", start: "", end: "", prices: "" };
 
 /** Price path with the running average cost drawn over it. */
 function PathChart({ prices, avg }: { prices: number[]; avg: number[] }) {
@@ -35,10 +37,12 @@ function PathChart({ prices, avg }: { prices: number[]; avg: number[] }) {
 }
 
 export function DcaCalc() {
-  const [f, setF] = useState(EMPTY);
-  const [mode, setMode] = useState<"linear" | "list">("linear");
+  const calc = useCalcInputs("dca", EMPTY);
+  const f = calc.values;
   const [all, setAll] = useState(false);
-  const set = (k: keyof typeof EMPTY) => (v: string) => setF((p) => ({ ...p, [k]: v }));
+  const set = calc.set;
+  const mode: "linear" | "list" = f.mode === "list" ? "list" : "linear";
+  const setMode = (m: "linear" | "list") => set("mode")(m);
   const count = parseNum(f.count);
   const r = useMemo(
     () => (mode === "linear" ? dca({ mode, amount: parseNum(f.amount), count, start: parseNum(f.start), end: parseNum(f.end) }) : dca({ mode, amount: parseNum(f.amount), prices: f.prices })),
@@ -50,8 +54,9 @@ export function DcaCalc() {
   return (
     <>
       <CalcFrame
-        onReset={() => { setF(EMPTY); setAll(false); }}
-        canReset={Object.values(f).some(Boolean)}
+        onReset={() => { calc.reset(); setAll(false); }}
+        canReset={calc.dirty}
+        toolbar={<ScenarioBar calc={calc} />}
         form={
           <>
             <Field id="dca-amount" label="Amount per buy" prefix="$" value={f.amount} onChange={set("amount")} placeholder="100" hint="The same dollar amount every time." />

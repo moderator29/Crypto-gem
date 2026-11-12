@@ -4,7 +4,11 @@ import Link from "next/link";
 import { CountUp } from "@/components/fx/CountUp";
 import { Spotlight } from "@/components/fx/Spotlight";
 import { Change, TokenRow } from "@/components/home/TokenRow";
+import { ChainRace } from "@/components/markets/ChainRace";
+import { PressureGauges } from "@/components/markets/PressureGauges";
+import { SurgeList } from "@/components/markets/SurgeList";
 import { Stat } from "@/components/ui/Kit";
+import { rankSurges } from "@/lib/market-data/analytics";
 import { getHomeData } from "@/lib/market-data/home";
 import { geckoTerminal } from "@/lib/market-data/providers/geckoterminal";
 import { chainPulse, heatBucket } from "@/lib/market-data/pulse";
@@ -34,6 +38,7 @@ export default async function PulsePage() {
     data = null;
   }
   const chains = data ? chainPulse(trending, fresh) : [];
+  const surges = data ? rankSurges([...trending, ...fresh, ...data.heating.map((h) => h.pool)]) : [];
 
   return (
     <div className="space-y-6">
@@ -51,12 +56,22 @@ export default async function PulsePage() {
             <Stat label="Chains measured" value={<CountUp value={chains.length} />} />
             <Stat label="24h volume sampled" value={<CountUp value={chains.reduce((a, c) => a + (c.volume24hUsd ?? 0), 0)} kind="usd" />} />
             <Stat label="Pools sampled" value={<CountUp value={trending.length + fresh.length} />} />
-            <Stat label="Unusual volume" value={<CountUp value={data.heating.length} />} note="pools right now" />
+            <Stat label="Unusual volume" value={<CountUp value={surges.length} />} note="pools right now" />
           </div>
+
+          <section aria-label="Chain race" className="space-y-3">
+            <ChainRace chains={chains} />
+          </section>
+
+          <section aria-label="Buy and sell pressure" className="space-y-3">
+            <h2 className="font-display text-xl font-bold">Buy vs sell pressure</h2>
+            <p className="text-xs text-muted">Share of 24h trades that were buys, across liquid pools on each chain. Counts trades, not dollars.</p>
+            <PressureGauges chains={chains} />
+          </section>
 
           <section aria-label="Chain heatmap" className="space-y-3">
             <h2 className="font-display text-xl font-bold">Chain heatmap</h2>
-            <div className="stagger grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-4">
+            <div className="stagger grid grid-cols-[repeat(2,minmax(0,1fr))] gap-2 md:grid-cols-3 lg:grid-cols-4">
               {chains.map((c) => (
                 <Spotlight key={c.networkId} className="rounded-[var(--r-md)]">
                 <Link href={`/markets?network=${c.networkId}`} className={`card-flat hover-lift block space-y-1 p-4 ${HEAT[heatBucket(c.medianChange24h) + 3]}`}>
@@ -76,9 +91,8 @@ export default async function PulsePage() {
 
           <section aria-label="Unusual volume" className="space-y-3">
             <h2 className="flex items-center gap-2 font-display text-xl font-bold"><Flame size={18} className="text-warm" /> Unusual volume</h2>
-            {data.heating.length === 0 ? <p className="card p-5 text-sm text-soft">No pool shows last-hour volume well above its own 24h pace with meaningful liquidity right now.</p> : (
-              <div className="grid gap-2">{data.heating.slice(0, 8).map((h, i) => <TokenRow key={h.pool.id} pool={h.pool} rank={i + 1} note={h.reason} />)}</div>
-            )}
+            <p className="text-xs text-muted">Pools whose last hour of volume is at least twice their own average hour over 24h, with at least $5K liquidity.</p>
+            <SurgeList surges={surges} />
           </section>
 
           <section aria-label="Newest pairs" className="space-y-3">

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { fmtMultiple, fmtPct, fmtPrice, fmtQty, fmtUsd, parseNum } from "@/lib/tools/common";
 import { positionSize } from "@/lib/tools/position";
+import { ScenarioBar } from "@/components/engage/ScenarioBar";
+import { useCalcInputs } from "./useCalcInputs";
 import { LiveNumber } from "./LiveNumber";
 import { CalcFrame, Field, HowItWorks, Metric, missingFields, Outcome } from "./parts";
 import { Meter } from "@/components/ui/Kit";
@@ -10,16 +11,18 @@ import { Meter } from "@/components/ui/Kit";
 const EMPTY = { account: "", risk: "", entry: "", stop: "", target: "" };
 
 export function PositionCalc() {
-  const [f, setF] = useState(EMPTY);
-  const set = (k: keyof typeof EMPTY) => (v: string) => setF((p) => ({ ...p, [k]: v }));
+  const calc = useCalcInputs("position-size", EMPTY);
+  const f = calc.values;
+  const set = calc.set;
   const target = f.target.trim() === "" ? null : parseNum(f.target);
   const r = positionSize({ account: parseNum(f.account), riskPct: parseNum(f.risk), entry: parseNum(f.entry), stop: parseNum(f.stop), target });
   const missing = missingFields([["account size", f.account], ["risk %", f.risk], ["entry price", f.entry], ["stop price", f.stop]]);
   return (
     <>
       <CalcFrame
-        onReset={() => setF(EMPTY)}
-        canReset={Object.values(f).some(Boolean)}
+        onReset={calc.reset}
+        canReset={calc.dirty}
+        toolbar={<ScenarioBar calc={calc} />}
         form={
           <>
             <Field id="pos-account" label="Account size" prefix="$" value={f.account} onChange={set("account")} placeholder="10000" hint="The capital this trade is measured against." />

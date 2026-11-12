@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  alignedIndex, buyShare, compareQuery, extent, extremes, heatIntensity, liquidityByDex, mapTiles, marketBreadth, parseCompareRefs,
+  alignedIndex, buyShare, changeHistogram, isFresh, matchesQuery, volumeShares, compareQuery, extent, extremes, heatIntensity, liquidityByDex, mapTiles, marketBreadth, parseCompareRefs,
   rankChains, rankSurges, surgeRatio, tail, toIndex, toPct, topMovers,
 } from "@/lib/market-data/analytics";
 import type { ChainPulse } from "@/lib/market-data/pulse";
@@ -105,5 +105,29 @@ describe("compare", () => {
     expect(compareQuery([], "pct", "7d")).toBe("");
     expect(compareQuery([{ networkId: "base", address: "0xabcabcabcabc" }], "index", "24h")).toBe("?t=base%3A0xabcabcabcabc&m=index&r=24h");
     expect(compareQuery([{ networkId: "base", address: "0xabcabcabcabc" }], "pct", "7d")).toBe("?t=base%3A0xabcabcabcabc");
+  });
+});
+
+describe("list helpers", () => {
+  it("bins changes at the edges and ignores unknowns", () => {
+    const at = (c: number | null) => pool(`p${c}`, { change: { m5: null, h1: null, h6: null, h24: c } });
+    const h = changeHistogram([at(-30), at(-5), at(0.9), at(1), at(25), at(null)]);
+    expect(h.map((b) => b.count)).toEqual([1, 0, 1, 1, 1, 0, 1]);
+  });
+  it("matches by name, symbol or address prefix", () => {
+    const p = pool("abc", { baseToken: { networkId: "solana", address: "XyZ123", name: "Moon Cat", symbol: "MEOW", imageUrl: null, decimals: 9, coingeckoId: null } });
+    expect([matchesQuery(p, ""), matchesQuery(p, "moon"), matchesQuery(p, "meow"), matchesQuery(p, "xyz"), matchesQuery(p, "dog")]).toEqual([true, true, true, true, false]);
+  });
+  it("calls only recent pools fresh", () => {
+    const now = Date.parse("2026-12-01T12:00:00Z");
+    expect(isFresh(pool("a", { createdAt: "2026-12-01T00:00:00Z" }), 48, now)).toBe(true);
+    expect(isFresh(pool("a", { createdAt: "2026-11-01T00:00:00Z" }), 48, now)).toBe(false);
+    expect(isFresh(pool("a", { createdAt: null }), 48, now)).toBe(false);
+  });
+  it("shares volume across chains and folds the tail", () => {
+    const s = volumeShares([chain("a", { volume24hUsd: 60 }), chain("b", { volume24hUsd: 30 }), chain("c", { volume24hUsd: 10 })], 2);
+    expect(s.map((r) => r.networkId)).toEqual(["a", "b", "other"]);
+    expect(s.reduce((t, r) => t + r.share, 0)).toBeCloseTo(1);
+    expect(volumeShares([chain("a", { volume24hUsd: 0 })])).toEqual([]);
   });
 });

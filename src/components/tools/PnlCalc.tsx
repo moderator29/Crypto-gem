@@ -1,25 +1,28 @@
 "use client";
 
-import { useState } from "react";
 import { fmtPct, fmtPrice, fmtQty, fmtUsd, parseNum } from "@/lib/tools/common";
 import { profitAndLoss } from "@/lib/tools/pnl";
 import { Bars } from "./Bars";
+import { ScenarioBar } from "@/components/engage/ScenarioBar";
+import { useCalcInputs } from "./useCalcInputs";
 import { LiveNumber } from "./LiveNumber";
 import { CalcFrame, Field, HowItWorks, Metric, missingFields, Outcome } from "./parts";
 
 const EMPTY = { entry: "", exit: "", amount: "", fees: "" };
 
 export function PnlCalc() {
-  const [f, setF] = useState(EMPTY);
-  const set = (k: keyof typeof EMPTY) => (v: string) => setF((p) => ({ ...p, [k]: v }));
+  const calc = useCalcInputs("profit-loss", EMPTY);
+  const f = calc.values;
+  const set = calc.set;
   const r = profitAndLoss({ entry: parseNum(f.entry), exit: parseNum(f.exit), amount: parseNum(f.amount), fees: parseNum(f.fees) });
   const missing = missingFields([["entry price", f.entry], ["exit price", f.exit], ["amount", f.amount]]);
   const tone = r.ok ? (r.value.pnl > 0 ? "up" : r.value.pnl < 0 ? "down" : null) : null;
   return (
     <>
       <CalcFrame
-        onReset={() => setF(EMPTY)}
-        canReset={Object.values(f).some(Boolean)}
+        onReset={calc.reset}
+        canReset={calc.dirty}
+        toolbar={<ScenarioBar calc={calc} />}
         form={
           <>
             <Field id="pnl-entry" label="Entry price" prefix="$" value={f.entry} onChange={set("entry")} placeholder="0.00" hint="What you paid for one unit." />

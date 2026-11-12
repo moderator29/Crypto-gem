@@ -1,18 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import { fmtMultiple, fmtPct, parseNum } from "@/lib/tools/common";
 import { percentChange, recoveryGain } from "@/lib/tools/recovery";
 import { Bars } from "./Bars";
+import { ScenarioBar } from "@/components/engage/ScenarioBar";
+import { useCalcInputs } from "./useCalcInputs";
 import { LiveNumber } from "./LiveNumber";
 import { CalcFrame, Field, HowItWorks, Metric, missingFields, Outcome } from "./parts";
 
-const EMPTY = { loss: "", from: "", to: "" };
+const EMPTY = { mode: "recover", loss: "", from: "", to: "" };
 
 export function RecoveryCalc() {
-  const [f, setF] = useState(EMPTY);
-  const [mode, setMode] = useState<"recover" | "move">("recover");
-  const set = (k: keyof typeof EMPTY) => (v: string) => setF((p) => ({ ...p, [k]: v }));
+  const calc = useCalcInputs("recovery", EMPTY);
+  const f = calc.values;
+  const set = calc.set;
+  const mode: "recover" | "move" = f.mode === "move" ? "move" : "recover";
+  const setMode = (m: "recover" | "move") => set("mode")(m);
   const rec = recoveryGain(parseNum(f.loss));
   const mov = percentChange(parseNum(f.from), parseNum(f.to));
   const missing = mode === "recover" ? missingFields([["loss %", f.loss]]) : missingFields([["starting price", f.from], ["new price", f.to]]);
@@ -20,8 +23,9 @@ export function RecoveryCalc() {
   return (
     <>
       <CalcFrame
-        onReset={() => setF(EMPTY)}
-        canReset={Object.values(f).some(Boolean)}
+        onReset={calc.reset}
+        canReset={calc.dirty}
+        toolbar={<ScenarioBar calc={calc} />}
         form={
           <>
             <div role="group" aria-label="What to work out" className="flex flex-wrap gap-2">

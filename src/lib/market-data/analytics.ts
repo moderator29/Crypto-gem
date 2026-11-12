@@ -13,6 +13,9 @@ export const WINDOW_LABEL: Record<ChangeWindow, string> = { h1: "1h", h6: "6h", 
 /** Percent move at which a tile reaches full colour, per window. Shorter windows move less. */
 const FULL_SCALE: Record<ChangeWindow, number> = { h1: 5, h6: 12, h24: 25 };
 
+/** Percent move that paints a tile at full strength for the window. */
+export const fullScale = (w: ChangeWindow): number => FULL_SCALE[w];
+
 export const changeOf = (p: PoolSummary, w: ChangeWindow): number | null => p.change[w];
 
 export function sizeOf(p: PoolSummary, by: SizeBy): number {
@@ -230,8 +233,8 @@ export function toIndex(points: number[]): number[] {
 /** The last `n` points. Series shorter than `n` are returned whole. */
 export const tail = (points: number[], n: number): number[] => (points.length > n ? points.slice(points.length - n) : points);
 
-/** Points per range: spark candles are 4h (42 per week); hourly candles give 24 points for a day. */
-export const RANGE_POINTS: Record<CompareRange, number> = { "24h": 24, "7d": 42 };
+/** Points per range: spark candles are 4h (42 per week); 25 hourly closes span a full day. */
+export const RANGE_POINTS: Record<CompareRange, number> = { "24h": 25, "7d": 42 };
 
 export interface Extremes { best: number | null; worst: number | null }
 
@@ -247,4 +250,58 @@ export function extremes(values: Array<number | null>): Extremes {
 export function alignedIndex(seriesLength: number, length: number, slot: number): number | null {
   const i = slot - (length - seriesLength);
   return i >= 0 && i < seriesLength ? i : null;
+}
+
+/** Each chain's own brand accent. Used only as ambient glow and chart tint, never as a signal for up or down. */
+const CHAIN_COLOR: Record<string, string> = { ethereum: "#627eea", solana: "#14f195", bsc: "#f3ba2f", base: "#0052ff", arbitrum: "#28a0f0", optimism: "#ff0420", polygon: "#8247e5", avalanche: "#e84142", ton: "#0098ea", tron: "#ff3b30", sui: "#4da2ff", robinhood: "#9cf200", fantom: "#1969ff", sonic: "#fe9a2e", linea: "#61dfff", zksync: "#8c8dfc", scroll: "#ffeeda", mantle: "#65b3ae", blast: "#fcfc03", celo: "#fcff52", aptos: "#2dd8a7", near: "#00ec97" };
+
+export const chainColor = (networkId: string): string => CHAIN_COLOR[networkId] ?? "var(--brand)";
+
+export interface HistBin { label: string; count: number; tone: "down" | "flat" | "up" }
+
+const BINS: Array<{ label: string; lo: number; hi: number; tone: HistBin["tone"] }> = [
+  { label: "<-20%", lo: -Infinity, hi: -20, tone: "down" },
+  { label: "-20 to -5", lo: -20, hi: -5, tone: "down" },
+  { label: "-5 to -1", lo: -5, hi: -1, tone: "down" },
+  { label: "-1 to 1", lo: -1, hi: 1, tone: "flat" },
+  { label: "1 to 5", lo: 1, hi: 5, tone: "up" },
+  { label: "5 to 20", lo: 5, hi: 20, tone: "up" },
+  { label: ">20%", lo: 20, hi: Infinity, tone: "up" },
+];
+
+/** How many pools fall in each band of change over a window. Pools without a figure are skipped. */
+export function changeHistogram(pools: PoolSummary[], w: ChangeWindow = "h24"): HistBin[] {
+  const counts = BINS.map(() => 0);
+  for (const p of pools) {
+    const c = changeOf(p, w);
+    if (c === null) continue;
+    const i = BINS.findIndex((b) => c >= b.lo && c < b.hi);
+    if (i >= 0) counts[i] = (counts[i] ?? 0) + 1;
+  }
+  return BINS.map((b, i) => ({ label: b.label, count: counts[i] ?? 0, tone: b.tone }));
+}
+
+/** Pools whose name, symbol or address contains the query. An empty query keeps everything. */
+export function matchesQuery(p: PoolSummary, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  const t = p.baseToken;
+  return t.name.toLowerCase().includes(q) || t.symbol.toLowerCase().includes(q) || t.address.toLowerCase().startsWith(q);
+}
+
+/** True when the pool was created within `hours`. Pools with no creation time are never new. */
+export function isFresh(p: PoolSummary, hours = 48, now = Date.now()): boolean {
+  if (!p.createdAt) return false;
+  const t = Date.parse(p.createdAt);
+  return Number.isFinite(t) && now - t >= 0 && now - t < hours * 3_600_000;
+}
+
+/** Each chain's share of the summed 24h volume, largest first, so a stacked bar always adds to 100. */
+export function volumeShares(chains: ChainPulse[], top = 6): Array<{ networkId: string; name: string; share: number }> {
+  const total = chains.reduce((s, c) => s + c.volume24hUsd, 0);
+  if (total <= 0) return [];
+  const sorted = [...chains].sort((a, b) => b.volume24hUsd - a.volume24hUsd);
+  const head = sorted.slice(0, top).map((c) => ({ networkId: c.networkId, name: c.name, share: c.volume24hUsd / total }));
+  const rest = sorted.slice(top).reduce((s, c) => s + c.volume24hUsd, 0) / total;
+  return rest > 0 ? [...head, { networkId: "other", name: "Other chains", share: rest }] : head;
 }

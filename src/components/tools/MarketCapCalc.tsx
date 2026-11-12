@@ -1,25 +1,29 @@
 "use client";
 
-import { useState } from "react";
 import { fmtMultiple, fmtPct, fmtPrice, fmtQty, parseNum } from "@/lib/tools/common";
 import { marketCapWhatIf } from "@/lib/tools/marketcap";
+import { ScenarioBar } from "@/components/engage/ScenarioBar";
+import { useCalcInputs } from "./useCalcInputs";
 import { LiveNumber } from "./LiveNumber";
 import { CalcFrame, Field, HowItWorks, Metric, missingFields, Outcome } from "./parts";
 
-const EMPTY = { price: "", current: "", target: "" };
+const EMPTY = { basis: "Market cap", price: "", current: "", target: "" };
 
 export function MarketCapCalc() {
-  const [f, setF] = useState(EMPTY);
-  const [basis, setBasis] = useState<"Market cap" | "FDV">("Market cap");
-  const set = (k: keyof typeof EMPTY) => (v: string) => setF((p) => ({ ...p, [k]: v }));
+  const calc = useCalcInputs("market-cap", EMPTY);
+  const f = calc.values;
+  const set = calc.set;
+  const basis: "Market cap" | "FDV" = f.basis === "FDV" ? "FDV" : "Market cap";
+  const setBasis = (b: "Market cap" | "FDV") => set("basis")(b);
   const r = marketCapWhatIf({ price: parseNum(f.price), current: parseNum(f.current), target: parseNum(f.target) });
   const missing = missingFields([["current price", f.price], [`current ${basis.toLowerCase()}`, f.current], [`target ${basis.toLowerCase()}`, f.target]]);
   const tone = r.ok ? (r.value.multiple > 1 ? "up" : r.value.multiple < 1 ? "down" : null) : null;
   return (
     <>
       <CalcFrame
-        onReset={() => setF(EMPTY)}
-        canReset={Object.values(f).some(Boolean)}
+        onReset={calc.reset}
+        canReset={calc.dirty}
+        toolbar={<ScenarioBar calc={calc} />}
         form={
           <>
             <div role="group" aria-label="Measure by" className="flex gap-2">
