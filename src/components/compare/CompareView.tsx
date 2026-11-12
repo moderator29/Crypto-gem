@@ -222,7 +222,7 @@ export function CompareView() {
   return (
     <div className="space-y-5">
       <div className="card space-y-3 p-4 md:p-5">
-        <div className="flex flex-wrap items-center gap-2" role="list" aria-label="Selected tokens">
+        <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Selected tokens">
           {picked.map((h, i) => (
             <span key={hitKey(h)} role="listitem" className="chip" style={{ borderColor: COLORS[i] }} onPointerEnter={() => setFocus(i)} onPointerLeave={() => setFocus(null)}>
               <i className="h-2.5 w-2.5 rounded-full" style={{ background: COLORS[i] }} /> {h.symbol}

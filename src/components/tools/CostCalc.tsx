@@ -29,6 +29,7 @@ function CostBar({ parts }: { parts: Array<{ label: string; value: number; color
   );
 }
 
+/** Swap cost calculator: pool fee, price impact and network fee. */
 export function CostCalc() {
   const calc = useCalcInputs("fee-slippage", EMPTY);
   const f = calc.values;

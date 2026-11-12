@@ -6,6 +6,24 @@ export interface Release { version: string; title: string; date: string | null; 
 /** Newest first. Dates are shown only where a release date is known. */
 export const RELEASES: Release[] = [
   {
+    version: "0.6.0",
+    title: "More calculators, a glossary and learning progress",
+    date: "2026-11-12",
+    summary: "Four new calculators, shareable and saveable scenarios, a crypto glossary, guide quizzes and reading progress, and a faster help centre.",
+    items: [
+      { tag: "New", text: "Token unlock and vesting calculator at /tools/token-vesting: set a cliff, a linear unlock and a total, then see released and locked tokens for every month with a chart and a table." },
+      { tag: "New", text: "Staking and compounding APY calculator at /tools/staking-apy: compare simple interest with compounding at your chosen frequency over any number of years." },
+      { tag: "New", text: "Liquidation price calculator at /tools/liquidation-price: long or short, leverage and maintenance margin in, liquidation price, distance and a price ladder out." },
+      { tag: "New", text: "Fee and slippage cost calculator at /tools/fee-slippage: pool fee, price impact and network fee added up in dollars and as a share of the trade." },
+      { tag: "New", text: "Share this calculation on every calculator. The link carries your inputs in the address, and anything out of range is checked and corrected when the page opens." },
+      { tag: "New", text: "Save up to ten scenarios per calculator in your browser, load them back, delete them, and compare key results side by side. Nothing is sent to a server." },
+      { tag: "New", text: "Glossary at /glossary with more than forty crypto terms, instant search with highlighting, an A to Z rail, related terms and links that open straight to a term." },
+      { tag: "New", text: "Learn: a reading progress bar, mark as read, a progress ring on the index, and a four-question quiz with explanations at the end of eight guides. Scores stay on your device." },
+      { tag: "New", text: "Your progress card on Learn with a day streak and badges. They are earned only from your own reading, quizzes, saved scenarios and calculator use, and are stored locally." },
+      { tag: "Improved", text: "Help centre search shows results as you type with matches highlighted, supports arrow-key navigation, and adds a Was this helpful? control that is saved on your device only." },
+    ],
+  },
+  {
     version: "0.5.0",
     title: "Tools, guides and help",
     date: "2026-11-04",

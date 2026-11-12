@@ -48,6 +48,7 @@ function GrowthChart({ curve, years, principal }: { curve: GrowthPoint[]; years:
   );
 }
 
+/** Staking calculator comparing simple interest with compounding. */
 export function StakingCalc() {
   const calc = useCalcInputs("staking-apy", EMPTY);
   const f = calc.values;

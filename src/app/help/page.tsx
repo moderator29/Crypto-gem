@@ -1,4 +1,4 @@
-import { BookOpen, Bot, Mail, Activity } from "lucide-react";
+import { BookA, BookOpen, Bot, Mail, Activity } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { HelpCenter } from "@/components/learn/HelpCenter";
@@ -11,6 +11,7 @@ const OPTIONS = [
   { href: "/contact", icon: Mail, title: "Contact us", text: "Send a message by email and include your order number if you have one." },
   { href: "/copilot", icon: Bot, title: "Ask Copilot", text: "Questions about a token or the market. It can be wrong, so verify." },
   { href: "/learn", icon: BookOpen, title: "Read the guides", text: "Plain-language explanations of risks and how rankings work." },
+  { href: "/glossary", icon: BookA, title: "Glossary", text: "Plain definitions of crypto terms, searchable from A to Z." },
   { href: "/status", icon: Activity, title: "Data status", text: "Check whether market data sources are working right now." },
 ];
 

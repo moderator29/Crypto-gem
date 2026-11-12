@@ -2,9 +2,13 @@ import { ArrowLeft, ArrowRight, Clock } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ReadingProgress } from "@/components/engage/ReadingProgress";
+import { Quiz } from "@/components/engage/Quiz";
+import { ReadBadge, ReadToggle } from "@/components/engage/ReadToggle";
 import { ArticleBody } from "@/components/learn/ArticleBody";
 import { TocNav } from "@/components/learn/TocNav";
 import { ARTICLES, articleBySlug, headings, readingMinutes } from "@/lib/content/learn";
+import { quizBySlug } from "@/lib/content/quizzes";
 
 export const dynamicParams = false;
 
@@ -39,6 +43,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   return (
     <div className="mx-auto w-full max-w-5xl">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ld).replace(/</g, "\\u003c") }} />
+      <ReadingProgress targetId="article-body" />
       <Link href="/learn" className="btn btn-ghost btn-sm mb-4 -ml-2"><ArrowLeft size={14} aria-hidden="true" /> All guides</Link>
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_240px]">
         <article className="min-w-0 max-w-3xl">
@@ -47,6 +52,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
               <span className="badge badge-brand">{a.category}</span>
               <span className="inline-flex items-center gap-1 text-xs text-muted"><Clock size={12} aria-hidden="true" /> {readingMinutes(a)} min read</span>
               <span className="text-xs text-muted">Updated {dateFmt.format(new Date(a.updated))}</span>
+              <ReadBadge slug={a.slug} />
             </div>
             <h1 className="h1">{a.title}</h1>
             <p className="mt-3 text-base text-soft md:text-lg">{a.summary}</p>
@@ -57,7 +63,11 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
               {toc.map((t) => <li key={t.id}><a className="block py-1.5 text-soft hover:text-text" href={`#${t.id}`}>{t.text}</a></li>)}
             </ol>
           </details>
-          <ArticleBody blocks={a.blocks} />
+          <div id="article-body"><ArticleBody blocks={a.blocks} /></div>
+          <div className="mt-8 space-y-4">
+            <ReadToggle slug={a.slug} />
+            {quizBySlug(a.slug) && <Quiz slug={a.slug} />}
+          </div>
           <p className="mt-10 rounded-[var(--r-md)] border border-line bg-[var(--surface-2)] px-4 py-3 text-xs leading-relaxed text-muted">Educational content, not financial advice. Markets are risky and you can lose everything you put in.</p>
         </article>
         <aside className="hidden lg:block">

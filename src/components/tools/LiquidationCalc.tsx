@@ -32,6 +32,7 @@ function Ladder({ rungs, side }: { rungs: Rung[]; side: "long" | "short" }) {
   );
 }
 
+/** Liquidation price calculator for a leveraged long or short. */
 export function LiquidationCalc() {
   const calc = useCalcInputs("liquidation-price", EMPTY);
   const f = calc.values;

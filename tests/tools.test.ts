@@ -6,7 +6,13 @@ import { marketCapWhatIf } from "@/lib/tools/marketcap";
 import { profitAndLoss } from "@/lib/tools/pnl";
 import { positionSize } from "@/lib/tools/position";
 import { percentChange, recoveryGain } from "@/lib/tools/recovery";
+import { tradeCost } from "@/lib/tools/costs";
+import { liquidation, liquidationPrice, priceLadder } from "@/lib/tools/liquidation";
 import { TOOLS, toolBySlug } from "@/lib/tools/registry";
+import { TOOL_SPECS } from "@/lib/tools/specs";
+import { apyFromApr, compoundValue, staking } from "@/lib/tools/staking";
+import { summarize } from "@/lib/tools/summaries";
+import { vesting } from "@/lib/tools/vesting";
 
 const ok = <T>(r: { ok: boolean; value?: T; errors?: string[] }): T => {
   expect(r.ok, JSON.stringify(r)).toBe(true);
@@ -225,10 +231,196 @@ describe("impermanent loss", () => {
 });
 
 describe("registry", () => {
-  it("has six tools with unique slugs", () => {
-    expect(TOOLS).toHaveLength(6);
-    expect(new Set(TOOLS.map((t) => t.slug)).size).toBe(6);
+  it("has ten tools with unique slugs and a share spec for each", () => {
+    expect(TOOLS).toHaveLength(10);
+    expect(new Set(TOOLS.map((t) => t.slug)).size).toBe(10);
+    for (const t of TOOLS) expect(Object.keys(TOOL_SPECS[t.slug] ?? {}).length, t.slug).toBeGreaterThan(0);
     expect(toolBySlug("dca")?.title).toBe("DCA calculator");
     expect(toolBySlug("nope")).toBeUndefined();
+  });
+});
+
+describe("token vesting", () => {
+  it("releases linearly after a cliff and ends at the total", () => {
+    const v = ok(vesting({ total: 1200, cliff: 6, linear: 12, tgePct: null }));
+    expect(v.totalMonths).toBe(18);
+    expect(v.rows).toHaveLength(19);
+    expect(v.rows[0]!.released).toBe(0);
+    expect(v.rows[6]!.released).toBe(0);
+    expect(v.rows[7]!.released).toBeCloseTo(100, 9);
+    expect(v.rows[12]!.released).toBeCloseTo(600, 9);
+    expect(v.rows[18]!.released).toBe(1200);
+    expect(v.rows[18]!.locked).toBe(0);
+    expect(v.perMonth).toBeCloseTo(100, 9);
+    expect(v.firstUnlockMonth).toBe(7);
+  });
+  it("honours an unlocked-at-start share and keeps released plus locked equal to the total", () => {
+    const v = ok(vesting({ total: 1000, cliff: 3, linear: 4, tgePct: 10 }));
+    expect(v.atStart).toBe(100);
+    expect(v.rows[0]!.released).toBe(100);
+    expect(v.rows[3]!.released).toBe(100);
+    for (const r of v.rows) expect(r.released + r.locked).toBeCloseTo(1000, 9);
+    const sum = v.rows.reduce((n, r, i) => (i === 0 ? n : n + r.unlocked), 0);
+    expect(sum).toBeCloseTo(900, 9);
+  });
+  it("unlocks everything at the cliff when there is no linear period", () => {
+    const v = ok(vesting({ total: 500, cliff: 12, linear: 0, tgePct: null }));
+    expect(v.rows[11]!.released).toBe(0);
+    expect(v.rows[12]!.released).toBe(500);
+    expect(v.perMonth).toBe(0);
+  });
+  it("rejects zero, negative, fractional, huge and NaN input", () => {
+    expect(vesting({ total: 0, cliff: 1, linear: 1, tgePct: null }).ok).toBe(false);
+    expect(vesting({ total: -5, cliff: 1, linear: 1, tgePct: null }).ok).toBe(false);
+    expect(vesting({ total: 10, cliff: 0, linear: 0, tgePct: null }).ok).toBe(false);
+    expect(vesting({ total: 10, cliff: -1, linear: 4, tgePct: null }).ok).toBe(false);
+    expect(vesting({ total: 10, cliff: 1.5, linear: 4, tgePct: null }).ok).toBe(false);
+    expect(vesting({ total: 10, cliff: 200, linear: 100, tgePct: null }).ok).toBe(false);
+    expect(vesting({ total: 10, cliff: 1, linear: 4, tgePct: 101 }).ok).toBe(false);
+    expect(vesting({ total: NaN, cliff: 1, linear: 4, tgePct: null }).ok).toBe(false);
+    expect(vesting({ total: 1e30, cliff: 1, linear: 4, tgePct: null }).ok).toBe(false);
+  });
+  it("handles a very large grant", () => {
+    expect(ok(vesting({ total: 1e18, cliff: 1, linear: 1, tgePct: null })).rows[2]!.released).toBe(1e18);
+  });
+});
+
+describe("staking and compounding", () => {
+  it("matches known compounding values", () => {
+    expect(compoundValue(1000, 12, 12, 1)).toBeCloseTo(1126.8250301319698, 9);
+    expect(apyFromApr(12, 12)).toBeCloseTo(12.682503013196973, 9);
+    expect(apyFromApr(10, 1)).toBeCloseTo(10, 9);
+  });
+  it("compares simple and compound growth", () => {
+    const v = ok(staking({ principal: 1000, aprPct: 10, perYear: 1, years: 3 }));
+    expect(v.simpleFinal).toBeCloseTo(1300, 9);
+    expect(v.compoundFinal).toBeCloseTo(1331, 9);
+    expect(v.extraFromCompounding).toBeCloseTo(31, 9);
+    expect(v.curve).toHaveLength(49);
+    expect(v.curve[0]!.compound).toBe(1000);
+    expect(v.yearly.map((p) => p.year)).toEqual([1, 2, 3]);
+  });
+  it("adds a final partial year row", () => {
+    expect(ok(staking({ principal: 100, aprPct: 5, perYear: 12, years: 2.5 })).yearly.map((p) => p.year)).toEqual([1, 2, 2.5]);
+  });
+  it("gives equal results at 0% APR", () => {
+    const v = ok(staking({ principal: 500, aprPct: 0, perYear: 365, years: 10 }));
+    expect(v.compoundFinal).toBe(500);
+    expect(v.simpleFinal).toBe(500);
+    expect(v.apyPct).toBe(0);
+  });
+  it("rejects bad input and overflow", () => {
+    expect(staking({ principal: 0, aprPct: 5, perYear: 12, years: 1 }).ok).toBe(false);
+    expect(staking({ principal: -1, aprPct: 5, perYear: 12, years: 1 }).ok).toBe(false);
+    expect(staking({ principal: 1, aprPct: -5, perYear: 12, years: 1 }).ok).toBe(false);
+    expect(staking({ principal: 1, aprPct: 5, perYear: 7, years: 1 }).ok).toBe(false);
+    expect(staking({ principal: 1, aprPct: 5, perYear: null, years: 1 }).ok).toBe(false);
+    expect(staking({ principal: 1, aprPct: 5, perYear: 12, years: 0 }).ok).toBe(false);
+    expect(staking({ principal: 1, aprPct: 5, perYear: 12, years: 101 }).ok).toBe(false);
+    expect(staking({ principal: NaN, aprPct: 5, perYear: 12, years: 1 }).ok).toBe(false);
+    expect(staking({ principal: 1, aprPct: 1000, perYear: 365, years: 100 }).ok).toBe(false);
+  });
+  it("handles a huge principal", () => {
+    expect(ok(staking({ principal: 1e18, aprPct: 5, perYear: 1, years: 1 })).compoundFinal).toBeCloseTo(1.05e18, -5);
+  });
+});
+
+describe("liquidation price", () => {
+  it("computes a long and a short", () => {
+    expect(liquidationPrice("long", 100, 10, 0)).toBeCloseTo(90, 9);
+    expect(liquidationPrice("short", 100, 10, 0)).toBeCloseTo(110, 9);
+    expect(liquidationPrice("long", 100, 10, 0.5)).toBeCloseTo(90 / 0.995, 9);
+    expect(liquidationPrice("short", 100, 10, 0.5)).toBeCloseTo(110 / 1.005, 9);
+  });
+  it("reports distance, starting margin and margin figures", () => {
+    const v = ok(liquidation({ side: "long", entry: 100, leverage: 10, mmrPct: 0.5, margin: 1000 }));
+    expect(v.liqPrice).toBeCloseTo(90 / 0.995, 9);
+    expect(v.distancePct).toBeCloseTo(((100 - 90 / 0.995) / 100) * 100, 9);
+    expect(v.initialMarginPct).toBe(10);
+    expect(v.notional).toBe(10000);
+    expect(v.quantity).toBe(100);
+    expect(v.marginLost).toBeCloseTo(1000 - 0.005 * (90 / 0.995) * 100, 9);
+  });
+  it("has no liquidation above zero at 1x for a long", () => {
+    expect(ok(liquidation({ side: "long", entry: 50, leverage: 1, mmrPct: 0.5, margin: null })).liqPrice).toBe(0);
+    expect(ok(liquidation({ side: "short", entry: 50, leverage: 1, mmrPct: 0, margin: null })).liqPrice).toBeCloseTo(100, 9);
+  });
+  it("moves closer as leverage rises", () => {
+    const lo = ok(liquidation({ side: "long", entry: 100, leverage: 3, mmrPct: 0.5, margin: null })).distancePct;
+    const hi = ok(liquidation({ side: "long", entry: 100, leverage: 50, mmrPct: 0.5, margin: null })).distancePct;
+    expect(hi).toBeLessThan(lo);
+  });
+  it("rejects bad input and positions that open underwater", () => {
+    expect(liquidation({ side: "long", entry: 0, leverage: 5, mmrPct: 0.5, margin: null }).ok).toBe(false);
+    expect(liquidation({ side: "long", entry: -1, leverage: 5, mmrPct: 0.5, margin: null }).ok).toBe(false);
+    expect(liquidation({ side: "long", entry: 1, leverage: 0.5, mmrPct: 0.5, margin: null }).ok).toBe(false);
+    expect(liquidation({ side: "long", entry: 1, leverage: 5000, mmrPct: 0.5, margin: null }).ok).toBe(false);
+    expect(liquidation({ side: "sideways", entry: 1, leverage: 5, mmrPct: 0.5, margin: null }).ok).toBe(false);
+    expect(liquidation({ side: null, entry: 1, leverage: 5, mmrPct: 0.5, margin: null }).ok).toBe(false);
+    expect(liquidation({ side: "long", entry: 1, leverage: 5, mmrPct: -1, margin: null }).ok).toBe(false);
+    expect(liquidation({ side: "long", entry: 1, leverage: 5, mmrPct: 50, margin: null }).ok).toBe(false);
+    expect(liquidation({ side: "long", entry: 1, leverage: 5, mmrPct: 0.5, margin: 0 }).ok).toBe(false);
+    expect(liquidation({ side: "long", entry: NaN, leverage: 5, mmrPct: 0.5, margin: null }).ok).toBe(false);
+    expect(liquidation({ side: "long", entry: 1, leverage: 100, mmrPct: 1, margin: null }).ok).toBe(false);
+    expect(liquidation({ side: "long", entry: 1, leverage: 200, mmrPct: 2, margin: null }).ok).toBe(false);
+  });
+  it("handles huge prices", () => {
+    expect(ok(liquidation({ side: "short", entry: 1e18, leverage: 2, mmrPct: 0.5, margin: null })).liqPrice).toBeGreaterThan(1e18);
+  });
+  it("builds a sorted ladder with the entry and liquidation marked", () => {
+    const liq = liquidationPrice("long", 100, 10, 0.5);
+    const rungs = priceLadder("long", 100, liq);
+    expect(rungs.filter((r) => r.kind === "entry")).toHaveLength(1);
+    expect(rungs.filter((r) => r.kind === "liq")).toHaveLength(1);
+    expect(rungs.map((r) => r.price)).toEqual([...rungs.map((r) => r.price)].sort((a, b) => b - a));
+    expect(rungs.every((r) => Number.isFinite(r.price) && r.price >= 0)).toBe(true);
+    const shortRungs = priceLadder("short", 100, liquidationPrice("short", 100, 2, 0.5));
+    expect(shortRungs.every((r) => r.price > 0)).toBe(true);
+    expect(shortRungs[0]!.kind).toBe("liq");
+  });
+});
+
+describe("fee and slippage cost", () => {
+  it("adds fee, impact and network cost", () => {
+    const v = ok(tradeCost({ size: 1000, feePct: 0.3, impactPct: 1, networkUsd: 2 }));
+    expect(v.feeUsd).toBeCloseTo(3, 9);
+    expect(v.impactUsd).toBeCloseTo(9.97, 9);
+    expect(v.networkUsd).toBe(2);
+    expect(v.totalUsd).toBeCloseTo(14.97, 9);
+    expect(v.totalPct).toBeCloseTo(1.497, 9);
+    expect(v.netValue).toBeCloseTo(985.03, 9);
+    expect(v.breakEvenPct).toBeCloseTo((14.97 / 985.03) * 100, 9);
+  });
+  it("allows zero costs and a missing network fee", () => {
+    const v = ok(tradeCost({ size: 50, feePct: 0, impactPct: 0, networkUsd: null }));
+    expect(v.totalUsd).toBe(0);
+    expect(v.breakEvenPct).toBe(0);
+  });
+  it("has no break-even when costs swallow the trade", () => {
+    expect(ok(tradeCost({ size: 5, feePct: 0.3, impactPct: 0, networkUsd: 10 })).breakEvenPct).toBeNull();
+  });
+  it("rejects zero size, negative and out-of-range input", () => {
+    expect(tradeCost({ size: 0, feePct: 0.3, impactPct: 0, networkUsd: 0 }).ok).toBe(false);
+    expect(tradeCost({ size: -10, feePct: 0.3, impactPct: 0, networkUsd: 0 }).ok).toBe(false);
+    expect(tradeCost({ size: 10, feePct: -1, impactPct: 0, networkUsd: 0 }).ok).toBe(false);
+    expect(tradeCost({ size: 10, feePct: 100, impactPct: 0, networkUsd: 0 }).ok).toBe(false);
+    expect(tradeCost({ size: 10, feePct: 0.3, impactPct: 100, networkUsd: 0 }).ok).toBe(false);
+    expect(tradeCost({ size: 10, feePct: 0.3, impactPct: 0, networkUsd: -1 }).ok).toBe(false);
+    expect(tradeCost({ size: NaN, feePct: 0.3, impactPct: 0, networkUsd: 0 }).ok).toBe(false);
+    expect(tradeCost({ size: null, feePct: null, impactPct: null, networkUsd: null }).ok).toBe(false);
+  });
+  it("handles a huge trade", () => {
+    expect(ok(tradeCost({ size: 1e18, feePct: 0.3, impactPct: 1, networkUsd: 1 })).totalPct).toBeCloseTo(1.297, 3);
+  });
+});
+
+describe("scenario summaries", () => {
+  it("summarises complete inputs and returns nothing for incomplete ones", () => {
+    expect(summarize("profit-loss", { entry: "100", exit: "150", amount: "10", fees: "" }).map((l) => l.label)).toContain("Profit");
+    expect(summarize("profit-loss", { entry: "100" })).toEqual([]);
+    expect(summarize("fee-slippage", { size: "1000", fee: "0.3", impact: "1", network: "" })[0]!.text).toBe("$12.97");
+    expect(summarize("staking-apy", { principal: "1000", apr: "10", freq: "1", years: "3" })[0]!.text).toBe("$1,331.00");
+    expect(summarize("recovery", { mode: "move", from: "100", to: "50" })[0]!.text).toBe("-50.00%");
+    expect(summarize("nope", {})).toEqual([]);
   });
 });

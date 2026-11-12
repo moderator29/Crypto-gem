@@ -29,7 +29,7 @@
 .mk-tile:focus-visible { z-index: 11; outline: 2px solid #fff; outline-offset: -3px; }
 .mk-sym { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; line-height: 1; letter-spacing: -0.01em; }
 .mk-pct { font-size: 0.82em; font-weight: 700; line-height: 1; }
-.mk-vol { font-size: 0.66em; line-height: 1; opacity: 0.85; }
+.mk-vol { font-size: 0.66em; line-height: 1; opacity: 1; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.45); }
 @keyframes mk-tile-in { from { opacity: 0; transform: scale(0.86); } to { opacity: 1; transform: scale(1); } }
 
 .mk-tip { position: absolute; z-index: 30; padding: 10px 12px; pointer-events: none; animation: mk-fade 140ms ease both; }

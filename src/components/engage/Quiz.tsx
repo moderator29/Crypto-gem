@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight, Check, RotateCcw, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { fireConfetti } from "@/components/fx/confetti";
 import { playSound } from "@/components/fx/sound";
 import { quizBySlug } from "@/lib/content/quizzes";
@@ -23,7 +23,7 @@ export function Quiz({ slug }: { slug: string }) {
   const [finished, setFinished] = useState(false);
   const total = quiz?.questions.length ?? 0;
   const q = quiz?.questions[idx];
-  const order = useMemo(() => (q ? optionOrder(slug, idx, q.options.length) : []), [slug, idx, q]);
+  const order = q ? optionOrder(slug, idx, q.options.length) : [];
   if (!quiz || !q) return null;
   const best = scores[slug];
 

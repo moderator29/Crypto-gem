@@ -52,6 +52,7 @@ function ScheduleChart({ rows, cliff, linear, month }: { rows: VestingRow[]; cli
   );
 }
 
+/** Token unlock and vesting calculator with a month by month schedule. */
 export function VestingCalc() {
   const calc = useCalcInputs("token-vesting", EMPTY);
   const f = calc.values;

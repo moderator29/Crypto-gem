@@ -51,6 +51,7 @@ const GROUPS: NavGroup[] = [
     items: [
       { href: "/tools", label: "Trader tools", icon: "tools", match: (p) => p.startsWith("/tools") },
       { href: "/learn", label: "Learn", icon: "learn", match: (p) => p.startsWith("/learn") },
+      { href: "/glossary", label: "Glossary", icon: "log", match: (p) => p.startsWith("/glossary") },
       { href: "/help", label: "Help", icon: "help", match: (p) => p.startsWith("/help") },
       { href: "/changelog", label: "Changelog", icon: "log", match: (p) => p.startsWith("/changelog") },
     ],

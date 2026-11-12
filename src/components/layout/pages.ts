@@ -23,6 +23,7 @@ export const PAGE_JUMPS: PageJump[] = [
   { href: "/profile", label: "Profile", hint: "Your account", icon: "home", keys: "account me" },
   { href: "/settings", label: "Settings", hint: "Preferences", icon: "settings", keys: "theme sound language" },
   { href: "/tools", label: "Trader tools", hint: "Calculators", icon: "tools", keys: "calculator pnl dca" },
+  { href: "/glossary", label: "Glossary", hint: "Crypto terms", icon: "learn", keys: "terms definitions dictionary" },
   { href: "/learn", label: "Learn", hint: "Guides", icon: "learn", keys: "guide glossary rug" },
   { href: "/help", label: "Help", hint: "FAQ", icon: "help", keys: "faq support" },
   { href: "/status", label: "Data status", hint: "Provider health", icon: "status", keys: "uptime" },

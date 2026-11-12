@@ -18,6 +18,7 @@ export interface CalcInputs<D extends Values = Values> {
   shareUrl: () => string;
 }
 
+const NO_SPEC: ParamSpec = {};
 const noop = () => () => undefined;
 const readSearch = () => window.location.search;
 
@@ -26,7 +27,7 @@ const readSearch = () => window.location.search;
  * and exposes what the share and scenario buttons need.
  */
 export function useCalcInputs<D extends Values>(slug: string, defaults: D): CalcInputs<D> {
-  const spec = TOOL_SPECS[slug] ?? {};
+  const spec = TOOL_SPECS[slug] ?? NO_SPEC;
   const search = useSyncExternalStore(noop, readSearch, () => "");
   const fromUrl = useMemo(() => sanitizeValues(spec, parseQuery(search), defaults) as D, [spec, search, defaults]);
   const [edits, setEdits] = useState<D | null>(null);
